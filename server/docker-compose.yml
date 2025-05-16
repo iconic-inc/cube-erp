@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  nhaymdb:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nhay
+      MONGO_INITDB_ROOT_PASSWORD: nhay
+    ports:
+      - 27017:27017
+    networks:
+      - nhay_network
+
+  # server:
+  #   build: .
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - nhaymdb
+  #   networks:
+  #     - nhaymdb_network
+  #   environment:
+  #     DEV_DB_HOST: nhaymdb
+
+networks:
+  nhay_network:
+    driver: bridge
