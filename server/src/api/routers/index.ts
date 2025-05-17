@@ -1,13 +1,13 @@
 import express from 'express';
 
 import { checkApiKey, checkPermission } from '../auth/checkApiKey';
-import { pushLog2Discord } from '../middlewares/logger.middleware';
+import { logRequest } from '../middlewares/logger.middleware';
 import CheckController from '@controllers/check.controller';
 import { AuthController } from '@controllers/auth.controller';
 
 const router = express.Router();
 
-router.use(pushLog2Discord);
+router.use(logRequest);
 //check api key
 
 router.get('/check-status', CheckController.checkStatus);

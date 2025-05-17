@@ -45,35 +45,4 @@ async function authenticationV2(
   if (next) return next();
 }
 
-async function authentication(req: Request, res: Response, next: NextFunction) {
-  /**
-   *    1. Check if userId is missing
-   *    2. Check KeyToken in DB
-   *    3. Verify accessToken
-   *    4. Check user in DB
-   *    5. Check accessToken in DB
-   *    6. All passed => return
-   */
-
-  // 1
-  const userId = req.headers[HEADER.CLIENT_ID] as string;
-  if (!userId) throw new BadRequestError('Invalid request');
-
-  // 2
-  const keyToken = await findByUserId(userId, 'browserId');
-  if (!keyToken) throw new NotFoundError('KeyStore Not Found');
-
-  // 3
-  const accessToken = req.headers[HEADER.AUTHORIZATION] as string;
-  if (!accessToken) throw new UnauthorizedError('Invalid request');
-
-  const payload = parseJwt(accessToken);
-  if (payload.userId !== userId) throw new UnauthorizedError('Invalid token');
-
-  // 6
-  req.keyToken = keyToken;
-
-  return next();
-}
-
 export { authenticationV2 };

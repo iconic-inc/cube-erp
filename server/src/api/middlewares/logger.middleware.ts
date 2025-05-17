@@ -1,21 +1,20 @@
 import { NextFunction, Request, Response } from 'express';
-import logger from '../loggers/discord.log';
-import { InternalServerError } from '../core/errors';
+import { logger } from '../loggers/logger.log';
 
-function pushLog2Discord(req: Request, res: Response, next: NextFunction) {
-  logger
-    .sendFormatLog({
-      title: `${req.method.toUpperCase()} ${req.url} (${req.requestId})`,
-      code: req.method === 'GET' ? req.query : req.body,
-      message: req.get('host') + req.originalUrl,
-    })
-    .then(() => {
-      console.log('Log sent to Discord');
-    })
-    .catch((err) => {
-      throw new InternalServerError(err.message);
-    });
+function logRequest(req: Request, res: Response, next: NextFunction) {
+  logger.info(`Request:::: ${req.method.toUpperCase()} ${req.baseUrl}`, {
+    context: req.path,
+    metadata: {
+      method: req.method,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      headers: req.headers,
+    },
+    requestId: req.requestId,
+  });
+
   next();
 }
 
-export { pushLog2Discord };
+export { logRequest };

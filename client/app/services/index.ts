@@ -1,5 +1,4 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
-import { pushLog2Discord } from '~/loggers/discord.log';
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 
@@ -30,13 +29,7 @@ const fetcher = async (
   }).catch((error) => {
     console.log('fetch error');
     console.error(error);
-    pushLog2Discord({
-      method: options?.method || 'GET',
-      host: API_URL,
-      path: `/api/v1${path}`,
-      body: options?.body,
-      response: { errors: { message: error.message } },
-    });
+
     throw new Response('Lỗi hệ thống', {
       status: 500,
     });
@@ -44,13 +37,7 @@ const fetcher = async (
   if (!response) {
     console.log('fetch error');
     console.error('No response');
-    pushLog2Discord({
-      method: options?.method || 'GET',
-      host: API_URL,
-      path: `/api/v1${path}`,
-      body: options?.body,
-      response: { errors: { message: 'No response' } },
-    });
+
     throw new Response('Lỗi hệ thống', {
       status: 500,
     });
@@ -81,13 +68,6 @@ const fetcher = async (
   }
 
   if (data.errors) {
-    pushLog2Discord({
-      method: options?.method || 'GET',
-      host: API_URL,
-      path: `/api/v1${path}`,
-      body: options?.body,
-      response: data,
-    });
     throw new Error(data.errors.message || response.statusText);
   }
   return data.metadata;
