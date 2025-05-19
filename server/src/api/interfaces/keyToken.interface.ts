@@ -1,7 +1,7 @@
 import { Model, HydratedDocument, ObjectId } from 'mongoose';
 
-interface IRawKeyToken {
-  _id: string | ObjectId;
+interface IKeyToken {
+  id: string | ObjectId;
   user: string | ObjectId;
   browserId: string;
   publicKey: string;
@@ -12,9 +12,9 @@ interface IRawKeyToken {
   updatedAt: Date;
 }
 
-export type IKeyToken = HydratedDocument<IRawKeyToken>;
+export type IKeyTokenDocument = HydratedDocument<IKeyToken>;
 
-export interface IKeyTokenAttrs {
+export interface IKeyTokenCreate {
   user: string;
   browserId: string;
   publicKey: string;
@@ -23,6 +23,6 @@ export interface IKeyTokenAttrs {
   refreshToken: string;
 }
 
-export interface IKeyTokenModel extends Model<IKeyToken> {
-  build(attrs: IKeyTokenAttrs): Promise<IKeyToken>;
+export interface IKeyTokenModel extends Model<IKeyTokenDocument> {
+  build(attrs: IKeyTokenCreate): Promise<IKeyToken>;
 }

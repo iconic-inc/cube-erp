@@ -1,6 +1,6 @@
 import { HydratedDocument, Model } from 'mongoose';
 
-export interface IRawImage {
+export interface IImage {
   img_name: string;
   img_title: string;
   img_type: string;
@@ -12,7 +12,7 @@ export interface IRawImage {
   updatedAt: Date;
 }
 
-export interface IImageAttrs {
+export interface IImageCreate {
   name: string;
   title: string;
   type?: string;
@@ -22,8 +22,8 @@ export interface IImageAttrs {
   isPublic?: boolean;
 }
 
-export type IImage = HydratedDocument<IRawImage>;
+export type IImageDocument = HydratedDocument<IImage>;
 
-export interface IImageModel extends Model<IImage> {
-  build(attrs: IImageAttrs): Promise<IImage>;
+export interface IImageModel extends Model<IImageDocument> {
+  build(attrs: IImageCreate): Promise<IImage>;
 }

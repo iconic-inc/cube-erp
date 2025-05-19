@@ -19,11 +19,11 @@ router.use(checkApiKey);
 router.use(checkPermission('0000'));
 
 router.use('/images', require('./image'));
-router.use('/email', require('./email'));
 router.use('/users', require('./user'));
 router.use('/auth', require('./auth'));
-router.use('/app', require('./app'));
 router.use('/roles', require('./role'));
 router.use('/resources', require('./resource'));
+
+router.use('/employees', require('./employee/admin'));
 
 module.exports = router;

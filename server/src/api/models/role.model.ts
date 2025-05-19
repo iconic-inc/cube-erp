@@ -1,20 +1,10 @@
 import { Schema, model, Types, Model, models } from 'mongoose';
 import { ROLE } from '../constants';
-
-interface IRole {
-  name: string;
-  slug: string;
-  status: 'active' | 'inactive';
-  description: string;
-  grants: {
-    resourceId: Types.ObjectId;
-    actions: string[];
-  }[];
-}
-
-interface IRoleModel extends Model<IRole> {
-  build(attrs: IRole): Promise<IRole>;
-}
+import {
+  IRoleCreate,
+  IRoleDocument,
+  IRoleModel,
+} from '../interfaces/role.interface';
 
 // Định nghĩa các action types được phép
 const VALID_ACTIONS = [
@@ -28,7 +18,7 @@ const VALID_ACTIONS = [
   'delete:own',
 ];
 
-const roleSchema = new Schema<IRole, IRoleModel>(
+const roleSchema = new Schema<IRoleDocument, IRoleModel>(
   {
     name: {
       type: String,
@@ -76,10 +66,10 @@ const roleSchema = new Schema<IRole, IRoleModel>(
   }
 );
 
-roleSchema.statics.build = (attrs: IRole) => {
+roleSchema.statics.build = (attrs: IRoleCreate) => {
   return RoleModel.create(attrs);
 };
 
 export const RoleModel =
   (models[ROLE.DOCUMENT_NAME] as IRoleModel) ||
-  model<IRole, IRoleModel>(ROLE.DOCUMENT_NAME, roleSchema);
+  model<IRoleDocument, IRoleModel>(ROLE.DOCUMENT_NAME, roleSchema);

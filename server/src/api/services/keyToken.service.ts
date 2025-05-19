@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IKeyToken, IKeyTokenAttrs } from '../interfaces/keyToken.interface';
+import { IKeyToken, IKeyTokenCreate } from '../interfaces/keyToken.interface';
 import { KeyTokenModel } from '../models/keyToken.model';
 
 async function createKeyToken({
@@ -9,7 +9,7 @@ async function createKeyToken({
   publicKey,
   refreshToken,
   refreshTokensUsed = [],
-}: IKeyTokenAttrs) {
+}: IKeyTokenCreate) {
   // const keyToken = await KeyTokenModel.build({
   //   user: userId,
   //   privateKey: privateKey.toString(),

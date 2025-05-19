@@ -2,12 +2,12 @@ import { Schema, model, models } from 'mongoose';
 
 import { APIKEY } from '../constants';
 import {
-  IApiKey,
-  IApiKeyAttrs,
+  IApiKeyCreate,
+  IApiKeyDocument,
   IApiKeyModel,
 } from '../interfaces/apiKey.interface';
 
-const apiKeySchema = new Schema<IApiKey, IApiKeyModel>(
+const apiKeySchema = new Schema<IApiKeyDocument, IApiKeyModel>(
   {
     key: {
       type: String,
@@ -30,11 +30,11 @@ const apiKeySchema = new Schema<IApiKey, IApiKeyModel>(
   }
 );
 
-apiKeySchema.statics.build = async (attrs: IApiKeyAttrs) => {
+apiKeySchema.statics.build = async (attrs: IApiKeyCreate) => {
   return ApiKeyModel.create(attrs);
 };
 
-export const ApiKeyModel = model<IApiKey, IApiKeyModel>(
+export const ApiKeyModel = model<IApiKeyDocument, IApiKeyModel>(
   APIKEY.DOCUMENT_NAME,
   apiKeySchema
 );

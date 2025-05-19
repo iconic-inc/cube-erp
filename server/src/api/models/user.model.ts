@@ -1,9 +1,14 @@
 import { model, Schema, Types, Model, ClientSession, models } from 'mongoose';
 import { IMAGE, ROLE, USER } from '../constants';
-import { IUser, IUserModel } from '../interfaces/user.interface';
+import {
+  IUser,
+  IUserCreate,
+  IUserDocument,
+  IUserModel,
+} from '../interfaces/user.interface';
 import { formatAttributeName } from '@utils/index';
 
-const userSchema = new Schema<IUser, IUserModel>(
+const userSchema = new Schema<IUserDocument, IUserModel>(
   {
     usr_username: {
       type: String,
@@ -71,10 +76,10 @@ const userSchema = new Schema<IUser, IUserModel>(
   }
 );
 
-userSchema.statics.build = async (attrs: IUser) => {
+userSchema.statics.build = async (attrs: IUserCreate) => {
   return await UserModel.create(formatAttributeName(attrs, USER.PREFIX));
 };
 
 export const UserModel =
   // models[USER.DOCUMENT_NAME] ||
-  model<IUser, IUserModel>(USER.DOCUMENT_NAME, userSchema);
+  model<IUserDocument, IUserModel>(USER.DOCUMENT_NAME, userSchema);

@@ -1,17 +1,12 @@
 import { Schema, model, Model, models } from 'mongoose';
 import { RESOURCE } from '../constants';
+import {
+  IResourceCreate,
+  IResourceDocument,
+  IResourceModel,
+} from '../interfaces/resource.interface';
 
-interface IResource {
-  name: string;
-  slug: string;
-  description: string;
-}
-
-interface IResourceModel extends Model<IResource> {
-  build(attrs: IResource): Promise<IResource>;
-}
-
-const resourceSchema = new Schema<IResource, IResourceModel>(
+const resourceSchema = new Schema<IResourceDocument, IResourceModel>(
   {
     name: {
       type: String,
@@ -34,11 +29,11 @@ const resourceSchema = new Schema<IResource, IResourceModel>(
   }
 );
 
-resourceSchema.statics.build = (attrs: IResource) => {
+resourceSchema.statics.build = (attrs: IResourceCreate) => {
   return ResourceModel.create(attrs);
 };
 
-export const ResourceModel = model<IResource, IResourceModel>(
+export const ResourceModel = model<IResourceDocument, IResourceModel>(
   RESOURCE.DOCUMENT_NAME,
   resourceSchema
 );

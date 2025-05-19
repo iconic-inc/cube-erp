@@ -4,8 +4,8 @@ import { randomBytes } from 'crypto';
 import { USER } from '../constants';
 import { getReturnData } from '../utils';
 import { createTokenPair, generateKeyPair } from '../auth/authUtils';
-import { IUserAttrs } from '../interfaces/user.interface';
-import { IKeyTokenAttrs } from '../interfaces/keyToken.interface';
+import { IUserCreate } from '../interfaces/user.interface';
+import { IKeyTokenCreate } from '../interfaces/keyToken.interface';
 import {
   BadRequestError,
   ForbiddenError,
@@ -56,7 +56,7 @@ export class AuthService {
       publicKey,
     });
 
-    const keyTokenAttrs: IKeyTokenAttrs = {
+    const keyTokenCreate: IKeyTokenCreate = {
       user: foundUser.id,
       browserId,
       privateKey,
@@ -64,9 +64,9 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
     };
 
-    if (refreshToken) keyTokenAttrs.refreshTokensUsed = [refreshToken];
+    if (refreshToken) keyTokenCreate.refreshTokensUsed = [refreshToken];
 
-    await createKeyToken(keyTokenAttrs);
+    await createKeyToken(keyTokenCreate);
 
     return {
       user: getReturnData(foundUser, {
@@ -76,7 +76,7 @@ export class AuthService {
     };
   }
 
-  static async signUp({ email }: IUserAttrs) {
+  static async signUp({ email }: IUserCreate) {
     const foundUser = await UserModel.findOne({ usr_email: email });
     if (foundUser) {
       throw new Error('Email already exists');
