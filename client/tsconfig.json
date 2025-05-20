@@ -34,7 +34,7 @@
       "@contexts/*": ["./app/contexts/*"],
       "@configs/*": ["./app/configs/*"],
       "@loggers/*": ["./app/loggers/*"],
-      "@ui/*": ["./app/ui/*"]
+      "@constants/*": ["./app/constants/*"]
     },
 
     // Vite takes care of building everything, not tsc.

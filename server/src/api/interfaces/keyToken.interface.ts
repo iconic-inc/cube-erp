@@ -24,5 +24,5 @@ export interface IKeyTokenCreate {
 }
 
 export interface IKeyTokenModel extends Model<IKeyTokenDocument> {
-  build(attrs: IKeyTokenCreate): Promise<IKeyToken>;
+  build(attrs: IKeyTokenCreate): Promise<IKeyTokenDocument>;
 }

@@ -23,7 +23,7 @@ export interface ILocation {
   formattedAddress?: string; // “123 Lê Lợi, Q.1, TP.HCM”
 }
 
-export interface ISpaAttrs {
+export interface ISpaCreate {
   name: string;
   slug?: string;
   owner?: string;

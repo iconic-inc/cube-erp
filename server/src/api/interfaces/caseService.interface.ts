@@ -42,7 +42,7 @@ export interface ICaseServiceCreate {
 export type ICaseServiceDocument = HydratedDocument<ICaseService>;
 
 export interface ICaseServiceModel extends Model<ICaseServiceDocument> {
-  build(attrs: ICaseServiceCreate): Promise<ICaseService>;
+  build(attrs: ICaseServiceCreate): Promise<ICaseServiceDocument>;
 }
 
 export interface ICaseServiceResponse

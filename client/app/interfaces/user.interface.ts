@@ -19,7 +19,7 @@ export interface IUser {
   updatedAt: string;
 }
 
-export interface IUserAttrs {
+export interface IUserCreate {
   username: string;
   email: string;
   firstName: string;

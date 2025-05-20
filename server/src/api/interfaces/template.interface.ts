@@ -19,7 +19,7 @@ export interface ITemplateCreate {
 }
 
 export interface ITemplateModel extends Model<ITemplateDocument> {
-  build(attrs: ITemplateCreate): Promise<ITemplate>;
+  build(attrs: ITemplateCreate): Promise<ITemplateDocument>;
 }
 
 export interface ITemplateResponseData {

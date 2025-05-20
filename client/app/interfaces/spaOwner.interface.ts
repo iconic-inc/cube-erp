@@ -1,7 +1,7 @@
 import { ISpa } from './spa.interface';
-import { IUser, IUserAttrs } from './user.interface';
+import { IUser, IUserCreate } from './user.interface';
 
-export interface ISpaOwnerAttrs extends IUserAttrs {
+export interface ISpaOwnerCreate extends IUserCreate {
   spas?: string[];
   level?: 'owner' | 'manager';
   plan?: string;

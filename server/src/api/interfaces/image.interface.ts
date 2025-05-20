@@ -25,5 +25,5 @@ export interface IImageCreate {
 export type IImageDocument = HydratedDocument<IImage>;
 
 export interface IImageModel extends Model<IImageDocument> {
-  build(attrs: IImageCreate): Promise<IImage>;
+  build(attrs: IImageCreate): Promise<IImageDocument>;
 }

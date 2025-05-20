@@ -16,5 +16,5 @@ export interface IOTPCreate {
 }
 
 export interface IOTPModel extends Model<IOTPDocument> {
-  build(attrs: IOTPCreate): Promise<IOTP>;
+  build(attrs: IOTPCreate): Promise<IOTPDocument>;
 }

@@ -36,7 +36,7 @@ const otpSchema = new Schema<IOTPDocument, IOTPModel>(
   }
 );
 
-otpSchema.statics.build = async (attrs: IOTPCreate): Promise<IOTP> => {
+otpSchema.statics.build = async (attrs: IOTPCreate) => {
   return OTPModel.create(formatAttributeName(attrs, OTP.PREFIX));
 };
 

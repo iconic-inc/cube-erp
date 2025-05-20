@@ -44,7 +44,7 @@ export interface IGrantInput {
 export type IRoleDocument = HydratedDocument<IRole>;
 
 export interface IRoleModel extends Model<IRoleDocument> {
-  build(attrs: IRoleCreate): Promise<IRole>;
+  build(attrs: IRoleCreate): Promise<IRoleDocument>;
 }
 export interface IUpdateGrantInput {
   grantId: string; // ID của grant cần update

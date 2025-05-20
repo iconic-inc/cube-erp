@@ -17,7 +17,7 @@ export interface IAppSettings {
   updatedAt: Date;
 }
 
-export interface IAppSettingsAttrs {
+export interface IAppSettingsCreate {
   title: string;
   description: string;
   logo: string;

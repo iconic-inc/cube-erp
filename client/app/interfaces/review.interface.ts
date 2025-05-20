@@ -2,7 +2,7 @@ import { IImage } from './image.interface';
 import { ISpa } from './spa.interface';
 import { IUser } from './user.interface';
 
-export interface IReviewAttrs {
+export interface IReviewCreate {
   spa: string;
   author: string;
   rating: number;

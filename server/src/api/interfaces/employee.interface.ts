@@ -31,5 +31,5 @@ export interface IEmployeeCreate extends IUserCreate {
 export type IEmployeeDocument = HydratedDocument<IEmployee>;
 
 export interface IEmployeeModel extends Model<IEmployeeDocument> {
-  build(attrs: IEmployeeCreate): Promise<IEmployee>;
+  build(attrs: IEmployeeCreate): Promise<IEmployeeDocument>;
 }

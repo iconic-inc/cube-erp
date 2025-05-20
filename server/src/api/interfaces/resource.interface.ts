@@ -24,7 +24,7 @@ export interface IResourceInput {
 export type IResourceDocument = HydratedDocument<IResource>;
 
 export interface IResourceModel extends Model<IResourceDocument> {
-  build(attrs: IResourceCreate): Promise<IResource>;
+  build(attrs: IResourceCreate): Promise<IResourceDocument>;
 }
 
 export interface IResourceResponseData {

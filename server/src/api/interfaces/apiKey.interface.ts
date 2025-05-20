@@ -17,5 +17,5 @@ export interface IApiKeyCreate {
 }
 
 export interface IApiKeyModel extends Model<IApiKeyDocument> {
-  build(attrs: IApiKeyCreate): Promise<IApiKey>;
+  build(attrs: IApiKeyCreate): Promise<IApiKeyDocument>;
 }
