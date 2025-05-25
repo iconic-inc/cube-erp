@@ -1,15 +1,10 @@
 import { LoaderFunctionArgs } from '@remix-run/node';
 
 import { getUsers } from '~/services/user.server';
-import { getPosts } from '~/services/page.server';
-import { getAppSettings } from '~/services/app.server';
 import { getImages } from '~/services/image.server';
-import { getKPIInstances } from '~/services/kpi.server';
 
 const services = {
   getUsers,
-  getPosts,
-  getAppSettings,
   getImages,
 };
 

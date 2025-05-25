@@ -10,24 +10,23 @@ import Defer from '~/components/Defer';
 
 import HandsomeError from '~/components/HandsomeError';
 import LoadingOverlay from '~/components/LoadingOverlay';
-import { isAuthenticated, logout } from '~/services/auth.server';
-import { deleteAuthCookie } from '~/services/cookie.server';
+import { logout } from '~/services/auth.server';
+import { deleteAuthCookie, parseAuthCookie } from '~/services/cookie.server';
 import { isExpired } from '~/utils';
 import Sidebar from './_components/SideBar';
 import { getCurrentUser } from '~/services/user.server';
-import CustomButton from '~/widgets/CustomButton';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const auth = await isAuthenticated(request);
+  const auth = await parseAuthCookie(request);
 
   try {
-    if (['/admin/login', '/admin/logout'].includes(url.pathname)) {
+    if (['/erp/login', '/erp/logout'].includes(url.pathname)) {
       return {};
     }
 
     if (!auth) {
-      return redirect('/admin/login' + `?redirect=${url.pathname}`);
+      return redirect('/erp/login' + `?redirect=${url.pathname}`);
     }
 
     const { user, tokens } = auth;
@@ -35,14 +34,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (isExpired(tokens.accessToken)) {
       console.log('access token expired');
 
-      return redirect('/admin/login' + `?redirect=${url.pathname}`);
+      return redirect('/erp/login' + `?redirect=${url.pathname}`);
     }
 
     if (
-      !url.pathname.includes('/admin/nhan-vien') &&
+      !url.pathname.includes('/erp/nhan-vien') &&
       !['admin'].includes(user.usr_role.slug)
     )
-      return redirect('/admin/nhan-vien');
+      return redirect('/erp/nhan-vien');
 
     const foundUser = getCurrentUser(auth);
     return { user: foundUser };
@@ -55,7 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       });
 
     // Clear session data
-    return redirect(`/admin/login`, {
+    return redirect(`/erp/login`, {
       headers: {
         'Set-Cookie': await deleteAuthCookie(),
       },
@@ -63,12 +62,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-export const ErrorBoundary = () => <HandsomeError basePath='/admin' />;
+export const ErrorBoundary = () => <HandsomeError basePath='/erp' />;
 
 export default function RootAdminLayout() {
   const navigation = useNavigation();
   const location = useLocation();
-  const isLoginPage = location.pathname === '/admin/login';
+  const isLoginPage = location.pathname === '/erp/login';
 
   const { user } = useLoaderData<typeof loader>();
 
@@ -87,7 +86,7 @@ export default function RootAdminLayout() {
                 <Defer resolve={user}>
                   {(user) => (
                     <Link
-                      to='/admin/profile'
+                      to='/erp/profile'
                       className='flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded-md transition-all duration-200'
                     >
                       <div className='w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold uppercase'>

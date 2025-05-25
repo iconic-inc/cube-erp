@@ -22,18 +22,10 @@ export const serializeAuthCookie = (data: ISessionUser) => {
 
 export const parseAuthCookie = async (request: Request) => {
   const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader)
-    return {
-      user: null,
-      tokens: null,
-    };
+  if (!cookieHeader) return null;
 
   const cookie = await authCookie.parse(cookieHeader);
-  if (!cookie)
-    return {
-      user: null,
-      tokens: null,
-    };
+  if (!cookie) return null;
 
   return cookie as ISessionUser;
 };

@@ -57,7 +57,7 @@ authenticator.use(
 
       return user;
     } catch (error: any) {
-      console.log('authenticate error: ', error);
+      console.log('authenticate error: ', error.data);
       throw error;
     }
   }),
@@ -66,69 +66,81 @@ authenticator.use(
   'user-pass',
 );
 
+/**
+ *
+ * @param request
+ * @returns \{ session: ISessionUser | null; headers: HeadersInit }
+ * @description Checks if the user is authenticated by looking for a valid session cookie.
+ * @note Only uses in action functions.
+ */
 const isAuthenticated = async (
   request: Request,
-): Promise<ISessionUser | null> => {
-  const { tokens, user } = (await parseAuthCookie(request)) || {};
+): Promise<{ session: ISessionUser | null; headers: HeadersInit }> => {
+  const cookie = await parseAuthCookie(request);
 
-  if (!tokens?.accessToken || !user) {
-    // return { session: null };
-    return null;
+  if (!cookie) {
+    return { session: null, headers: {} };
   }
 
-  // if (!isExpired(tokens.accessToken)) {
-  //   return { session: { user, tokens } };
-  // }
+  const { user, tokens } = cookie;
+  if (!isExpired(tokens.accessToken)) {
+    return { session: { user, tokens }, headers: {} };
+  }
 
   // Access token expired → try refresh
-  // if (!isExpired(tokens.refreshToken)) {
-  //   try {
-  //     const refreshed = await authenticator.authenticate(
-  //       'refresh-token',
-  //       request,
-  //     );
-  //     const newCookie = await serializeAuthCookie(refreshed);
-  //     return {
-  //       session: { user: refreshed.user, tokens: refreshed.tokens },
-  //       headers: { 'Set-Cookie': newCookie },
-  //     };
-  //   } catch (error) {
-  //     console.error('Token refresh failed:', error);
-  //   }
-  // }
+  if (!isExpired(tokens.refreshToken)) {
+    try {
+      const refreshed = await authenticator.authenticate(
+        'refresh-token',
+        request,
+      );
+      const newCookie = await serializeAuthCookie(refreshed);
+      return {
+        session: { user: refreshed.user, tokens: refreshed.tokens },
+        headers: { 'Set-Cookie': newCookie },
+      };
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+    }
+  }
+
   // Both tokens invalid or refresh failed
-  // return { session: null, headers: { 'Set-Cookie': await deleteAuthCookie() } };
-  return { user, tokens };
+  return {
+    session: null,
+    headers: {
+      'Set-Cookie': await deleteAuthCookie(),
+    },
+  };
 };
 
 const login = async (username: string, password: string, browserId: string) => {
-  const res = await fetcher('/auth/signin', {
+  const res = await fetcher<ISessionUser>('/auth/signin', {
     method: 'POST',
     body: JSON.stringify({ username, password, browserId }),
   });
 
-  return res as ISessionUser;
+  return res;
 };
 
 const logout = async (request: ISessionUser) => {
-  await fetcher('/auth/signout', {
+  await fetcher<any>('/auth/signout', {
     method: 'POST',
     request,
   });
 };
 
 const refreshTokenHandler = async (request: Request) => {
-  const { tokens, user } = await parseAuthCookie(request);
+  const cookie = await parseAuthCookie(request);
 
-  const res = await fetcher('/auth/refresh-token', {
+  const res = await fetcher<ISessionUser>('/auth/refresh-token', {
     method: 'POST',
     headers: {
-      'x-refresh-token': tokens?.refreshToken || '',
-      'x-client-id': user?.id || '',
+      'x-refresh-token': cookie?.tokens.refreshToken || '',
+      'x-client-id': cookie?.user.id || '',
     },
   });
 
-  return res as ISessionUser;
+  return res;
 };
 
 export { authenticator, logout, isAuthenticated };

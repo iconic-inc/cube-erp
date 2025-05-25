@@ -48,7 +48,7 @@ export default function Sidebar() {
                 }) => `flex items-center text-gray-500 hover:text-red-500 
                     transition duration-200 p-2 hover:bg-red-100 rounded-md ${
                       (
-                        item.link.replace('/admin', '')
+                        item.link.replace('/erp', '')
                           ? location.pathname.includes(item.link)
                           : location.pathname === item.link
                       )
@@ -70,8 +70,8 @@ export default function Sidebar() {
                 e.preventDefault();
 
                 if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                  await fetch('/admin/logout', { method: 'POST' });
-                  navigate(`/admin/login?redirect=${location.pathname}`, {
+                  await fetch('/erp/logout', { method: 'POST' });
+                  navigate(`/erp/login?redirect=${location.pathname}`, {
                     replace: true,
                   });
                 }
@@ -96,7 +96,7 @@ export default function Sidebar() {
               }) => `flex items-center text-gray-500 hover:text-red-500 
                   transition duration-200 p-2 hover:bg-red-100 rounded-md ${
                     (
-                      item.link.replace('/admin', '')
+                      item.link.replace('/erp', '')
                         ? location.pathname.includes(item.link)
                         : location.pathname === item.link
                     )
@@ -126,7 +126,7 @@ export default function Sidebar() {
                 }) => `flex items-center text-gray-500 hover:text-red-500 
                     transition duration-200 p-2 hover:bg-red-100 rounded-md ${
                       (
-                        item.link.replace('/admin', '')
+                        item.link.replace('/erp', '')
                           ? location.pathname.includes(item.link)
                           : location.pathname === item.link
                       )
@@ -148,8 +148,8 @@ export default function Sidebar() {
                 e.preventDefault();
 
                 if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                  await fetch('/admin/logout', { method: 'POST' });
-                  navigate(`/admin/login?redirect=${location.pathname}`, {
+                  await fetch('/erp/logout', { method: 'POST' });
+                  navigate(`/erp/login?redirect=${location.pathname}`, {
                     replace: true,
                   });
                 }
@@ -166,31 +166,31 @@ export default function Sidebar() {
 }
 
 const MENU = [
-  { label: 'Trang chủ', icon: 'dashboard', link: '/admin' },
+  { label: 'Trang chủ', icon: 'dashboard', link: '/erp' },
   {
     label: 'Chủ Spa',
     icon: 'diversity_1',
-    link: '/admin/spa-owners',
+    link: '/erp/spa-owners',
   },
   {
     label: 'Spa',
     icon: 'spa',
-    link: '/admin/spas',
+    link: '/erp/spas',
   },
   {
     label: 'Review',
     icon: 'stars_2',
-    link: '/admin/reviews',
+    link: '/erp/reviews',
   },
   {
     label: 'Tin tuyển dụng',
     icon: 'work',
-    link: '/admin/job-posts',
+    link: '/erp/job-posts',
   },
   {
     label: 'Đơn ứng tuyển',
     icon: 'assignment_ind',
-    link: '/admin/job-applications',
+    link: '/erp/job-applications',
   },
 ];
 
@@ -198,6 +198,6 @@ const ACCOUNT_MENU = [
   {
     label: 'Tài khoản',
     icon: 'manage_accounts',
-    link: '/admin/profile',
+    link: '/erp/profile',
   },
 ];

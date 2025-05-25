@@ -1,6 +1,6 @@
 require('dotenv').config();
 import { mongodbInstance } from '../db/init.mongodb';
-import { PAGE, TEMPLATE } from 'src/api/constants';
+import { TEMPLATE } from 'src/api/constants';
 import { TemplateModel } from '@models/template.model';
 import { emailVerificationEmailTemplate } from '@utils/email.template';
 import { passwordEmailTemplate } from '@utils/password.template';

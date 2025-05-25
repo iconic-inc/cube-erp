@@ -24,6 +24,14 @@ router.use('/auth', require('./auth'));
 router.use('/roles', require('./role'));
 router.use('/resources', require('./resource'));
 
-router.use('/employees', require('./employee/admin'));
+// router.use('/tasks', require('./task'));
+router.use('/roles', require('./role'));
+router.use('/customers', require('./customer'));
+router.use('/resources', require('./resource'));
+router.use('/employees', require('./employee'));
+router.use('/office-ips', require('./officeIP'));
+router.use('/attendance', require('./attendance'));
+router.use('/notifications', require('./notification'));
+router.use('/case-services', require('./caseService'));
 
 module.exports = router;

@@ -1,5 +1,9 @@
 import { useLoaderData } from '@remix-run/react';
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  data as dataResponse,
+} from '@remix-run/node';
 import { useState } from 'react';
 
 import { isAuthenticated } from '~/services/auth.server';
@@ -7,9 +11,10 @@ import HandsomeError from '~/components/HandsomeError';
 import UserProfileForm from '../_components/UserProfileForm';
 import { getCurrentUser, updateUser } from '~/services/user.server';
 import CustomButton from '~/widgets/CustomButton';
+import { parseAuthCookie } from '~/services/cookie.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const auth = await isAuthenticated(request);
+  const auth = await parseAuthCookie(request);
 
   const user = await getCurrentUser(auth!);
   return {
@@ -19,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const auth = await isAuthenticated(request);
+    const { session: auth, headers } = await isAuthenticated(request);
     if (!auth) {
       throw new Response('Unauthorized', { status: 401 });
     }
@@ -46,10 +51,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 
     const updatedEmployee = await updateUser(auth?.user.id, updateData, auth!);
-    return {
-      employee: updatedEmployee,
-      toast: { message: 'Cập nhật thông tin thành công!', type: 'success' },
-    };
+    return dataResponse(
+      {
+        employee: updatedEmployee,
+        toast: { message: 'Cập nhật thông tin thành công!', type: 'success' },
+      },
+      { headers },
+    );
   } catch (error: any) {
     console.error('Error updating profile:', error);
     return {
@@ -74,7 +82,7 @@ export default function HRMProfile() {
         <div className='flex items-center'>
           <h1 className='text-xl font-semibold'>My Profile</h1>
           <div className='ml-3 text-gray-500 text-sm flex items-center'>
-            <a href='/hrm' className='hover:text-blue-500 transition'>
+            <a href='/erp' className='hover:text-blue-500 transition'>
               Trang chủ
             </a>
             <span className='mx-2'>/</span>
@@ -104,4 +112,4 @@ export default function HRMProfile() {
   );
 }
 
-export const ErrorBoundary = () => <HandsomeError basePath='hrm/nhan-vien' />;
+export const ErrorBoundary = () => <HandsomeError basePath='/erp/nhan-vien' />;

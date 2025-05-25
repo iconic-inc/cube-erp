@@ -20,11 +20,6 @@ async function main() {
 
 const RESOURCES = [
   {
-    name: 'Notification Management',
-    slug: 'notification',
-    description: 'Quản lý thông báo',
-  },
-  {
     name: 'Resource Management',
     slug: 'resource',
     description: 'Quản lý tài nguyên',
@@ -38,11 +33,6 @@ const RESOURCES = [
     name: 'Role Management',
     slug: 'role',
     description: 'Quản lý vai trò',
-  },
-  {
-    name: 'Page Management',
-    slug: 'page',
-    description: 'Quản lý trang',
   },
   {
     name: 'OTP Management',
@@ -60,27 +50,6 @@ const RESOURCES = [
     description: 'Quản lý hình ảnh',
   },
   {
-    name: 'Category Management',
-    slug: 'category',
-    description: 'Quản lý danh mục',
-  },
-  {
-    name: 'Branch Management',
-    slug: 'branch',
-    description: 'Quản lý chi nhánh',
-  },
-  {
-    name: 'Booking Management',
-    slug: 'booking',
-    description: 'Quản lý đặt lịch',
-  },
-  {
-    _id: '67d29e626f885210e0329c83',
-    name: 'App Management',
-    slug: 'app',
-    description: 'Quản lý ứng dụng',
-  },
-  {
     name: 'API Key Management',
     slug: 'apiKey',
     description: 'Quản lý khóa API',
@@ -89,16 +58,6 @@ const RESOURCES = [
     name: 'User Management',
     slug: 'user',
     description: 'Quản lý người dùng hệ thống',
-  },
-  {
-    name: 'Spa Management',
-    slug: 'spa',
-    description: 'Quản lý spa',
-  },
-  {
-    name: 'Review Management',
-    slug: 'review',
-    description: 'Quản lý đánh giá',
   },
 ];
 

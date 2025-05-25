@@ -4,17 +4,18 @@ import { redirect, useFetcher, useNavigation } from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { toast } from 'react-toastify';
 
-import { authenticator, isAuthenticated, logout } from '~/services/auth.server';
+import { authenticator, logout } from '~/services/auth.server';
 import { isExpired } from '~/utils';
 import {
   deleteAuthCookie,
+  parseAuthCookie,
   serializeAuthCookie,
 } from '~/services/cookie.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const auth = await isAuthenticated(request);
+  const auth = await parseAuthCookie(request);
   const url = new URL(request.url);
-  const redirectUrl = url.searchParams.get('redirect') || '/admin';
+  const redirectUrl = url.searchParams.get('redirect') || '/erp';
 
   // If the user is already authenticated
   if (auth) {
@@ -73,7 +74,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
-  const redicrectUrl = url.searchParams.get('redirect') || '/admin';
+  const redicrectUrl = url.searchParams.get('redirect') || '/erp';
   try {
     const auth = await authenticator.authenticate('user-pass', request);
 
@@ -154,16 +155,22 @@ const Login = () => {
   const [fingerprint, setFingerprint] = useState('');
 
   useEffect(() => {
-    import('@thumbmarkjs/thumbmarkjs').then((module) => {
-      module
-        .getFingerprint()
-        .then((result) => {
-          setFingerprint(result);
-        })
-        .catch((error) => {
-          console.error('Error getting fingerprint:', error);
-        });
-    });
+    // Initialize the agent at application startup.
+    // If you're using an ad blocker or Brave/Firefox, this import will not work.
+    // Please use the NPM package instead: https://t.ly/ORyXk
+    const fpPromise = import('@fingerprintjs/fingerprintjs').then(
+      (FingerprintJS) => FingerprintJS.load(),
+    );
+
+    // Get the visitor identifier when you need it.
+    fpPromise
+      .then((fp) => fp.get())
+      .then((result) => {
+        // This is the visitor identifier:
+        const visitorId = result.visitorId;
+        console.log(visitorId);
+        setFingerprint(visitorId);
+      });
   }, []);
 
   return (
@@ -177,7 +184,7 @@ const Login = () => {
               </span>
             </div>
             <span className='text-blue-500 font-bold ml-2 text-xl'>
-              Iconic Inc.
+              Cube Lawfirm Inc.
             </span>
           </div>
 
