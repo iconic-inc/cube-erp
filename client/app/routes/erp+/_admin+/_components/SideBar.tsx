@@ -11,7 +11,7 @@ export default function Sidebar() {
         <div className='bg-red-500 text-white p-1 rounded-md'>
           <span className='material-symbols-outlined text-xs'>grid_view</span>
         </div>
-        <span className='text-red-500 font-bold ml-2'>Iconic Inc.</span>
+        <span className='text-red-500 font-bold ml-2'>Cube Lawfirm ERP</span>
       </div>
 
       <details className='lg:hidden mb-4'>
@@ -39,7 +39,23 @@ export default function Sidebar() {
             ACCOUNT
           </div>
           <div className='space-y-4'>
-            {ACCOUNT_MENU.map((item, i) => (
+            {[
+              {
+                label: 'Tài khoản',
+                icon: 'person',
+                link: '/erp/profile',
+              },
+              // {
+              //   label: 'Chat',
+              //   icon: 'chat',
+              //   link: '/erp/chat',
+              // },
+              {
+                label: 'Thông báo',
+                icon: 'notifications',
+                link: '/erp/notifications',
+              },
+            ].map((item, i) => (
               <NavLink
                 key={i}
                 to={item.link}
@@ -117,7 +133,23 @@ export default function Sidebar() {
             ACCOUNT
           </div>
           <div className='space-y-4'>
-            {ACCOUNT_MENU.map((item, i) => (
+            {[
+              {
+                label: 'Tài khoản',
+                icon: 'person',
+                link: '/erp/profile',
+              },
+              // {
+              //   label: 'Chat',
+              //   icon: 'chat',
+              //   link: '/erp/chat',
+              // },
+              {
+                label: 'Thông báo',
+                icon: 'notifications',
+                link: '/erp/notifications',
+              },
+            ].map((item, i) => (
               <NavLink
                 key={i}
                 to={item.link}
@@ -168,36 +200,23 @@ export default function Sidebar() {
 const MENU = [
   { label: 'Trang chủ', icon: 'dashboard', link: '/erp' },
   {
-    label: 'Chủ Spa',
-    icon: 'diversity_1',
-    link: '/erp/spa-owners',
+    label: 'Nhân sự',
+    icon: 'people',
+    link: '/erp/employees',
+  },
+  // {
+  //   label: 'Task board',
+  //   icon: 'timeline',
+  //   link: '/erp/tasks',
+  // },
+  {
+    label: 'KPI',
+    icon: 'monitoring',
+    link: '/erp/kpi',
   },
   {
-    label: 'Spa',
-    icon: 'spa',
-    link: '/erp/spas',
-  },
-  {
-    label: 'Review',
-    icon: 'stars_2',
-    link: '/erp/reviews',
-  },
-  {
-    label: 'Tin tuyển dụng',
-    icon: 'work',
-    link: '/erp/job-posts',
-  },
-  {
-    label: 'Đơn ứng tuyển',
-    icon: 'assignment_ind',
-    link: '/erp/job-applications',
-  },
-];
-
-const ACCOUNT_MENU = [
-  {
-    label: 'Tài khoản',
-    icon: 'manage_accounts',
-    link: '/erp/profile',
+    label: 'Chấm công',
+    icon: 'fact_check',
+    link: '/erp/attendance',
   },
 ];

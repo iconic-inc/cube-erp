@@ -26,7 +26,9 @@ const createEmployee = async (data: IEmployeeCreate) => {
     // Kiểm tra trước khi bắt đầu transaction
     const [existingEmployeeCheck, existingUserCheck] = await Promise.all([
       EmployeeModel.findOne({ emp_code: data.code }),
-      UserModel.findOne({ usr_email: data.email }),
+      UserModel.findOne({
+        $or: [{ usr_email: data.email }, { usr_username: data.username }],
+      }),
     ]);
 
     if (existingEmployeeCheck) {
@@ -34,7 +36,9 @@ const createEmployee = async (data: IEmployeeCreate) => {
     }
 
     if (existingUserCheck) {
-      throw new BadRequestError('Email already exists in user system');
+      throw new BadRequestError(
+        'Tên đăng nhập hoặc email đã tồn tại trong hệ thống'
+      );
     }
 
     // Kiểm tra ràng buộc role nếu có trường role
@@ -90,7 +94,7 @@ const createEmployee = async (data: IEmployeeCreate) => {
 
     return {
       ...getReturnData(newEmployee.toJSON(), { without: ['emp_user'] }),
-      userId: getReturnData(newUser.toJSON(), {
+      emp_user: getReturnData(newUser.toJSON(), {
         without: ['_id', 'usr_password', 'usr_salt'],
       }),
     };
@@ -110,7 +114,7 @@ const createEmployee = async (data: IEmployeeCreate) => {
 const getEmployees = async (query: any = {}) => {
   const employees = await EmployeeModel.find(query)
     .populate({
-      path: 'userId',
+      path: 'emp_user',
       select: '-__v -usr_password -usr_salt',
       populate: {
         path: 'usr_avatar',
@@ -123,7 +127,7 @@ const getEmployees = async (query: any = {}) => {
 
 const getEmployeeById = async (id: string) => {
   const employee = await EmployeeModel.findById(id).populate({
-    path: 'userId',
+    path: 'emp_user',
     select: '-usr_password -usr_salt -__v',
     populate: {
       path: 'usr_role usr_avatar',
@@ -138,9 +142,9 @@ const getEmployeeById = async (id: string) => {
   return getReturnData(employee);
 };
 
-const getEmployeeByUserId = async (userId: string) => {
-  const employee = await EmployeeModel.findOne({ userId }).populate({
-    path: 'userId',
+const getEmployeeByUserId = async (emp_user: string) => {
+  const employee = await EmployeeModel.findOne({ emp_user }).populate({
+    path: 'emp_user',
     select: '-__v -usr_password -usr_salt',
     populate: {
       path: 'usr_role usr_avatar',
@@ -155,9 +159,9 @@ const getEmployeeByUserId = async (userId: string) => {
   return getReturnData(employee);
 };
 
-const getCurrentEmployeeByUserId = async (userId: string) => {
-  const employee = await EmployeeModel.findOne({ userId }).populate({
-    path: 'userId',
+const getCurrentEmployeeByUserId = async (emp_user: string) => {
+  const employee = await EmployeeModel.findOne({ emp_user }).populate({
+    path: 'emp_user',
     select: '-__v -usr_password -usr_salt',
     populate: {
       path: 'usr_role usr_avatar',
@@ -175,7 +179,7 @@ const getCurrentEmployeeByUserId = async (userId: string) => {
 const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
   let session;
   try {
-    // Tìm employee và lấy userId
+    // Tìm employee và lấy emp_user
     const employee = await EmployeeModel.findById(id);
 
     if (!employee) {
@@ -286,7 +290,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
 
     // Lấy dữ liệu mới nhất sau khi cập nhật
     const finalEmployee = await EmployeeModel.findById(id).populate({
-      path: 'userId',
+      path: 'emp_user',
       select: '-__v -usr_password -usr_salt',
     });
 
@@ -296,7 +300,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
 
     return {
       ...getReturnData(finalEmployee, { without: ['emp_user'] }),
-      userId: getReturnData(finalEmployee.emp_user.id),
+      emp_user: getReturnData(finalEmployee.emp_user.id),
     };
   } catch (error) {
     if (session) {
@@ -321,7 +325,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
 const deleteEmployee = async (id: string) => {
   let session;
   try {
-    // Tìm employee để lấy userId
+    // Tìm employee để lấy emp_user
     const employee = await EmployeeModel.findById(id);
 
     if (!employee) {

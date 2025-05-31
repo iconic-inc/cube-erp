@@ -289,7 +289,7 @@ const Login = () => {
       </div>
 
       <div className='mt-6 text-center'>
-        <p className='text-xs text-gray-500'>&copy; Iconic Inc.</p>
+        <p className='text-xs text-gray-500'>&copy; Cube Lawfirm ERP</p>
         <div className='flex items-center justify-center mt-2 space-x-3'>
           <a
             href='#'

@@ -2,8 +2,8 @@ import { ISessionUser } from '~/interfaces/auth.interface';
 import { fetcher } from '.';
 import {
   IEmployee,
-  ICreateEmployeeData,
-  IUpdateEmployeeData,
+  IEmployeeCreate,
+  IEmployeeUpdate,
 } from '~/interfaces/employee.interface';
 
 // Lấy danh sách nhân viên
@@ -26,10 +26,7 @@ const getEmployeeById = async (id: string, request: ISessionUser) => {
 };
 
 // Tạo nhân viên mới
-const createEmployee = async (
-  data: ICreateEmployeeData,
-  request: ISessionUser,
-) => {
+const createEmployee = async (data: IEmployeeCreate, request: ISessionUser) => {
   try {
     // Đảm bảo dữ liệu được format đúng trước khi gửi đến API
     const formattedData = {
@@ -37,8 +34,6 @@ const createEmployee = async (
       // Đảm bảo role có giá trị
       role: data.role || '',
     };
-
-    console.log('Sending data to API:', JSON.stringify(formattedData, null, 2));
 
     const response = await fetcher('/employees', {
       method: 'POST',
@@ -82,7 +77,7 @@ const createEmployee = async (
 // Cập nhật thông tin nhân viên
 const updateEmployee = async (
   id: string,
-  data: IUpdateEmployeeData,
+  data: IEmployeeUpdate,
   request: ISessionUser,
 ) => {
   const response = await fetcher(`/employees/${id}`, {

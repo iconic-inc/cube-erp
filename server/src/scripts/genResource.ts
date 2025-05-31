@@ -59,6 +59,46 @@ const RESOURCES = [
     slug: 'user',
     description: 'Quản lý người dùng hệ thống',
   },
+  {
+    name: 'Office IP Management',
+    slug: 'officeIP',
+    description: 'Quản lý IP văn phòng',
+  },
+  {
+    name: 'Employee Management',
+    slug: 'employee',
+    description: 'Quản lý nhân viên',
+  },
+  {
+    name: 'Attendance Management',
+    slug: 'attendance',
+    description: 'Quản lý điểm danh',
+  },
+  {
+    name: 'Case Service Management',
+    slug: 'caseService',
+    description: 'Quản lý dịch vụ vụ án',
+  },
+  {
+    name: 'Customer Management',
+    slug: 'customer',
+    description: 'Quản lý khách hàng',
+  },
+  {
+    name: 'Task Management',
+    slug: 'task',
+    description: 'Quản lý công việc',
+  },
+  {
+    name: 'Invoice Management',
+    slug: 'invoice',
+    description: 'Quản lý hóa đơn',
+  },
+  {
+    name: 'Document Management',
+    slug: 'document',
+    description: 'Quản lý tài liệu',
+  },
 ];
 
 main();

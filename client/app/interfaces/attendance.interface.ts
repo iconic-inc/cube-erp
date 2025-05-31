@@ -1,4 +1,4 @@
-import { IEmployeeBrief } from './employee.interface';
+import { IEmployee, IEmployeeBrief } from './employee.interface';
 
 export interface IAttendanceBrief {
   id: string;
@@ -13,7 +13,7 @@ export interface IAttendanceBrief {
 export interface IAttendance extends Omit<IAttendanceBrief, 'employee'> {
   fingerprint: string;
   ip: string;
-  employee: IEmployeeBrief;
+  employee: IEmployee;
 }
 
 export interface IAttendanceStats {

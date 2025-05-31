@@ -7,6 +7,16 @@ import {
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../LoadingOverlay';
 
+export const meta = () => {
+  return [
+    { title: 'Lỗi' },
+    {
+      name: 'description',
+      content: 'Đã xảy ra lỗi trong quá trình xử lý yêu cầu của bạn.',
+    },
+  ];
+};
+
 export default function HandsomeError({ basePath }: { basePath?: string }) {
   console.log('Oops! An error occurred!');
   const error = useRouteError();

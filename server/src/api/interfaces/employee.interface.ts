@@ -21,11 +21,10 @@ export interface IEmployee extends Omit<IEmployeePopulate, 'emp_user'> {
 }
 
 export interface IEmployeeCreate extends IUserCreate {
-  userId: string;
   code: string;
   position: string;
   department: string;
-  joinDate: Date;
+  joinDate: Date | string;
 }
 
 export type IEmployeeDocument = HydratedDocument<IEmployee>;

@@ -180,7 +180,7 @@ export default function UserProfileForm({
               id='currentPassword'
               label='Mật khẩu'
               value={password}
-              name='password'
+              name='currentPassword'
               onChange={(e) => setPassword(e.target.value)}
               placeholder='(Để trống nếu không thay đổi)'
             />
