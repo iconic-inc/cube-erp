@@ -1,16 +1,14 @@
-import { useLoaderData, useLocation } from '@remix-run/react';
+import { Link, useLoaderData, useLocation } from '@remix-run/react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
 } from '~/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -18,14 +16,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import { ChevronUp, LogOut, User2 } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '~/components/ui/accordion';
-import { loader } from '../routes/erp+/_admin+/_layout';
+import { BookOpen, Bot, ChevronUp, SquareTerminal, User2 } from 'lucide-react';
+import { loader } from '../../routes/erp+/_admin+/_layout';
+import SideNav from './SideNav';
+import { NavUser } from './NavUser';
 
 export default function ERPSidebar() {
   const location = useLocation();
@@ -75,34 +69,22 @@ export default function ERPSidebar() {
   return (
     <Sidebar className='lg:h-screen'>
       <SidebarHeader>
-        <div className='flex items-center mb-6'>
+        <Link to='/erp' className='flex items-center mb-6'>
           <div className='bg-primary text-white p-1 rounded'>
             <span className='material-symbols-outlined text-xs'>grid_view</span>
           </div>
           <span className='text-primary font-semibold ml-2'>
             Cube Lawfirm ERP
           </span>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <Accordion type='single' collapsible defaultValue='item-1'>
-            <AccordionItem value='item-1' className='border-b-0'>
-              <AccordionTrigger>MENU</AccordionTrigger>
-
-              <AccordionContent className='w-[--radix-popper-anchor-width] flex flex-col gap-4'>
-                {MENU.map((item, i) => (
-                  <NavItem key={i} item={item} />
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </SidebarGroup>
+        <SideNav items={navMain} />
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
+        {/* <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -133,32 +115,50 @@ export default function ERPSidebar() {
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> */}
+        <NavUser
+          user={{
+            avatar:
+              user.usr_avatar?.img_url || '/assets/user-avatar-placeholder.jpg',
+            email: user.usr_email,
+            name: `${user.usr_firstName} ${user.usr_lastName}`,
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   );
 }
 
-const MENU = [
-  { label: 'Trang chủ', icon: 'dashboard', link: '/erp' },
+const navMain = [
   {
-    label: 'Nhân sự',
-    icon: 'people',
-    link: '/erp/employees',
+    title: 'Quản lý nhân sự',
+    url: '#',
+    icon: User2,
+    isActive: true,
+    items: [
+      {
+        title: 'Nhân sự',
+        url: '/erp/employees',
+      },
+      {
+        title: 'Chấm công',
+        url: '#',
+      },
+    ],
   },
-  // {
-  //   label: 'Task board',
-  //   icon: 'timeline',
-  //   link: '/erp/tasks',
-  // },
   {
-    label: 'KPI',
-    icon: 'monitoring',
-    link: '/erp/kpi',
-  },
-  {
-    label: 'Chấm công',
-    icon: 'fact_check',
-    link: '/erp/attendance',
+    title: 'Quản lý khách hàng',
+    url: '#',
+    icon: Bot,
+    items: [
+      {
+        title: 'Khách hàng',
+        url: '/erp/customers',
+      },
+      {
+        title: 'Hồ sơ vụ việc',
+        url: '/erp/cases',
+      },
+    ],
   },
 ];
