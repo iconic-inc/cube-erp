@@ -1,11 +1,12 @@
 import { useFetcher } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { IAttendance } from '~/interfaces/attendance.interface';
-import { action } from '../attendance+/$id_';
 import { format } from 'date-fns';
+
+import { IAttendance } from '~/interfaces/attendance.interface';
+import { action } from '~/routes/erp+/_admin+/attendance+/$id_';
 import TextInput from '~/components/TextInput';
-import HRMButton from '../../_components/CustomButton';
+import HRMButton from '~/components/CustomButton';
 
 export default function AttendanceFormPopup({
   attendanceStats: att,

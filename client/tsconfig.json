@@ -29,7 +29,7 @@
       "@interfaces/*": ["./app/interfaces/*"],
       "@styles/*": ["./app/styles/*"],
       "@utils/*": ["./app/utils/*"],
-      "@hooks/*": ["./app/hooks/*"],
+      "@hooks/*": ["app/components/hooks/*"],
       "@widgets/*": ["./app/widgets/*"],
       "@contexts/*": ["./app/contexts/*"],
       "@configs/*": ["./app/configs/*"],

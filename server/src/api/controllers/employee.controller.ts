@@ -104,6 +104,21 @@ export class EmployeeController {
     }
   }
 
+  static async bulkDeleteEmployees(req: Request, res: Response) {
+    try {
+      const employeeIds = req.body.employeeIds;
+      const result = await employeeService.bulkDeleteEmployees(employeeIds);
+
+      return OK({
+        res,
+        message: 'Employees deleted successfully',
+        metadata: result,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async exportEmployeesToCSV(req: Request, res: Response) {
     try {
       const result = await employeeService.exportEmployeesToCSV(req.query);

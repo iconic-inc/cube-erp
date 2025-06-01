@@ -5,11 +5,26 @@ import {
   IEmployeeCreate,
   IEmployeeUpdate,
 } from '~/interfaces/employee.interface';
+import { IListResponse } from '~/interfaces/response.interface';
+import { IPaginationOptions } from '~/interfaces/request.interface';
 
 // Lấy danh sách nhân viên
-const getEmployees = async (request: ISessionUser) => {
-  const response = await fetcher('/employees', { request });
-  return response as IEmployee[];
+const getEmployees = async (
+  query: any = {},
+  options: IPaginationOptions = {},
+  request: ISessionUser,
+) => {
+  const { page = 1, limit = 10, sortBy, sortOrder } = options;
+  const searchParams = new URLSearchParams(query);
+  if (sortBy) searchParams.set('sortBy', sortBy);
+  if (sortOrder) searchParams.set('sortOrder', sortOrder);
+  searchParams.set('page', String(page));
+  searchParams.set('limit', String(limit));
+
+  const response = await fetcher(`/employees?${searchParams.toString()}`, {
+    request,
+  });
+  return response as IListResponse<IEmployee>;
 };
 
 // Lấy thông tin nhân viên hiện tại theo userId
@@ -97,31 +112,36 @@ const deleteEmployee = async (id: string, request: ISessionUser) => {
   return response as { success: boolean };
 };
 
-// // Tìm kiếm nhân viên
-// const searchEmployees = async (query: string, request: ISessionUser) => {
-//   const response = await fetcher(`/employees/search?q=${query}`, { request });
-//   return response as IEmployeeListResponse;
-// };
+const bulkDeleteEmployees = async (
+  employeeIds: string[],
+  request: ISessionUser,
+) => {
+  const response = await fetcher('/employees/bulk', {
+    method: 'DELETE',
+    body: JSON.stringify({ employeeIds }),
+    request,
+  });
+  return response as { success: boolean; message: string };
+};
 
-// // Lọc nhân viên theo trạng thái
-// const filterEmployeesByStatus = async (
-//   status: "active" | "inactive",
-//   request: ISessionUser
-// ) => {
-//   const response = await fetcher(`/employees?status=${status}`, { request });
-//   return response as IEmployeeListResponse;
-// };
-
-// // Lọc nhân viên theo phòng ban
-// const filterEmployeesByDepartment = async (
-//   department: string,
-//   request: ISessionUser
-// ) => {
-//   const response = await fetcher(`/employees?department=${department}`, {
-//     request,
-//   });
-//   return response as IEmployeeListResponse;
-// };
+// Xuất dữ liệu nhân viên
+const exportEmployees = async (
+  query: any = {},
+  options: IPaginationOptions = {},
+  fileType: 'csv' | 'xlsx',
+  request: ISessionUser,
+) => {
+  const searchParams = new URLSearchParams(query);
+  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
+  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
+  return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
+    `/employees/export/${fileType}?${searchParams.toString()}`,
+    {
+      method: 'GET',
+      request,
+    },
+  );
+};
 
 export {
   getEmployees,
@@ -129,8 +149,7 @@ export {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  bulkDeleteEmployees,
   getCurrentEmployeeByUserId,
-  // searchEmployees,
-  // filterEmployeesByStatus,
-  // filterEmployeesByDepartment,
+  exportEmployees,
 };

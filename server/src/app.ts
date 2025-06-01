@@ -83,6 +83,20 @@ app.use(
   })
 );
 
+// Serve static files with CORS
+const EXPORTS_DIR = ['production'].includes(process.env.NODE_ENV as string)
+  ? path.join(__dirname, '../../public/exports') // production code place inside dist folder
+  : path.join(__dirname, '../public/exports');
+app.use(
+  '/exports',
+  express.static(EXPORTS_DIR, {
+    setHeaders: (res, path) => {
+      res.setHeader('Content-Disposition', 'attachment');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    },
+  })
+);
+
 // init routers
 app.use(express.Router().use('/api/v1', require('./api/routers')));
 

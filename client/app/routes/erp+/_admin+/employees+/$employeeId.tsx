@@ -1,10 +1,10 @@
 import { deleteEmployee, getEmployeeById } from '~/services/employee.server';
-import EmployeeProfileHeader from '../../_components/EmployeeProfileHeader';
+import EmployeeProfileHeader from '../../../../components/EmployeeProfileHeader';
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { authenticator, isAuthenticated } from '~/services/auth.server';
 import { data, Link, useLoaderData, useNavigate } from '@remix-run/react';
 import Defer from '~/components/Defer';
-import AdminAttendanceLog from '../../_components/AttendanceLog';
+import AdminAttendanceLog from '../../../../components/AttendanceLog';
 import { getLast7DaysStats } from '~/services/attendance.server';
 import { parseAuthCookie } from '~/services/cookie.server';
 

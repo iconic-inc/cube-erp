@@ -2,7 +2,7 @@ import { LoaderFunctionArgs } from '@remix-run/node';
 
 import HandsomeError from '~/components/HandsomeError';
 import { parseAuthCookie } from '~/services/cookie.server';
-import Sidebar from '../../../components/SideBar';
+import Sidebar from '~/components/emp/SideBar';
 import { getCurrentUser } from '~/services/user.server';
 import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
 import { Outlet } from '@remix-run/react';
@@ -15,7 +15,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return { user };
 };
 
-export const ErrorBoundary = () => <HandsomeError basePath='/erp' />;
+export const ErrorBoundary = () => <HandsomeError basePath='/erp/nhan-vien' />;
 
 export default function RootAdminLayout() {
   return (

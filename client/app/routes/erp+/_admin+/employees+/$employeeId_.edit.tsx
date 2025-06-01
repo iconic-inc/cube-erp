@@ -3,7 +3,7 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { getEmployeeById, updateEmployee } from '~/services/employee.server';
 import { getRoles } from '~/services/role.server';
-import EmployeeDetailForm from './_components/EmployeeDetailForm';
+import EmployeeDetailForm from '../../../../components/EmployeeDetailForm';
 import { useState } from 'react';
 import { parseAuthCookie } from '~/services/cookie.server';
 

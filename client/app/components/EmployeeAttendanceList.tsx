@@ -10,24 +10,6 @@ export default function EmployeeAttendanceList({
 }: {
   attendanceStats: IAttendance[];
 }) {
-  /**
-   * checkInTime: "2025-03-31T03:20:49.599Z"
-createdAt: "2025-03-31T03:20:49.606Z"
-date: "2025-03-30T17:00:00.000Z"
-employee: {
-employeeCode: "EMP-NDP1"
-id: "67dcdd34623855af01f18ddc"
-  user: {
-    id: "67dcdd34623855af01f18dda"
-    usr_firstName: "Phan"
-    usr_lastName: "Nguyễn"
-  }
-fingerprint: "6c1a790ce95e58e41ffd28c300592c58"
-geolocation: {latitude: 10.7932941, longitude: 106.7449393}
-id: "67ea0a11c0cd6611fad4f57a"
-ip: "115.79.197.170"
-updatedAt: "2025-03-31T03:20:49.606Z"
-   */
   return (
     <div className='col-span-2 bg-white rounded-lg shadow-sm overflow-hidden'>
       <div className='overflow-x-auto'>

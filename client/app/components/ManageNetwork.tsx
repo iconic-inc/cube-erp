@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { IOfficeIP } from '~/interfaces/officeIP.interface';
 import IPEditorForm from './IPEditorForm';
-import HRMButton from '../../_components/CustomButton';
+import HRMButton from './CustomButton';
 
 export default function ManageNetwork({
   officeIps,

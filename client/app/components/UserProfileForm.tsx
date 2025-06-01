@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import TextInput from '~/components/TextInput';
-import { action } from '../profile+';
+import { action } from '../routes/erp+/_admin+/profile+';
 import Select from '~/widgets/Select';
 import PasswordInput from '~/components/PasswordInput';
 import { IUser } from '~/interfaces/user.interface';

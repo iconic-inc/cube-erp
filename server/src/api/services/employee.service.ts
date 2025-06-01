@@ -11,7 +11,11 @@ import {
   removeNestedNullish,
 } from '@utils/index';
 import { UserModel } from '../models/user.model';
-import { IEmployeeCreate } from '../interfaces/employee.interface';
+import {
+  IEmployee,
+  IEmployeeCreate,
+  IEmployeeDetail,
+} from '../interfaces/employee.interface';
 import { USER } from '../constants';
 
 // Import modules for export functionality
@@ -19,6 +23,15 @@ import { createObjectCsvWriter } from 'csv-writer';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
+import { serverConfig } from '@configs/config.server';
+
+interface IEmployeeQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
 
 const createEmployee = async (data: IEmployeeCreate) => {
   let session;
@@ -111,18 +124,127 @@ const createEmployee = async (data: IEmployeeCreate) => {
   }
 };
 
-const getEmployees = async (query: any = {}) => {
-  const employees = await EmployeeModel.find(query)
-    .populate({
-      path: 'emp_user',
-      select: '-__v -usr_password -usr_salt',
-      populate: {
-        path: 'usr_avatar',
-      },
-    })
-    .sort({ createdAt: -1 });
+const getEmployees = async (query: IEmployeeQuery) => {
+  const { page = 1, limit = 10, search, sortBy, sortOrder } = query;
 
-  return getReturnList(employees);
+  // Build the aggregation pipeline
+  const pipeline: any[] = [];
+
+  // Stage 1: Join with the user collection
+  pipeline.push({
+    $lookup: {
+      from: 'users', // The actual collection name in MongoDB
+      localField: 'emp_user',
+      foreignField: '_id',
+      as: 'emp_user',
+    },
+  });
+
+  // Stage 2: Unwind the emp_user array to make it easier to work with
+  pipeline.push({
+    $unwind: {
+      path: '$emp_user',
+      preserveNullAndEmptyArrays: true,
+    },
+  });
+
+  // Stage 3: Join with avatar collection for user avatar
+  pipeline.push({
+    $lookup: {
+      from: 'images', // Adjust based on your actual image collection name
+      localField: 'emp_user.usr_avatar',
+      foreignField: '_id',
+      as: 'emp_user.usr_avatar',
+    },
+  });
+
+  // Unwind the avatar (optional, depending on your data structure)
+  pipeline.push({
+    $unwind: {
+      path: '$emp_user.usr_avatar',
+      preserveNullAndEmptyArrays: true,
+    },
+  });
+
+  // Stage 4: Search filter if provided
+  if (search) {
+    const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+    pipeline.push({
+      $match: {
+        $or: [
+          { 'emp_user.usr_firstName': searchRegex },
+          { 'emp_user.usr_lastName': searchRegex },
+          { 'emp_user.usr_email': searchRegex },
+          { 'emp_user.usr_msisdn': searchRegex },
+          { emp_code: searchRegex },
+          { emp_position: searchRegex },
+          { emp_department: searchRegex },
+        ],
+      },
+    });
+  }
+
+  // Stage 5: Project to exclude sensitive user fields
+  pipeline.push({
+    $project: {
+      _id: 1,
+      emp_code: 1,
+      emp_position: 1,
+      emp_department: 1,
+      emp_joinDate: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      emp_user: {
+        _id: 1,
+        usr_firstName: 1,
+        usr_lastName: 1,
+        usr_email: 1,
+        usr_msisdn: 1,
+        usr_address: 1,
+        usr_birthdate: 1,
+        usr_sex: 1,
+        usr_status: 1,
+        usr_username: 1,
+        usr_slug: 1,
+        usr_role: 1,
+        usr_avatar: {
+          img_url: 1,
+          img_name: 1,
+        },
+      },
+    },
+  });
+
+  // Stage 6: Sort the results
+  const sortField = sortBy || 'createdAt';
+  const sortDirection = sortOrder === 'asc' ? 1 : -1;
+  pipeline.push({
+    $sort: { [sortField]: sortDirection },
+  });
+
+  // Get total count first (for pagination)
+  const countPipeline = [...pipeline]; // Clone the pipeline
+  countPipeline.push({ $count: 'total' });
+  const countResult = await EmployeeModel.aggregate(countPipeline);
+  const total = countResult.length > 0 ? countResult[0].total : 0;
+
+  // Stage 7: Apply pagination
+  pipeline.push({ $skip: (page - 1) * limit });
+  pipeline.push({ $limit: +limit });
+
+  // Execute the aggregation
+  const employees = await EmployeeModel.aggregate(pipeline);
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data: getReturnList<IEmployeeDetail>(employees),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages,
+    },
+  };
 };
 
 const getEmployeeById = async (id: string) => {
@@ -201,7 +323,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
     // Kiểm tra trùng lặp email nếu có cập nhật email
     if (data.email) {
       const existingUser = await UserModel.findOne({
-        _id: { $ne: employee.emp_user.id },
+        _id: { $ne: employee.emp_user.toString() },
         usr_email: data.email,
       });
 
@@ -267,7 +389,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
 
     if (!isEmptyObj(userUpdateData)) {
       const updatedUser = await UserModel.findByIdAndUpdate(
-        employee.emp_user.id,
+        employee.emp_user.toString(),
         {
           $set: {
             ...formatAttributeName(userUpdateData, USER.PREFIX),
@@ -297,11 +419,9 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
     if (!finalEmployee) {
       throw new NotFoundError('Nhân viên không tồn tại');
     }
-
-    return {
-      ...getReturnData(finalEmployee, { without: ['emp_user'] }),
-      emp_user: getReturnData(finalEmployee.emp_user.id),
-    };
+    return getReturnData(
+      await finalEmployee.populate('emp_user', '-__v -usr_password -usr_salt')
+    );
   } catch (error) {
     if (session) {
       try {
@@ -386,14 +506,77 @@ const deleteEmployee = async (id: string) => {
   }
 };
 
+const bulkDeleteEmployees = async (employeeIds: string[]) => {
+  if (!Array.isArray(employeeIds) || employeeIds.length === 0) {
+    throw new BadRequestError('Invalid employee IDs');
+  }
+  let session;
+  try {
+    // Bắt đầu transaction
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Tìm tất cả employees để lấy emp_user
+    const employees = await EmployeeModel.find({
+      _id: { $in: employeeIds },
+    }).select('emp_user');
+    if (employees.length === 0) {
+      throw new NotFoundError('No employees found for the provided IDs');
+    }
+    // Lấy danh sách emp_user từ employees
+    const empUserIds = employees.map((emp) => emp.emp_user.toString());
+    // Xóa tất cả employees
+    const deleteEmployeesResult = await EmployeeModel.deleteMany(
+      { _id: { $in: employeeIds } },
+      { session }
+    );
+    if (deleteEmployeesResult.deletedCount === 0) {
+      throw new Error('Failed to delete employees');
+    }
+    // Xóa tất cả users tương ứng
+    const deleteUsersResult = await UserModel.deleteMany(
+      { _id: { $in: empUserIds } },
+      { session }
+    );
+    if (deleteUsersResult.deletedCount === 0) {
+      throw new Error('Failed to delete users');
+    }
+    // Commit transaction
+    await session.commitTransaction();
+    return {
+      success: true,
+      message: `Successfully deleted ${deleteEmployeesResult.deletedCount} employees and their associated users.`,
+    };
+  } catch (error) {
+    // Rollback transaction nếu có lỗi
+    if (session) {
+      try {
+        await session.abortTransaction();
+      } catch (abortError) {
+        console.error('Error aborting transaction:', abortError);
+      }
+    }
+    throw error;
+  } finally {
+    // Đảm bảo session luôn được kết thúc
+    if (session) {
+      try {
+        await session.endSession();
+      } catch (endError) {
+        console.error('Error ending session:', endError);
+      }
+    }
+  }
+};
+
 /**
  * Export employees data to CSV file
  * @param queryParams Query parameters for filtering employees
  */
-const exportEmployeesToCSV = async (queryParams: any) => {
+const exportEmployeesToCSV = async (queryParams: IEmployeeQuery) => {
   try {
     // Reuse the same query logic from getEmployees
-    const employeesList = await getEmployees(queryParams);
+    const { data: employeesList } = await getEmployees(queryParams);
 
     // Create directory if it doesn't exist
     const exportDir = path.join(process.cwd(), 'public', 'exports');
@@ -424,24 +607,38 @@ const exportEmployeesToCSV = async (queryParams: any) => {
     });
 
     // Map employee data to CSV format
-    const csvData = employeesList.map((employee: any) => {
+    const csvData = employeesList.map((employee) => {
       return {
-        code: employee.code || '',
-        firstName: employee.emp_user.id?.usr_firstName || '',
-        lastName: employee.emp_user.id?.usr_lastName || '',
-        position: employee.position || '',
-        department: employee.department || '',
-        email: employee.emp_user.id?.usr_email || '',
-        phone: employee.emp_user.id?.usr_msisdn || '',
-        joinDate: employee.joinDate
-          ? new Date(employee.joinDate).toISOString().split('T')[0]
+        'Mã nhân viên': employee.emp_code || '',
+        Tên: employee.emp_user?.usr_firstName || '',
+        Họ: employee.emp_user?.usr_lastName || '',
+        'Vị trí': employee.emp_position || '',
+        'Phòng ban': employee.emp_department || '',
+        Email: employee.emp_user?.usr_email || '',
+        'Số điện thoại': employee.emp_user?.usr_msisdn || '',
+        'Ngày vào làm': employee.emp_joinDate
+          ? new Date(employee.emp_joinDate).toISOString().split('T')[0]
           : '',
-        status: employee.emp_user.id?.usr_status || '',
-        createdAt: employee.createdAt
-          ? new Date(employee.createdAt).toISOString()
+        'Trạng thái': employee.emp_user?.usr_status || '',
+        'Tạo lúc': employee.createdAt
+          ? new Date(employee.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
           : '',
-        updatedAt: employee.updatedAt
-          ? new Date(employee.updatedAt).toISOString()
+        'Cập nhật lúc': employee.updatedAt
+          ? new Date(employee.updatedAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
           : '',
       };
     });
@@ -450,7 +647,7 @@ const exportEmployeesToCSV = async (queryParams: any) => {
     await csvWriter.writeRecords(csvData);
 
     return {
-      filePath: `/exports/employees_${timestamp}.csv`,
+      fileUrl: `${serverConfig.serverUrl}/exports/employees_${timestamp}.csv`,
       fileName: `employees_${timestamp}.csv`,
       count: csvData.length,
     };
@@ -466,37 +663,59 @@ const exportEmployeesToCSV = async (queryParams: any) => {
 const exportEmployeesToXLSX = async (queryParams: any) => {
   try {
     // Reuse the same query logic from getEmployees
-    const employeesList = await getEmployees(queryParams);
+    const { data: employeesList } = await getEmployees(queryParams);
 
     // Create directory if it doesn't exist
     const exportDir = path.join(process.cwd(), 'public', 'exports');
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
+    } else {
+      for (const file of fs.readdirSync(exportDir)) {
+        fs.unlinkSync(path.join(exportDir, file));
+      }
     }
 
     // Create timestamp for unique filename
     const timestamp = new Date().getTime();
-    const filePath = path.join(exportDir, `employees_${timestamp}.xlsx`);
+    const fileName = `nhan_su_${new Date()
+      .toLocaleDateString('vi-VN')
+      .split('/')
+      .join('-')}_${timestamp}.xlsx`;
+    const filePath = path.join(exportDir, fileName);
 
     // Map employee data for Excel
-    const excelData = employeesList.map((employee: any) => {
+    const excelData = employeesList.map((employee) => {
       return {
-        'Employee Code': employee.code || '',
-        'First Name': employee.emp_user.id?.usr_firstName || '',
-        'Last Name': employee.emp_user.id?.usr_lastName || '',
-        Position: employee.position || '',
-        Department: employee.department || '',
-        Email: employee.emp_user.id?.usr_email || '',
-        Phone: employee.emp_user.id?.usr_msisdn || '',
-        'Join Date': employee.joinDate
-          ? new Date(employee.joinDate).toISOString().split('T')[0]
+        'Mã nhân viên': employee.emp_code || '',
+        Tên: employee.emp_user?.usr_firstName || '',
+        Họ: employee.emp_user?.usr_lastName || '',
+        'Vị trí': employee.emp_position || '',
+        'Phòng ban': employee.emp_department || '',
+        Email: employee.emp_user?.usr_email || '',
+        'Số điện thoại': employee.emp_user?.usr_msisdn || '',
+        'Ngày vào làm': employee.emp_joinDate
+          ? new Date(employee.emp_joinDate).toISOString().split('T')[0]
           : '',
-        Status: employee.emp_user.id?.usr_status || '',
-        'Created At': employee.createdAt
-          ? new Date(employee.createdAt).toISOString()
+        'Trạng thái': employee.emp_user?.usr_status || '',
+        'Tạo lúc': employee.createdAt
+          ? new Date(employee.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
           : '',
-        'Updated At': employee.updatedAt
-          ? new Date(employee.updatedAt).toISOString()
+        'Cập nhật lúc': employee.updatedAt
+          ? new Date(employee.updatedAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
           : '',
       };
     });
@@ -504,14 +723,14 @@ const exportEmployeesToXLSX = async (queryParams: any) => {
     // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Nhân sự');
 
     // Write to file
     XLSX.writeFile(workbook, filePath);
 
     return {
-      filePath: `/exports/employees_${timestamp}.xlsx`,
-      fileName: `employees_${timestamp}.xlsx`,
+      fileUrl: `${serverConfig.serverUrl}/exports/${fileName}`,
+      fileName: fileName,
       count: excelData.length,
     };
   } catch (error) {
@@ -525,6 +744,7 @@ export {
   getEmployeeById,
   updateEmployee,
   deleteEmployee,
+  bulkDeleteEmployees,
   getEmployeeByUserId,
   getCurrentEmployeeByUserId,
   exportEmployeesToCSV,

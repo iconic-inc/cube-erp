@@ -2,7 +2,7 @@ import { Link, useFetcher } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
 import Defer from '~/components/Defer';
 import { IEmployee } from '~/interfaces/employee.interface';
-import { action } from '../../$employeeId';
+import { action } from '../../routes/erp+/_admin+/employees+/$employeeId';
 import { toast } from 'react-toastify';
 
 export default function EmployeeList({

@@ -1,4 +1,4 @@
-import HRMButton from '../../_components/CustomButton';
+import HRMButton from './CustomButton';
 
 export default function ContentHeader({
   title,

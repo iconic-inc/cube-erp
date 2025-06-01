@@ -1,5 +1,5 @@
 import { HydratedDocument, Model, Types } from 'mongoose';
-import { IUserCreate, IUserPopulate } from './user.interface';
+import { IUserCreate, IUserDetail, IUserPopulate } from './user.interface';
 
 export interface IEmployeePopulate {
   id: string;
@@ -18,6 +18,13 @@ export interface IEmployee extends Omit<IEmployeePopulate, 'emp_user'> {
   emp_joinDate: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IEmployeeDetail extends IEmployeePopulate {
+  emp_user: IUserDetail;
+  emp_joinDate: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface IEmployeeCreate extends IUserCreate {

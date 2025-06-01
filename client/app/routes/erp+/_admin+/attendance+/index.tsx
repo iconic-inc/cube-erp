@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
-import ContentHeader from '../_components/ContentHeader';
+import ContentHeader from '../../../../components/ContentHeader';
 import { authenticator, isAuthenticated } from '~/services/auth.server';
 import {
   getAttendanceQR,
@@ -8,10 +8,10 @@ import {
 } from '~/services/attendance.server';
 import Defer from '~/components/Defer';
 import { useLoaderData } from '@remix-run/react';
-import ManageNetwork from '../_components/ManageNetwork';
-import ManageQRCode from '../_components/ManageQRCode';
+import ManageNetwork from '../../../../components/ManageNetwork';
+import ManageQRCode from '../../../../components/ManageQRCode';
 import { createOfficeIP, getOfficeIPs } from '~/services/officeIP.server';
-import EmployeeAttendanceList from '../employees+/_components/EmployeeAttendanceList';
+import EmployeeAttendanceList from '../../../../components/EmployeeAttendanceList';
 import { parseAuthCookie } from '~/services/cookie.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {

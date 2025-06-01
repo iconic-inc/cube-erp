@@ -52,6 +52,13 @@ router.put(
   EmployeeController.updateEmployee
 );
 
+// Route để xóa nhiều nhân viên
+router.delete(
+  '/bulk',
+  hasPermission('employee', 'deleteAny'),
+  EmployeeController.bulkDeleteEmployees
+);
+
 // Route để xóa nhân viên
 router.delete(
   '/:id',

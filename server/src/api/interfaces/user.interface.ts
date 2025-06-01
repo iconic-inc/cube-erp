@@ -3,13 +3,13 @@ import { IRole, IRoleResponseData } from './role.interface';
 
 export interface IUserPopulate {
   id: string;
-  usr_fistName: string;
+  usr_firstName: string;
   usr_lastName: string;
   usr_slug: string;
 }
 
 export interface IUser {
-  id: Types.ObjectId;
+  id: string;
   usr_username: string;
   usr_email: string;
   usr_firstName: string;

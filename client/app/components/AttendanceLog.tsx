@@ -6,7 +6,7 @@ import {
   IAttendanceBrief,
 } from '~/interfaces/attendance.interface';
 import { calHourDiff } from '~/utils';
-import { action } from '../_admin+/attendance+/$id_';
+import { action } from '../routes/erp+/_admin+/attendance+/$id_';
 
 export default function AttendanceLog({
   attendanceStats,

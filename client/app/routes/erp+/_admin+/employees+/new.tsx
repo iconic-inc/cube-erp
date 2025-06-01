@@ -7,7 +7,7 @@ import {
 } from '@remix-run/react';
 
 import { getRoles } from '~/services/role.server';
-import EmployeeDetailForm from './_components/EmployeeDetailForm';
+import EmployeeDetailForm from '../../../../components/EmployeeDetailForm';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { authenticator, isAuthenticated } from '~/services/auth.server';
 import Defer from '~/components/Defer';
