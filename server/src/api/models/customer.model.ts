@@ -9,7 +9,13 @@ import { formatAttributeName } from '../utils';
 
 const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
   {
-    cus_fistName: {
+    cus_code: {
+      type: String,
+      trim: true,
+      required: true,
+      unique: true,
+    },
+    cus_firstName: {
       type: String,
       trim: true,
       required: true,
@@ -38,6 +44,9 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
       type: String,
       enum: Object.values(CUSTOMER.SEX),
       default: CUSTOMER.SEX.MALE,
+    },
+    cus_birthDate: {
+      type: Date,
     },
     cus_contactChannel: {
       type: String,

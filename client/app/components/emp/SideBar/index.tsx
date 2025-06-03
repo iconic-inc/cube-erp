@@ -1,18 +1,62 @@
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useLocation } from '@remix-run/react';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from '~/components/ui/sidebar';
-import { Bot, User2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu';
+import { BookOpen, Bot, ChevronUp, SquareTerminal, User2 } from 'lucide-react';
 import { loader } from '../../routes/erp+/_admin+/_layout';
 import SideNav from './SideNav';
 import { NavUser } from './NavUser';
 
 export default function ERPSidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useLoaderData<typeof loader>();
+
+  const isActive = (link: string) =>
+    link.replace('/erp', '')
+      ? location.pathname.includes(link)
+      : location.pathname === link;
+
+  const AccountItems = [
+    { label: 'Tài khoản', icon: 'person', link: '/erp/profile' },
+    { label: 'Thông báo', icon: 'notifications', link: '/erp/notifications' },
+  ];
+
+  const NavItem = ({
+    item,
+  }: {
+    item: {
+      link: string;
+      label: string;
+      icon: React.ReactNode;
+      onClick?: (...args: any) => any;
+    };
+  }) => (
+    <NavLink
+      to={item.link}
+      className={`w-full flex items-center text-sm p-2 rounded-md transition-colors duration-200 hover:bg-red-100 hover:text-red-500 ${
+        isActive(item.link) ? 'bg-red-500 text-white' : 'text-gray-500'
+      }`}
+      onClick={item.onClick}
+    >
+      <span className='material-symbols-outlined text-lg'>{item.icon}</span>
+      <span className='ml-3'>{item.label}</span>
+    </NavLink>
+  );
 
   return (
     <Sidebar className='lg:h-screen'>
@@ -66,7 +110,6 @@ const navMain = [
     title: 'Quản lý khách hàng',
     url: '#',
     icon: Bot,
-    isActive: true,
     items: [
       {
         title: 'Khách hàng',
@@ -74,7 +117,7 @@ const navMain = [
       },
       {
         title: 'Hồ sơ vụ việc',
-        url: '/erp/crm/cases',
+        url: '/erp/cases',
       },
     ],
   },

@@ -86,7 +86,7 @@ export function NavUser({
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link to='/erp/profile'>
+              <Link to='/erp/account'>
                 <DropdownMenuItem>
                   <BadgeCheck />
                   Account

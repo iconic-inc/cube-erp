@@ -15,12 +15,18 @@ import { CUSTOMER } from '../constants';
 import { formatAttributeName } from '../utils';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import mongoose from 'mongoose';
-import { read as xlsxRead, utils as xlsxUtils } from 'xlsx';
-import { IPaginationOptions } from '../interfaces/request.interface';
 import * as path from 'path';
 import * as fs from 'fs';
 import { createObjectCsvWriter } from 'csv-writer';
 import * as XLSX from 'xlsx';
+
+interface ICustomerQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
 
 // Enhanced createCustomer method to support creating customer with case service
 const createCustomer = async (customerData: ICustomerCreate) => {
@@ -43,23 +49,19 @@ const createCustomer = async (customerData: ICustomerCreate) => {
     }
 
     // Format and create new customer
-    const formattedData = formatAttributeName(
-      {
-        firstName: customerData.firstName,
-        lastName: customerData.lastName,
-        email: customerData.email,
-        msisdn: customerData.msisdn,
-        address: customerData.address,
-        sex: customerData.sex,
-        contactChannel: customerData.contactChannel,
-        source: customerData.source,
-        notes: customerData.notes,
-      },
-      CUSTOMER.PREFIX
-    );
-
-    // Use create method instead of build for proper typing
-    const newCustomer = await CustomerModel.create(formattedData);
+    const newCustomer = await CustomerModel.build({
+      firstName: customerData.firstName,
+      lastName: customerData.lastName,
+      email: customerData.email,
+      msisdn: customerData.msisdn,
+      address: customerData.address,
+      sex: customerData.sex,
+      contactChannel: customerData.contactChannel,
+      source: customerData.source,
+      notes: customerData.notes,
+      code: customerData.code,
+      birthDate: customerData.birthDate,
+    });
 
     return getReturnData(newCustomer);
   } catch (error) {
@@ -75,35 +77,80 @@ const createCustomer = async (customerData: ICustomerCreate) => {
   }
 };
 
-const getCustomers = async (
-  query: any = {},
-  options: IPaginationOptions = {}
-) => {
+const getCustomers = async (query: ICustomerQuery = {}) => {
   try {
     // Apply pagination options
-    const page = options.page || 1;
-    const limit = options.limit || 10;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 10, search, sortBy, sortOrder } = query;
 
-    // Default sorting is by createdAt in descending order
-    // Note: Using -1 for descending, 1 for ascending as per MongoDB's sort syntax
+    // Build the aggregation pipeline
+    const pipeline: any[] = [];
 
-    // Get total count for pagination
-    const totalCount = await CustomerModel.countDocuments(query);
+    // Stage 1: Search filter if provided
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+      pipeline.push({
+        $match: {
+          $or: [
+            { cus_firstName: searchRegex },
+            { cus_lastName: searchRegex },
+            { cus_email: searchRegex },
+            { cus_msisdn: searchRegex },
+            { cus_code: searchRegex },
+            { cus_address: searchRegex },
+            { cus_notes: searchRegex },
+          ],
+        },
+      });
+    }
 
-    // Get customers with pagination
-    const customers = await CustomerModel.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // Stage 2: Project to include only necessary fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        cus_firstName: 1,
+        cus_lastName: 1,
+        cus_email: 1,
+        cus_msisdn: 1,
+        cus_address: 1,
+        cus_sex: 1,
+        cus_contactChannel: 1,
+        cus_source: 1,
+        cus_notes: 1,
+        cus_code: 1,
+        cus_birthDate: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+
+    // Stage 3: Sort the results
+    const sortField = sortBy || 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({
+      $sort: { [sortField]: sortDirection },
+    });
+
+    // Get total count first (for pagination)
+    const countPipeline = [...pipeline]; // Clone the pipeline
+    countPipeline.push({ $count: 'total' });
+    const countResult = await CustomerModel.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Stage 4: Apply pagination
+    pipeline.push({ $skip: (page - 1) * limit });
+    pipeline.push({ $limit: +limit });
+
+    // Execute the aggregation
+    const customers = await CustomerModel.aggregate(pipeline);
+    const totalPages = Math.ceil(total / limit);
 
     return {
       data: getReturnList(customers),
       pagination: {
-        total: totalCount,
+        total,
         page,
         limit,
-        totalPages: Math.ceil(totalCount / limit),
+        totalPages,
       },
     };
   } catch (error) {
@@ -255,7 +302,11 @@ const deleteCustomer = async (customerId: string) => {
   }
 };
 
-const deleteMultipleCustomers = async (customerIds: string[]) => {
+const deleteMultipleCustomers = async ({
+  customerIds,
+}: {
+  customerIds: string[];
+}) => {
   let session;
   try {
     // Validate input

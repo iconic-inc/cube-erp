@@ -8,6 +8,7 @@ export default function TextInput({
   oneline = false,
   onChange,
   className,
+  error,
   ...props
 }: {
   name?: string;
@@ -15,7 +16,8 @@ export default function TextInput({
   value?: string | number;
   oneline?: boolean;
   pattern?: string;
-  onChange?: (e: any) => void;
+  onChange?: (e: string) => void;
+  error?: string;
 } & Omit<
   DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
   'onChange'
@@ -44,6 +46,7 @@ export default function TextInput({
           {...props}
         />
       </div>
+      {error && <span className='text-red-500 text-sm mt-1'>{error}</span>}
     </div>
   );
 }

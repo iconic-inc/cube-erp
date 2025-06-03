@@ -225,7 +225,6 @@ export default function HRMEmployees() {
   );
 }
 
-// Action function để xử lý xóa chủ spa
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
 

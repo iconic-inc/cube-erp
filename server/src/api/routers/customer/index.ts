@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { CustomerController } from '@controllers/customer.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
-import multer from 'multer';
 
 const router = Router();
 

@@ -12,4 +12,4 @@ export const CUSTOMER = {
     PENDING: 'pending',
     BLOCKED: 'blocked',
   },
-};
+} as const;

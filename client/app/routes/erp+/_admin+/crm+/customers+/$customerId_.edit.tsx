@@ -1,31 +1,32 @@
-import { useLoaderData, useNavigate, data, Link } from '@remix-run/react';
+import {
+  useLoaderData,
+  useNavigate,
+  data as dataResponse,
+  Link,
+} from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
-import { getEmployeeById, updateEmployee } from '~/services/employee.server';
-import { getRoles } from '~/services/role.server';
-import EmployeeDetailForm from '../../../../components/EmployeeDetailForm';
+import { getCustomerById, updateCustomer } from '~/services/customer.server';
+import CustomerDetailForm from './_components/CustomerDetailForm';
 import { useState } from 'react';
 import { parseAuthCookie } from '~/services/cookie.server';
+import { ICustomerCreate } from '~/interfaces/customer.interface';
+import { Button } from '~/components/ui/button';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
-  const { employeeId } = params;
+  const { customerId } = params;
 
-  if (!employeeId) {
-    throw new Response('Không tìm thấy nhân sự.', {
+  if (!customerId) {
+    throw new Response('Không tìm thấy Khách hàng.', {
       status: 404,
     });
   }
 
   try {
-    const [employee, roles] = await Promise.all([
-      getEmployeeById(employeeId, auth!),
-      getRoles(auth!),
-    ]);
-
-    return data({
-      employee,
-      roles,
+    const customer = await getCustomerById(customerId, auth!);
+    return dataResponse({
+      customer,
     });
   } catch (error: any) {
     throw new Response(error.message || error.statusText, {
@@ -40,51 +41,77 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   switch (request.method) {
     case 'PUT':
       try {
-        const { employeeId } = params;
-        if (!employeeId) {
-          return data(
+        const { customerId } = params;
+        if (!customerId) {
+          return dataResponse(
             {
               toast: {
-                message: 'Không tìm thấy nhân sự.',
+                message: 'Không tìm thấy Khách hàng.',
                 type: 'error',
               },
             },
             { headers },
           );
         }
-        const formData = await request.formData();
-        const updateData = Object.fromEntries(formData.entries());
 
-        const updatedEmployee = await updateEmployee(
-          employeeId,
-          updateData,
+        const formData = await request.formData();
+        const data: ICustomerCreate = {
+          firstName: formData.get('firstName') as string,
+          lastName: formData.get('lastName') as string,
+          email: formData.get('email') as string,
+          msisdn: formData.get('msisdn') as string,
+          address: formData.get('address') as string,
+          sex: formData.get('sex') as string,
+          birthDate: formData.get('birthDate') as string,
+          code: formData.get('code') as string,
+          notes: formData.get('notes') as string,
+          contactChannel: formData.get('contactChannel') as string,
+          source: formData.get('source') as string,
+        };
+        // Kiểm tra dữ liệu bắt buộc
+        if (
+          ['firstName', 'email', 'msisdn', 'code'].some(
+            (field) => !data[field as keyof ICustomerCreate],
+          )
+        ) {
+          return dataResponse(
+            {
+              customer: null,
+              toast: {
+                message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
+                type: 'error',
+              },
+            },
+            { headers },
+          );
+        }
+
+        const updatedCustomer = await updateCustomer(
+          customerId,
+          data,
           session!,
         );
-        return data(
+        return dataResponse(
           {
-            employee: updatedEmployee,
+            customer: updatedCustomer,
             toast: {
-              message: 'Cập nhật thông tin nhân sự thành công!',
+              message: 'Cập nhật thông tin Khách hàng thành công!',
               type: 'success',
             },
           },
           { headers },
         );
       } catch (error: any) {
-        return data(
+        return dataResponse(
           {
             toast: { message: error.message || 'Update failed', type: 'error' },
           },
-          {
-            headers,
-            status: error.status || 500,
-            statusText: error.statusText || 'Internal Server Error',
-          },
+          { headers },
         );
       }
 
     default:
-      return data(
+      return dataResponse(
         {
           toast: { message: 'Method not allowed', type: 'error' },
         },
@@ -97,19 +124,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 };
 
-export default function HRMProfile() {
-  const { employee, roles } = useLoaderData<typeof loader>();
+export default function () {
+  const { customer } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [isChanged, setIsChanged] = useState(false);
 
-  const formId = 'employee-profile-form';
+  const formId = 'customer-profile-form';
   return (
     <>
       {/* Content Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
         <div className='flex items-center'>
-          <h1 className='text-xl font-semibold'>Employee Profile</h1>
+          <h1 className='text-xl font-semibold'>Customer Profile</h1>
           <div className='ml-3 text-gray-500 text-sm flex items-center'>
             <a href='/erp' className='hover:text-blue-500 transition'>
               Dashboard
@@ -151,17 +178,17 @@ export default function HRMProfile() {
       </div>
 
       {/* Profile Form */}
-      <EmployeeDetailForm
+      <CustomerDetailForm
         formId={formId}
-        employee={employee}
+        customer={customer}
         setIsChanged={setIsChanged}
-        roles={roles}
         type='update'
       />
 
-      <div className='flex justify-between items-center'>
+      {/* Bottom Action Buttons */}
+      <div className='flex justify-between items-center mt-6'>
         <Link
-          to='/erp/employees'
+          to='/erp/crm/customers'
           className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
         >
           <span className='material-symbols-outlined text-sm mr-1'>
@@ -171,19 +198,15 @@ export default function HRMProfile() {
         </Link>
 
         <div className='flex space-x-2'>
-          {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Bản nháp
-          </button> */}
-          <button
+          <Button
             className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
             type='submit'
             form={formId}
             disabled={!isChanged}
           >
             <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Nhân sự
-          </button>
+            Lưu Thay đổi
+          </Button>
         </div>
       </div>
     </>

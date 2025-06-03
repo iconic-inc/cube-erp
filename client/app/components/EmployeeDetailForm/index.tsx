@@ -75,7 +75,6 @@ export default function EmployeeDetailForm({
         msisdn !== employee?.emp_user.usr_msisdn ||
         address !== employee?.emp_user.usr_address ||
         username !== employee?.emp_user.usr_username ||
-        username !== employee?.emp_user.usr_username ||
         password !== '' ||
         role?.id !== employee?.emp_user.usr_role?.id ||
         status !== employee?.emp_user.usr_status ||
@@ -401,28 +400,19 @@ export default function EmployeeDetailForm({
             className='mb-4'
           />
 
-          <div className='mb-4'>
-            <label
-              className='block text-sm font-medium text-gray-700 mb-1'
-              htmlFor='emp-password'
-            >
-              Mật khẩu*
-            </label>
-            <input
-              id='emp-password'
-              type='password'
-              name='password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder='Mật khẩu'
-              className={`w-full border ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              } rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition`}
-            />
-            {errors.password && (
-              <p className='text-red-500 text-xs mt-1'>{errors.password}</p>
-            )}
-          </div>
+          <PasswordInput
+            id='password'
+            name='password'
+            label={
+              <span>
+                Mật khẩu <span className='text-red-500'>*</span>
+              </span>
+            }
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder='Nhập mật khẩu mới'
+            className='mb-4'
+          />
         </div>
 
         <div className='bg-gray-50 p-6 rounded-lg mb-6'>
