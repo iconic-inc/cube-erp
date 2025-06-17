@@ -1,0 +1,177 @@
+import { Request, Response } from 'express';
+import { BadRequestError } from '../core/errors';
+import fs from 'fs';
+import { OK } from '../core/success.response';
+import {
+  createCaseService,
+  deleteCaseService,
+  getAllCaseServices,
+  getCaseServiceById,
+  updateCaseService,
+  exportCaseServicesToCSV,
+  exportCaseServicesToXLSX,
+  importCaseServices,
+} from '@services/caseService.service';
+import {
+  attachDocumentToCase,
+  detachDocumentFromCase,
+} from '@services/document.service';
+
+export class CaseServiceController {
+  /**
+   * Get all case services with filtering, pagination, sorting, and search
+   */
+  static async getAllCaseServices(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case services fetched successfully',
+      metadata: await getAllCaseServices(req.query),
+    });
+  }
+
+  /**
+   * Get a case service by ID
+   */
+  static async getCaseServiceById(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case service fetched successfully',
+      metadata: getCaseServiceById(req.params.id),
+    });
+  }
+
+  /**
+   * Create a new case service
+   */
+  static async createCaseService(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case service created successfully',
+      metadata: await createCaseService(req.body),
+    });
+  }
+
+  /**
+   * Update a case service
+   */
+  static async updateCaseService(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case service updated successfully',
+      metadata: await updateCaseService(req.params.id, req.body),
+    });
+  }
+
+  /**
+   * Delete a case service
+   */
+  static async deleteCaseService(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case service deleted successfully',
+      metadata: await deleteCaseService(req.params.id),
+    });
+  }
+
+  /**
+   * Export case services to CSV
+   */
+  static async exportCaseServicesToCSV(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case services exported successfully',
+      metadata: await exportCaseServicesToCSV(req.query),
+    });
+  }
+
+  /**
+   * Export case services to XLSX
+   */
+  static async exportCaseServicesToXLSX(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Case services exported successfully',
+      metadata: await exportCaseServicesToXLSX(req.query),
+    });
+  }
+
+  /**
+   * Import case services from CSV or XLSX
+   */
+  static async importCaseServices(req: Request, res: Response) {
+    // Get the file path
+    const filePath = req.file?.path;
+    if (!filePath) {
+      throw new BadRequestError('File not found');
+    }
+
+    // Import case services from the uploaded file
+    const result = await importCaseServices(filePath);
+
+    // Delete the file after processing
+    fs.unlinkSync(filePath);
+
+    return OK({
+      res,
+      message: 'Case services imported successfully',
+      metadata: result,
+    });
+  }
+
+  /**
+   * Attach document to a case service
+   */
+  static attachToCase = async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new BadRequestError('User ID is required');
+    }
+
+    const documentId = req.params.id;
+    const caseId = req.params.caseId;
+
+    const result = await attachDocumentToCase(documentId, caseId, userId);
+
+    return OK({
+      res,
+      metadata: result,
+      message: 'Document attached to case successfully',
+      link: {
+        document: { href: `/documents/${documentId}`, method: 'GET' },
+        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        detach: {
+          href: `/documents/${documentId}/case/${caseId}`,
+          method: 'DELETE',
+        },
+      },
+    });
+  };
+  /**
+   * Detach document from a case service
+   */
+  static detachFromCase = async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new BadRequestError('User ID is required');
+    }
+
+    const documentId = req.params.id;
+    const caseId = req.params.caseId;
+
+    const result = await detachDocumentFromCase(documentId, caseId, userId);
+
+    return OK({
+      res,
+      metadata: result,
+      message: 'Document detached from case successfully',
+      link: {
+        document: { href: `/documents/${documentId}`, method: 'GET' },
+        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        attach: {
+          href: `/documents/${documentId}/case/${caseId}`,
+          method: 'POST',
+        },
+      },
+    });
+  };
+}

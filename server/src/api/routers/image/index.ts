@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { ImageController } from '@controllers/image.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
-import { diskStorage } from '@configs/config.multer';
+import { diskImageStorage } from '@configs/config.multer';
 
 const imageRouter = Router();
 
@@ -15,7 +15,7 @@ imageRouter.use(authenticationV2);
 imageRouter.post(
   '/',
   hasPermission('image', 'createAny'),
-  diskStorage.array('image'),
+  diskImageStorage.array('image'),
   ImageController.createImage
 );
 

@@ -1,7 +1,7 @@
 import { Model, HydratedDocument } from 'mongoose';
 
-interface IRawApiKey {
-  _id: string;
+interface IApiKey {
+  id: string;
   key: string;
   status: boolean;
   permissions: string[];
@@ -9,13 +9,13 @@ interface IRawApiKey {
   updatedAt: Date;
 }
 
-export type IApiKey = HydratedDocument<IRawApiKey>;
+export type IApiKeyDocument = HydratedDocument<IApiKey>;
 
-export interface IApiKeyAttrs {
+export interface IApiKeyCreate {
   key: string;
   permissions: string[];
 }
 
-export interface IApiKeyModel extends Model<IApiKey> {
-  build(attrs: IApiKeyAttrs): Promise<IApiKey>;
+export interface IApiKeyModel extends Model<IApiKeyDocument> {
+  build(attrs: IApiKeyCreate): Promise<IApiKeyDocument>;
 }

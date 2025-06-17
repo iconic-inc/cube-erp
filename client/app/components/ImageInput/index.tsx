@@ -1,4 +1,4 @@
-import { RiUploadCloud2Line } from '@remixicon/react';
+import { UploadCloud } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import ImagePicker from './ImagePicker';
 import { useState } from 'react';
@@ -73,7 +73,7 @@ export default function ImageInput({
           }}
           onClick={handleOpenPicker}
         >
-          <RiUploadCloud2Line className='w-6 h-6 text-blue-400' />
+          <UploadCloud className='w-6 h-6 text-blue-400' />
 
           <h2 className='text-xl mt-2 font-medium text-gray-700 tracking-wide'>
             {label}

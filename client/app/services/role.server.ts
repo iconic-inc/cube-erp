@@ -5,7 +5,7 @@ import { ICreateRole, IRole, IUpdateRole } from '~/interfaces/role.interface';
 // Lấy danh sách roles
 const getRoles = async (request: ISessionUser) => {
   try {
-    const response = await fetcher('/roles', { request });
+    const response = await fetcher<IRole[]>('/roles', { request });
 
     return response as IRole[];
   } catch (error) {
@@ -16,13 +16,13 @@ const getRoles = async (request: ISessionUser) => {
 
 // Lấy thông tin một role
 const getRoleById = async (id: string, request: ISessionUser) => {
-  const response = await fetcher(`/roles/${id}`, { request });
+  const response = await fetcher<IRole>(`/roles/${id}`, { request });
   return response as IRole;
 };
 
 // Tạo role mới
 const createRole = async (data: ICreateRole, request: ISessionUser) => {
-  const response = await fetcher('/roles', {
+  const response = await fetcher<IRole>('/roles', {
     method: 'POST',
     body: JSON.stringify(data),
     request,
@@ -36,7 +36,7 @@ const updateRole = async (
   data: IUpdateRole,
   request: ISessionUser,
 ) => {
-  const response = await fetcher(`/roles/${id}`, {
+  const response = await fetcher<IRole>(`/roles/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
     request,
@@ -46,7 +46,10 @@ const updateRole = async (
 
 // Xóa role
 const deleteRole = async (id: string, request: ISessionUser) => {
-  const response = await fetcher(`/roles/${id}`, {
+  const response = await fetcher<{
+    message: string;
+    metadata: { success: boolean };
+  }>(`/roles/${id}`, {
     method: 'DELETE',
     request,
   });
@@ -59,7 +62,7 @@ const updateRoleGrants = async (
   grants: { resourceId: string; actions: string[] }[],
   request: ISessionUser,
 ) => {
-  const response = await fetcher(`/roles/${id}/grants`, {
+  const response = await fetcher<IRole>(`/roles/${id}/grants`, {
     method: 'PUT',
     body: JSON.stringify({ grants }),
     request,

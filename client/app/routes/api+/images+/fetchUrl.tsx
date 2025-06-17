@@ -3,7 +3,7 @@ import { authenticator, isAuthenticated } from '~/services/auth.server';
 import { createImage } from '~/services/image.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await isAuthenticated(request);
+  const { session, headers } = await isAuthenticated(request);
   const body = await request.json();
 
   try {
@@ -15,16 +15,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
     const formData = new FormData();
     formData.append('image', file);
-    const image = await createImage(formData, user!);
+    const image = await createImage(formData, session!);
 
-    return Response.json({
-      image,
-      success: 1,
-      file: {
-        url: image[0].img_url,
+    return Response.json(
+      {
+        image,
+        success: 1,
+        file: {
+          url: image[0].img_url,
+        },
+        toast: { message: 'Upload ảnh thành công!', type: 'success' },
       },
-      toast: { message: 'Upload ảnh thành công!', type: 'success' },
-    });
+      {
+        headers,
+      },
+    );
   } catch (error: any) {
     console.error(error);
     return Response.json({

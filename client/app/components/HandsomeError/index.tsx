@@ -7,6 +7,16 @@ import {
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../LoadingOverlay';
 
+export const meta = () => {
+  return [
+    { title: 'Lỗi' },
+    {
+      name: 'description',
+      content: 'Đã xảy ra lỗi trong quá trình xử lý yêu cầu của bạn.',
+    },
+  ];
+};
+
 export default function HandsomeError({ basePath }: { basePath?: string }) {
   console.log('Oops! An error occurred!');
   const error = useRouteError();
@@ -45,7 +55,7 @@ const ErrorCard = ({
   const navigation = useNavigation();
 
   return (
-    <div className='bg-gray-200 w-full px-16 md:px-0 py-16 flex items-center justify-center'>
+    <div className='bg-gray-200 h-screen w-full px-16 md:px-0 py-16 flex items-center justify-center'>
       <div className='bg-white w-full max-w-[520px] border border-gray-200 flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-8 rounded-lg shadow-2xl'>
         <p className='text-6xl md:text-7xl lg:text-9xl font-bold tracking-wider text-gray-300'>
           {error.status}

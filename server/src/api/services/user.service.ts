@@ -4,8 +4,12 @@ import {
   getReturnList,
   removeNestedNullish,
 } from '@utils/index';
-import { NotFoundError, BadRequestError } from '../core/errors';
-import { IUserAttrs, IUserDetail } from '../interfaces/user.interface';
+import {
+  NotFoundError,
+  BadRequestError,
+  InternalServerError,
+} from '../core/errors';
+import { IUserCreate, IUserDetail } from '../interfaces/user.interface';
 import { UserModel } from '../models/user.model';
 import bcrypt from 'bcrypt';
 import { USER } from '../constants';
@@ -50,7 +54,7 @@ const changePassword = async (userId: string, password: string) => {
   return getReturnData(user);
 };
 
-const updateUser = async (userId: string, user: IUserAttrs) => {
+const updateUser = async (userId: string, user: IUserCreate) => {
   if (user.password) {
     await changePassword(userId, user.password);
     delete user.password;
@@ -101,4 +105,90 @@ const getUserById = async (userId: string) => {
   return getReturnData<IUserDetail>(user as unknown as IUserDetail);
 };
 
-export { changePassword, updateUser, getCurrentUser, getUsers, getUserById };
+const createEmployee = async (employeeData: IUserCreate) => {
+  // Validate required fields
+  if (!employeeData.email) throw new BadRequestError('Email is required');
+  if (!employeeData.firstName)
+    throw new BadRequestError('First name is required');
+
+  // Check if user already exists with this email
+  const existingUser = await UserModel.findOne({
+    usr_email: employeeData.email,
+  });
+  if (existingUser) {
+    throw new BadRequestError('Email already exists');
+  }
+
+  // Generate salt and password for the new employee
+  const salt = bcrypt.genSaltSync(10);
+  // Generate a random temporary password
+  const tempPassword = Math.random().toString(36).slice(-8);
+  const hashPassword = await bcrypt.hash(tempPassword, salt);
+
+  // Set username if not provided (use email by default)
+  if (!employeeData.username) {
+    employeeData.username = employeeData.email;
+  }
+
+  // Set slug if not provided
+  if (!employeeData.slug) {
+    employeeData.slug = employeeData.firstName
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+  }
+
+  // Set status to active by default
+  if (!employeeData.status) {
+    employeeData.status = USER.STATUS.ACTIVE;
+  }
+
+  // Create the employee
+  const newEmployee = await UserModel.build({
+    ...employeeData,
+    password: hashPassword,
+    salt: salt,
+  });
+
+  if (!newEmployee) {
+    throw new InternalServerError('Failed to create employee');
+  }
+
+  // Return employee data without sensitive information
+  return getReturnData(newEmployee);
+};
+
+const deleteEmployee = async (userId: string) => {
+  if (!userId) throw new BadRequestError('User ID is required');
+
+  // Find the user first to confirm it exists
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new NotFoundError('Employee not found');
+  }
+
+  // Option 1: Soft delete - Update status to 'deleted'
+  const deletedUser = await UserModel.findByIdAndUpdate(
+    userId,
+    { usr_status: USER.STATUS.DELETED },
+    { new: true }
+  );
+
+  // Option 2: Hard delete (uncomment if you want to permanently delete)
+  // const deletedUser = await UserModel.findByIdAndDelete(userId);
+
+  if (!deletedUser) {
+    throw new InternalServerError('Failed to delete employee');
+  }
+
+  return { success: true, id: userId };
+};
+
+export {
+  changePassword,
+  updateUser,
+  getCurrentUser,
+  getUsers,
+  getUserById,
+  createEmployee,
+  deleteEmployee,
+};

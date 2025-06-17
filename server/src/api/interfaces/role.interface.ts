@@ -1,6 +1,6 @@
 import { HydratedDocument, Model, Types } from 'mongoose';
 
-export interface IRawRole {
+export interface IRole {
   id: string;
   name: string;
   slug: string;
@@ -14,7 +14,7 @@ export interface IRawRole {
   updatedAt: Date;
 }
 
-export interface IRoleAttrs {
+export interface IRoleCreate {
   name: string;
   slug: string;
   status: 'active' | 'inactive';
@@ -41,10 +41,10 @@ export interface IGrantInput {
   actions: string[];
 }
 
-export type IRole = HydratedDocument<IRawRole>;
+export type IRoleDocument = HydratedDocument<IRole>;
 
-export interface IRoleModel extends Model<IRole> {
-  build(attrs: IRoleAttrs): Promise<IRole>;
+export interface IRoleModel extends Model<IRoleDocument> {
+  build(attrs: IRoleCreate): Promise<IRoleDocument>;
 }
 export interface IUpdateGrantInput {
   grantId: string; // ID của grant cần update

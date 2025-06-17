@@ -1,10 +1,15 @@
 import { Schema, model, models } from 'mongoose';
 
-import { ITemplate, ITemplateModel } from '../interfaces/template.interface';
+import {
+  ITemplate,
+  ITemplateCreate,
+  ITemplateDocument,
+  ITemplateModel,
+} from '../interfaces/template.interface';
 import { TEMPLATE } from '../constants';
 import { formatAttributeName } from '@utils/index';
 
-const templateSchema = new Schema<ITemplate>(
+const templateSchema = new Schema<ITemplateDocument, ITemplateModel>(
   {
     tem_name: {
       type: String,
@@ -27,7 +32,9 @@ const templateSchema = new Schema<ITemplate>(
   }
 );
 
-templateSchema.statics.build = async (attrs: ITemplate): Promise<ITemplate> => {
+templateSchema.statics.build = async (
+  attrs: ITemplateCreate
+): Promise<ITemplate> => {
   return await TemplateModel.create(
     formatAttributeName(attrs, TEMPLATE.PREFIX)
   );
@@ -35,4 +42,7 @@ templateSchema.statics.build = async (attrs: ITemplate): Promise<ITemplate> => {
 
 export const TemplateModel =
   // models[TEMPLATE.DOCUMENT_NAME] ||
-  model<ITemplate, ITemplateModel>(TEMPLATE.COLLECTION_NAME, templateSchema);
+  model<ITemplateDocument, ITemplateModel>(
+    TEMPLATE.COLLECTION_NAME,
+    templateSchema
+  );

@@ -1,6 +1,6 @@
 import { HydratedDocument, Model } from 'mongoose';
 
-export interface IRawResource {
+export interface IResource {
   id: string;
   name: string;
   slug: string;
@@ -9,7 +9,7 @@ export interface IRawResource {
   updatedAt: Date;
 }
 
-export interface IResourceAttrs {
+export interface IResourceCreate {
   name: string;
   slug: string;
   description: string;
@@ -21,10 +21,10 @@ export interface IResourceInput {
   description: string;
 }
 
-export type IResource = HydratedDocument<IRawResource>;
+export type IResourceDocument = HydratedDocument<IResource>;
 
-export interface IResourceModel extends Model<IResource> {
-  build(attrs: IResourceAttrs): Promise<IResource>;
+export interface IResourceModel extends Model<IResourceDocument> {
+  build(attrs: IResourceCreate): Promise<IResourceDocument>;
 }
 
 export interface IResourceResponseData {
@@ -32,4 +32,4 @@ export interface IResourceResponseData {
   name: string;
   slug: string;
   description: string;
-} 
+}

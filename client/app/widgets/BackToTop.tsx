@@ -1,4 +1,4 @@
-import { RiArrowUpSLine } from '@remixicon/react';
+import { ChevronUp } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function BackToTop({ className }: { className?: string }) {
@@ -28,7 +28,7 @@ export default function BackToTop({ className }: { className?: string }) {
       style={{ position: 'fixed', bottom: 40, right: 40 }}
     >
       <div>
-        <RiArrowUpSLine />
+        <ChevronUp />
       </div>
     </button>
   );

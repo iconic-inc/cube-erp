@@ -7,12 +7,12 @@ const headers = {
   credentials: 'include',
 };
 
-const fetcher = async (
+const fetcher = async <T = any>(
   path: string,
   options?: RequestInit & {
     request?: ISessionUser;
   },
-) => {
+): Promise<T> => {
   const response = await fetch(`${API_URL}/api/v1${path}`, {
     method: 'GET',
     ...options,

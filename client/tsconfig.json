@@ -29,12 +29,12 @@
       "@interfaces/*": ["./app/interfaces/*"],
       "@styles/*": ["./app/styles/*"],
       "@utils/*": ["./app/utils/*"],
-      "@hooks/*": ["./app/hooks/*"],
+      "@hooks/*": ["app/components/hooks/*"],
       "@widgets/*": ["./app/widgets/*"],
       "@contexts/*": ["./app/contexts/*"],
       "@configs/*": ["./app/configs/*"],
       "@loggers/*": ["./app/loggers/*"],
-      "@ui/*": ["./app/ui/*"]
+      "@constants/*": ["./app/constants/*"]
     },
 
     // Vite takes care of building everything, not tsc.

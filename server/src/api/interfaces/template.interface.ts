@@ -1,7 +1,7 @@
 import { HydratedDocument, Model, Types } from 'mongoose';
 import { TEMPLATE } from '../constants';
 
-export interface IRawTemplate {
+export interface ITemplate {
   tem_name: string;
   tem_html: string;
   tem_status: Values<typeof TEMPLATE.STATUS>;
@@ -10,23 +10,23 @@ export interface IRawTemplate {
   updatedAt: Date;
 }
 
-export interface ITemplate extends HydratedDocument<IRawTemplate> {}
+export interface ITemplateDocument extends HydratedDocument<ITemplate> {}
 
-export interface ITemplateAttrs {
+export interface ITemplateCreate {
   name: string;
   html: string;
-  status: IRawTemplate['tem_status'];
+  status: ITemplate['tem_status'];
 }
 
-export interface ITemplateModel extends Model<ITemplate> {
-  build(attrs: ITemplateAttrs): Promise<ITemplate>;
+export interface ITemplateModel extends Model<ITemplateDocument> {
+  build(attrs: ITemplateCreate): Promise<ITemplateDocument>;
 }
 
 export interface ITemplateResponseData {
   id: string;
   name: string;
   html: string;
-  status: IRawTemplate['tem_status'];
+  status: ITemplate['tem_status'];
   createdAt: Date;
   updatedAt: Date;
 }

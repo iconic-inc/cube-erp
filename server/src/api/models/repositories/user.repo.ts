@@ -1,12 +1,12 @@
 import { ClientSession, isValidObjectId } from 'mongoose';
-import { IUserAttrs } from '../../interfaces/user.interface';
+import { IUserCreate } from '../../interfaces/user.interface';
 import { UserModel } from '../user.model';
 
 const getAllUsers = async () => {
   return await UserModel.find();
 };
 
-const createUser = async (user: IUserAttrs) => {
+const createUser = async (user: IUserCreate) => {
   return await UserModel.build(user);
 };
 

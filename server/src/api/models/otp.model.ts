@@ -1,10 +1,15 @@
 import { Schema, model, models } from 'mongoose';
 
-import { IOTP, IOTPAttrs, IOTPModel } from '../interfaces/otp.interface';
+import {
+  IOTPDocument,
+  IOTPCreate,
+  IOTPModel,
+  IOTP,
+} from '../interfaces/otp.interface';
 import { OTP } from '../constants';
 import { formatAttributeName } from '@utils/index';
 
-const otpSchema = new Schema<IOTP>(
+const otpSchema = new Schema<IOTPDocument, IOTPModel>(
   {
     otp_token: {
       type: String,
@@ -31,10 +36,10 @@ const otpSchema = new Schema<IOTP>(
   }
 );
 
-otpSchema.statics.build = async (attrs: IOTPAttrs): Promise<IOTP> => {
+otpSchema.statics.build = async (attrs: IOTPCreate) => {
   return OTPModel.create(formatAttributeName(attrs, OTP.PREFIX));
 };
 
 export const OTPModel =
   // models[OTP.DOCUMENT_NAME] ||
-  model<IOTP, IOTPModel>(OTP.COLLECTION_NAME, otpSchema);
+  model<IOTPDocument, IOTPModel>(OTP.COLLECTION_NAME, otpSchema);
