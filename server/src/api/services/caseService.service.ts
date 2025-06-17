@@ -256,19 +256,19 @@ const exportCaseServicesToCSV = async (query: any) => {
   // Format the data for CSV export
   const formattedData = caseServices.data.map((cs) => {
     const customer = cs.case_customer
-      ? `${cs.case_customer.cus_fistName} ${cs.case_customer.cus_lastName}`
+      ? `${cs.case_customer.cus_firstName} ${cs.case_customer.cus_lastName}`
       : 'N/A';
 
     const leadAttorney = cs.case_leadAttorney
-      ? `${cs.case_leadAttorney.emp_user.usr_fistName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
+      ? `${cs.case_leadAttorney.emp_user.usr_firstName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
       : 'N/A';
 
     const associateAttorney = cs.case_associateAttorney
-      ? `${cs.case_associateAttorney.emp_user.usr_fistName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
+      ? `${cs.case_associateAttorney.emp_user.usr_firstName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
       : 'N/A';
 
     const paralegal = cs.case_paralegal
-      ? `${cs.case_paralegal.emp_user.usr_fistName} ${cs.case_paralegal.emp_user.usr_lastName}`
+      ? `${cs.case_paralegal.emp_user.usr_firstName} ${cs.case_paralegal.emp_user.usr_lastName}`
       : 'N/A';
 
     return {
@@ -330,19 +330,19 @@ const exportCaseServicesToXLSX = async (query: any) => {
   // Format the data for XLSX export
   const formattedData = caseServices.data.map((cs) => {
     const customer = cs.case_customer
-      ? `${cs.case_customer.cus_fistName} ${cs.case_customer.cus_lastName}`
+      ? `${cs.case_customer.cus_firstName} ${cs.case_customer.cus_lastName}`
       : 'N/A';
 
     const leadAttorney = cs.case_leadAttorney
-      ? `${cs.case_leadAttorney.emp_user.usr_fistName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
+      ? `${cs.case_leadAttorney.emp_user.usr_firstName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
       : 'N/A';
 
     const associateAttorney = cs.case_associateAttorney
-      ? `${cs.case_associateAttorney.emp_user.usr_fistName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
+      ? `${cs.case_associateAttorney.emp_user.usr_firstName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
       : 'N/A';
 
     const paralegal = cs.case_paralegal
-      ? `${cs.case_paralegal.emp_user.usr_fistName} ${cs.case_paralegal.emp_user.usr_lastName}`
+      ? `${cs.case_paralegal.emp_user.usr_firstName} ${cs.case_paralegal.emp_user.usr_lastName}`
       : 'N/A';
 
     return {
@@ -527,6 +527,40 @@ const parseXLSXFile = (filePath: string) => {
   } catch (error: any) {
     throw new BadRequestError(`Error parsing XLSX file: ${error.message}`);
   }
+};
+
+// attach documents to case services
+const attachDocumentsToCase = async (
+  caseServiceId: string,
+  documents: Express.Multer.File[]
+) => {
+  if (!documents || documents.length === 0) {
+    throw new BadRequestError('No documents provided for attachment');
+  }
+  const caseService = await CaseServiceModel.findById(caseServiceId);
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+  const documentIds = documents.map((doc) => doc.id);
+
+  await caseService.save();
+  return getReturnData(caseService);
+};
+
+// detach documents from case services
+const detachDocumentsFromCase = async (
+  caseServiceId: string,
+  documentIds: string[]
+) => {
+  if (!documentIds || documentIds.length === 0) {
+    throw new BadRequestError('No document IDs provided for detachment');
+  }
+  const caseService = await CaseServiceModel.findById(caseServiceId);
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+  await caseService.save();
+  return getReturnData(caseService);
 };
 
 export {

@@ -8,10 +8,12 @@ export default function TextEditor({
   value,
   onChange,
   name,
+  placeholder,
 }: {
   value: string;
   name: string;
-  onChange: (...args: any[]) => any;
+  onChange: (value: string) => any;
+  placeholder?: string;
 }) {
   const quillRef = useRef<HTMLDivElement | null>(null);
   const [quill, setQuill] = useState<Quill | null>(null);
@@ -24,6 +26,7 @@ export default function TextEditor({
 
       const quillInstance = new Quill(editor, {
         theme: 'snow', // or 'bubble'
+        placeholder: placeholder || 'Nhập nội dung tại đây...',
         modules: {
           toolbar: {
             container: [

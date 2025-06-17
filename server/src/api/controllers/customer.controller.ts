@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
 import { OK } from '../core/success.response';
-import { NotFoundError, BadRequestError } from '../core/errors';
-import { parse } from 'csv-parse/sync';
 import {
   createCustomer,
   getCustomers,
@@ -9,6 +7,7 @@ import {
   updateCustomer,
   deleteCustomer,
   deleteMultipleCustomers,
+  exportCustomersToXLSX,
 } from '@services/customer.service';
 
 export class CustomerController {
@@ -66,6 +65,16 @@ export class CustomerController {
       res,
       message: 'Xóa nhiều khách hàng thành công',
       metadata: result,
+    });
+  }
+
+  static async exportCustomersToXLSX(req: Request, res: Response) {
+    // Implement the logic to export customers to a file format (e.g., CSV, XLSX)
+    // This is a placeholder for the actual implementation
+    return OK({
+      res,
+      message: 'Export customers functionality not implemented yet',
+      metadata: await exportCustomersToXLSX(req.query),
     });
   }
 }

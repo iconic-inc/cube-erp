@@ -1,6 +1,6 @@
 import { useSearchParams } from '@remix-run/react';
 
-export default function EmployeePagination({
+export default function ListPagination({
   pagination,
 }: {
   pagination: {

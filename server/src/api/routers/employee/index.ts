@@ -66,13 +66,6 @@ router.delete(
   EmployeeController.deleteEmployee
 );
 
-// Route để lấy danh sách nhân viên
-router.get(
-  '/',
-  hasPermission('employee', 'readAny'),
-  EmployeeController.getEmployees
-);
-
 // Route để xuất danh sách nhân viên sang CSV
 router.get(
   '/export/csv',
@@ -85,6 +78,13 @@ router.get(
   '/export/xlsx',
   hasPermission('employee', 'readAny'),
   EmployeeController.exportEmployeesToXLSX
+);
+
+// Route để lấy danh sách nhân viên
+router.get(
+  '/',
+  hasPermission('employee', 'readAny'),
+  EmployeeController.getEmployees
 );
 
 module.exports = router;

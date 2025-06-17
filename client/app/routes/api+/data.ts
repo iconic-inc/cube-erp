@@ -11,7 +11,6 @@ const services = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const getter = url.searchParams.get('getter') as string;
-  const page = +url.searchParams.get('page')! || 1;
 
   if (!getter || !(getter in services)) {
     throw new Response(null, { status: 400, statusText: 'Invalid request' });

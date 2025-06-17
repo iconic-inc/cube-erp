@@ -1,47 +1,49 @@
 import { useNavigate } from '@remix-run/react';
-import HRMButton from './CustomButton';
-import { Button } from './ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { Button, buttonVariants } from './ui/button';
+import { VariantProps } from 'class-variance-authority';
 
 export default function ContentHeader({
   title,
   actionContent,
   actionHandler,
+  actionVariant = 'default',
+  backHandler,
 }: {
   title: string;
   actionContent?: React.ReactNode;
   actionHandler?: () => void;
+  actionVariant?: VariantProps<typeof buttonVariants>['variant'];
+  backHandler?: () => void;
 }) {
   const navigate = useNavigate();
 
   return (
-    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-      <div className='flex items-center'>
+    <div className='flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200'>
+      <div className='flex items-center space-x-3'>
+        {/* Back button */}
         <Button
-          className='mr-3 bg-white px-2 rounded-full border hover:bg-gray-100 transition-all duration-300 transform hover:-translate-y-0.5'
-          onClick={() => navigate(-1)}
+          variant='ghost'
+          size='icon'
+          className='text-gray-600 hover:bg-gray-100 rounded-full'
+          onClick={backHandler || (() => navigate(-1))}
         >
-          <span className='material-symbols-outlined text-gray-600'>
-            arrow_back
-          </span>
+          <ArrowLeft className='h-6 w-6' />
         </Button>
-
-        <h1 className='text-xl font-semibold'>{title}</h1>
+        {/* Page title */}
+        <h1 className='text-2xl font-bold text-gray-800'>{title}</h1>
       </div>
+      {/* Add Document button */}
 
-      <div className='flex space-x-2'>
-        {actionContent && actionHandler && (
-          <HRMButton color='blue' type='button' onClick={() => actionHandler()}>
-            {actionContent}
-          </HRMButton>
-        )}
-
-        {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-          <span className='material-symbols-outlined text-sm mr-1'>
-            filter_list
-          </span>
-          Filter
-        </button> */}
-      </div>
+      {actionContent && actionHandler && (
+        <Button
+          variant={actionVariant}
+          className='px-6 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out transform hover:scale-105'
+          onClick={actionHandler}
+        >
+          {actionContent}
+        </Button>
+      )}
     </div>
   );
 }

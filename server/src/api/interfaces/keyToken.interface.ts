@@ -1,6 +1,6 @@
 import { Model, HydratedDocument, ObjectId } from 'mongoose';
 
-interface IKeyToken {
+export interface IKeyToken {
   id: string | ObjectId;
   user: string | ObjectId;
   browserId: string;

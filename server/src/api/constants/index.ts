@@ -7,6 +7,8 @@ export * from './resource.constant';
 export * from './role.constant';
 export * from './customer.constant';
 export * from './caseService.constant';
+export * from './document.constant';
+export * from './documentCase.constant';
 
 export const KEYTOKEN = {
   DOCUMENT_NAME: 'KeyToken',

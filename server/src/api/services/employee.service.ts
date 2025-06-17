@@ -671,7 +671,9 @@ const exportEmployeesToXLSX = async (queryParams: any) => {
       fs.mkdirSync(exportDir, { recursive: true });
     } else {
       for (const file of fs.readdirSync(exportDir)) {
-        fs.unlinkSync(path.join(exportDir, file));
+        if (file.startsWith('nhan_su_') && file.endsWith('.xlsx')) {
+          fs.unlinkSync(path.join(exportDir, file));
+        }
       }
     }
 

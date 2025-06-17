@@ -19,6 +19,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { createObjectCsvWriter } from 'csv-writer';
 import * as XLSX from 'xlsx';
+import { serverConfig } from '@configs/config.server';
 
 interface ICustomerQuery {
   page?: number;
@@ -321,7 +322,7 @@ const deleteMultipleCustomers = async ({
 
     if (associatedCases) {
       throw new BadRequestError(
-        'Không thể xóa khách hàng có liên kết với các dịch vụ hồ sơ'
+        'Vui lòng xóa các hồ sơ dịch vụ của khách hàng trước khi xóa'
       );
     }
 
@@ -504,189 +505,70 @@ const getCustomerStatistics = async (query: any) => {
   }
 };
 
-const addCustomerInteraction = async (
-  customerId: string,
-  interaction: {
-    type: 'call' | 'message' | 'meeting' | 'email' | 'other';
-    notes?: string;
-    staff?: string;
-  }
-) => {
-  try {
-    // Check if customer exists
-    const customer = await CustomerModel.findById(customerId);
-
-    if (!customer) {
-      throw new NotFoundError('Không tìm thấy khách hàng');
-    }
-
-    // Check if staff exists (if staff ID provided)
-    if (interaction.staff) {
-      const staffExists = await EmployeeModel.findById(interaction.staff);
-      if (!staffExists) {
-        throw new BadRequestError('Không tìm thấy nhân viên');
-      }
-    }
-
-    // Add interaction to customer document
-    // Note: We'd need to extend the customer model to support interactions
-    // For now, let's modify the customer's notes field
-    const currentNotes = customer.cus_notes || '';
-    const interactionNote = `[${new Date().toISOString()}] ${interaction.type.toUpperCase()}${
-      interaction.staff ? ` bởi ${interaction.staff}` : ''
-    }: ${interaction.notes || 'Không có thông tin chi tiết'}`;
-
-    // Update the customer notes
-    const updatedCustomer = await CustomerModel.findByIdAndUpdate(
-      customerId,
-      {
-        cus_notes: currentNotes
-          ? `${currentNotes}\n\n${interactionNote}`
-          : interactionNote,
-      },
-      { new: true }
-    );
-
-    if (!updatedCustomer) {
-      throw new Error('Không thể cập nhật tương tác cho khách hàng');
-    }
-
-    return {
-      success: true,
-      message: 'Ghi nhận tương tác khách hàng thành công',
-      interaction: {
-        type: interaction.type,
-        timestamp: new Date().toISOString(),
-        staff: interaction.staff,
-        notes: interaction.notes,
-      },
-    };
-  } catch (error) {
-    // Wrap original error with Vietnamese message if it's a standard Error
-    if (
-      error instanceof Error &&
-      !(error instanceof BadRequestError) &&
-      !(error instanceof NotFoundError)
-    ) {
-      throw new Error(
-        `Đã xảy ra lỗi khi thêm tương tác khách hàng: ${error.message}`
-      );
-    }
-    throw error;
-  }
-};
-
-// Export functions for CSV format
-const exportCustomersToCSV = async (queryParams: any) => {
-  try {
-    // Get customers based on query params
-    const customersList = await searchCustomers(queryParams);
-
-    // Create directory if it doesn't exist
-    const exportDir = path.join(process.cwd(), 'public', 'exports');
-    if (!fs.existsSync(exportDir)) {
-      fs.mkdirSync(exportDir, { recursive: true });
-    }
-
-    // Create timestamp for unique filename
-    const timestamp = new Date().getTime();
-    const filePath = path.join(exportDir, `customers_${timestamp}.csv`);
-
-    // Define CSV headers
-    const csvWriter = createObjectCsvWriter({
-      path: filePath,
-      header: [
-        { id: 'firstName', title: 'First Name' },
-        { id: 'lastName', title: 'Last Name' },
-        { id: 'email', title: 'Email' },
-        { id: 'phone', title: 'Phone' },
-        { id: 'address', title: 'Address' },
-        { id: 'sex', title: 'Gender' },
-        { id: 'contactChannel', title: 'Contact Channel' },
-        { id: 'source', title: 'Source' },
-        { id: 'notes', title: 'Notes' },
-        { id: 'createdAt', title: 'Created At' },
-        { id: 'updatedAt', title: 'Updated At' },
-      ],
-    });
-
-    // Map customer data to CSV format
-    const csvData = customersList.map((customer: any) => {
-      return {
-        firstName: customer.cus_fistName || '',
-        lastName: customer.cus_lastName || '',
-        email: customer.cus_email || '',
-        phone: customer.cus_msisdn || '',
-        address: customer.cus_address || '',
-        sex: customer.cus_sex || '',
-        contactChannel: customer.cus_contactChannel || '',
-        source: customer.cus_source || '',
-        notes: customer.cus_notes || '',
-        createdAt: customer.createdAt
-          ? new Date(customer.createdAt).toISOString()
-          : '',
-        updatedAt: customer.updatedAt
-          ? new Date(customer.updatedAt).toISOString()
-          : '',
-      };
-    });
-
-    // Write data to CSV file
-    await csvWriter.writeRecords(csvData);
-
-    return {
-      filePath: `/exports/customers_${timestamp}.csv`,
-      fileName: `customers_${timestamp}.csv`,
-      count: csvData.length,
-    };
-  } catch (error) {
-    // Wrap original error with Vietnamese message if it's a standard Error
-    if (
-      error instanceof Error &&
-      !(error instanceof BadRequestError) &&
-      !(error instanceof NotFoundError)
-    ) {
-      throw new Error(
-        `Đã xảy ra lỗi khi xuất dữ liệu khách hàng ra CSV: ${error.message}`
-      );
-    }
-    throw error;
-  }
-};
-
-// Export functions for XLSX format
+/**
+ * Export customers data to XLSX file
+ * @param queryParams Query parameters for filtering customers
+ */
 const exportCustomersToXLSX = async (queryParams: any) => {
   try {
     // Get customers based on query params
-    const customersList = await searchCustomers(queryParams);
+    const { data: customersList } = await getCustomers(queryParams);
 
     // Create directory if it doesn't exist
     const exportDir = path.join(process.cwd(), 'public', 'exports');
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
+    } else {
+      for (const file of fs.readdirSync(exportDir)) {
+        if (file.startsWith('khach_hang_')) {
+          fs.unlinkSync(path.join(exportDir, file));
+        }
+      }
     }
 
     // Create timestamp for unique filename
     const timestamp = new Date().getTime();
-    const filePath = path.join(exportDir, `customers_${timestamp}.xlsx`);
+    const fileName = `khach_hang_${new Date()
+      .toLocaleDateString('vi-VN')
+      .split('/')
+      .join('-')}_${timestamp}.xlsx`;
+    const filePath = path.join(exportDir, fileName);
 
     // Map customer data for Excel
     const excelData = customersList.map((customer: any) => {
       return {
-        'First Name': customer.cus_fistName || '',
-        'Last Name': customer.cus_lastName || '',
+        'Mã khách hàng': customer.cus_code || '',
+        Họ: customer.cus_lastName || '',
+        Tên: customer.cus_firstName || '',
         Email: customer.cus_email || '',
-        Phone: customer.cus_msisdn || '',
-        Address: customer.cus_address || '',
-        Gender: customer.cus_sex || '',
-        'Contact Channel': customer.cus_contactChannel || '',
-        Source: customer.cus_source || '',
-        Notes: customer.cus_notes || '',
-        'Created At': customer.createdAt
-          ? new Date(customer.createdAt).toISOString()
+        'Số điện thoại': customer.cus_msisdn || '',
+        'Địa chỉ': customer.cus_address || '',
+        'Giới tính': customer.cus_sex || '',
+        'Kênh liên hệ': customer.cus_contactChannel || '',
+        Nguồn: customer.cus_source || '',
+        'Ghi chú': customer.cus_notes || '',
+        'Ngày sinh': customer.cus_birthDate
+          ? new Date(customer.cus_birthDate).toISOString().split('T')[0]
           : '',
-        'Updated At': customer.updatedAt
-          ? new Date(customer.updatedAt).toISOString()
+        'Tạo lúc': customer.createdAt
+          ? new Date(customer.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '',
+        'Cập nhật lúc': customer.updatedAt
+          ? new Date(customer.updatedAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
           : '',
       };
     });
@@ -694,14 +576,14 @@ const exportCustomersToXLSX = async (queryParams: any) => {
     // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Khách hàng');
 
     // Write to file
     XLSX.writeFile(workbook, filePath);
 
     return {
-      filePath: `/exports/customers_${timestamp}.xlsx`,
-      fileName: `customers_${timestamp}.xlsx`,
+      fileUrl: `${serverConfig.serverUrl}/exports/${fileName}`,
+      fileName: fileName,
       count: excelData.length,
     };
   } catch (error) {
@@ -728,7 +610,5 @@ export {
   deleteMultipleCustomers,
   searchCustomers,
   getCustomerStatistics,
-  addCustomerInteraction,
-  exportCustomersToCSV,
   exportCustomersToXLSX,
 };

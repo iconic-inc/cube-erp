@@ -4,6 +4,7 @@ import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
 import multer from 'multer';
 import { fileFilter, storage } from '@configs/config.multer';
+import { validateObjectId } from '@schemas/index';
 
 const router = Router();
 
@@ -17,20 +18,6 @@ const upload = multer({
 router.use(authenticationV2);
 
 // Define the routes
-// Get all case services with filtering, pagination, search, and sorting
-router.get(
-  '/',
-  hasPermission('caseService', 'readAny'),
-  CaseServiceController.getAllCaseServices
-);
-
-// Create a new case service
-router.post(
-  '/',
-  hasPermission('caseService', 'createAny'),
-  CaseServiceController.createCaseService
-);
-
 // Export case services to CSV
 router.get(
   '/export/csv',
@@ -45,6 +32,14 @@ router.get(
   CaseServiceController.exportCaseServicesToXLSX
 );
 
+// attach documents to case services
+router.post(
+  '/:id/documents',
+  validateObjectId('id'),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.attachToCase
+);
+
 // Import case services from CSV or XLSX
 router.post(
   '/import',
@@ -53,16 +48,32 @@ router.post(
   CaseServiceController.importCaseServices
 );
 
+// Create a new case service
+router.post(
+  '/',
+  hasPermission('caseService', 'createAny'),
+  CaseServiceController.createCaseService
+);
+
 // Get single case service by ID
 router.get(
   '/:id',
+  validateObjectId('id'),
   hasPermission('caseService', 'readAny'),
   CaseServiceController.getCaseServiceById
+);
+
+// Get all case services with filtering, pagination, search, and sorting
+router.get(
+  '/',
+  hasPermission('caseService', 'readAny'),
+  CaseServiceController.getAllCaseServices
 );
 
 // Update a case service
 router.put(
   '/:id',
+  validateObjectId('id'),
   hasPermission('caseService', 'updateAny'),
   CaseServiceController.updateCaseService
 );
@@ -70,6 +81,7 @@ router.put(
 // Delete a case service
 router.delete(
   '/:id',
+  validateObjectId('id'),
   hasPermission('caseService', 'deleteAny'),
   CaseServiceController.deleteCaseService
 );

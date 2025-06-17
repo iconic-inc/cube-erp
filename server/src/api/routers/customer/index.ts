@@ -8,6 +8,13 @@ const router = Router();
 // Require authentication for all routes
 router.use(authenticationV2);
 
+// Route để xuất danh sách nhân viên sang XLSX
+router.get(
+  '/export/xlsx',
+  hasPermission('employee', 'readAny'),
+  CustomerController.exportCustomersToXLSX
+);
+
 // Get all customers
 router.get(
   '/',

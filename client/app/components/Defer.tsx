@@ -17,7 +17,11 @@ export default function Defer<T>({
   children,
   resolve,
   fallback = <div>Loading...</div>,
-  errorElement = () => <div>Error loading data</div>,
+  errorElement = (error: IResolveError) => (
+    <span className='text-red-500'>
+      {error.message || 'Có lỗi xảy ra khi lấy dữ liệu.'}
+    </span>
+  ),
 }: IDeferProps<T>) {
   const isError = (data: any): data is IResolveError => {
     return (

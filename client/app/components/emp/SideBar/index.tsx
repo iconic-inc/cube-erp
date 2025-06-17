@@ -6,24 +6,14 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from '~/components/ui/sidebar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import { BookOpen, Bot, ChevronUp, SquareTerminal, User2 } from 'lucide-react';
-import { loader } from '../../routes/erp+/_admin+/_layout';
+import { Bot, Folder, User2 } from 'lucide-react';
+import { loader } from '~/routes/erp+/nhan-vien+/_layout';
 import SideNav from './SideNav';
 import { NavUser } from './NavUser';
 
 export default function ERPSidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user } = useLoaderData<typeof loader>();
 
   const isActive = (link: string) =>
@@ -98,7 +88,7 @@ const navMain = [
     items: [
       {
         title: 'Nhân sự',
-        url: '/erp/employees',
+        url: '/erp/nhan-vien/employees',
       },
       {
         title: 'Chấm công',
@@ -110,14 +100,31 @@ const navMain = [
     title: 'Quản lý khách hàng',
     url: '#',
     icon: Bot,
+    isActive: true,
     items: [
       {
         title: 'Khách hàng',
-        url: '/erp/crm/customers',
+        url: '/erp/nhan-vien/crm/customers',
       },
       {
         title: 'Hồ sơ vụ việc',
-        url: '/erp/cases',
+        url: '/erp/nhan-vien/crm/cases',
+      },
+    ],
+  },
+  {
+    title: 'Quản lý tài liệu',
+    url: '#',
+    icon: Folder,
+    isActive: true,
+    items: [
+      {
+        title: 'Tài liệu',
+        url: '/erp/nhan-vien/documents',
+      },
+      {
+        title: 'Thư viện mẫu',
+        url: '/erp/nhan-vien/documents/templates',
       },
     ],
   },

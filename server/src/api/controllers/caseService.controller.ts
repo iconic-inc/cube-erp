@@ -12,6 +12,10 @@ import {
   exportCaseServicesToXLSX,
   importCaseServices,
 } from '@services/caseService.service';
+import {
+  attachDocumentToCase,
+  detachDocumentFromCase,
+} from '@services/document.service';
 
 export class CaseServiceController {
   /**
@@ -113,4 +117,61 @@ export class CaseServiceController {
       metadata: result,
     });
   }
+
+  /**
+   * Attach document to a case service
+   */
+  static attachToCase = async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new BadRequestError('User ID is required');
+    }
+
+    const documentId = req.params.id;
+    const caseId = req.params.caseId;
+
+    const result = await attachDocumentToCase(documentId, caseId, userId);
+
+    return OK({
+      res,
+      metadata: result,
+      message: 'Document attached to case successfully',
+      link: {
+        document: { href: `/documents/${documentId}`, method: 'GET' },
+        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        detach: {
+          href: `/documents/${documentId}/case/${caseId}`,
+          method: 'DELETE',
+        },
+      },
+    });
+  };
+  /**
+   * Detach document from a case service
+   */
+  static detachFromCase = async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new BadRequestError('User ID is required');
+    }
+
+    const documentId = req.params.id;
+    const caseId = req.params.caseId;
+
+    const result = await detachDocumentFromCase(documentId, caseId, userId);
+
+    return OK({
+      res,
+      metadata: result,
+      message: 'Document detached from case successfully',
+      link: {
+        document: { href: `/documents/${documentId}`, method: 'GET' },
+        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        attach: {
+          href: `/documents/${documentId}/case/${caseId}`,
+          method: 'POST',
+        },
+      },
+    });
+  };
 }

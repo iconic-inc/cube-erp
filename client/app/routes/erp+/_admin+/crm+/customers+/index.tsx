@@ -3,22 +3,19 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import Defer from '~/components/Defer';
 import {
   deleteMultipleCustomers,
+  exportCustomers,
   getCustomers,
 } from '~/services/customer.server';
-import CustomerList from './_components/CustomerList';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ICustomer } from '~/interfaces/customer.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import { useState } from 'react';
-import CustomerToolbar from './_components/CustomerToolbar';
 import { IListColumn } from '~/interfaces/app.interface';
-import { Card } from '~/components/ui/card';
 import StatCard from '~/components/StatCard';
-import CustomerBulkActionBar from './_components/CustomerBulkActionBar';
-import CustomerConfirmModal from './_components/CustomerConfirmModal';
 import { isAuthenticated } from '~/services/auth.server';
 import { formatDate } from '~/utils';
+import List from '~/components/List';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -152,7 +149,7 @@ export default function HRMCustomers() {
     <>
       {/* Content Header */}
       <ContentHeader
-        title='Trang chủ'
+        title='Danh sách Khách hàng'
         actionContent={
           <>
             <span className='material-symbols-outlined text-sm mr-1'>add</span>
@@ -192,37 +189,17 @@ export default function HRMCustomers() {
         </Defer>
       </div>
 
-      <Card>
-        {/* Customer Toolbar */}
-        <CustomerToolbar
-          visibleColumns={visibleColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
-
-        {/* Bulk Action Bar (Visible when rows selected) */}
-        {selectedCustomers.length > 0 && (
-          <CustomerBulkActionBar
-            selectedCustomers={selectedCustomers}
-            handleConfirmBulkDelete={() => setShowDeleteModal(true)}
-          />
-        )}
-
-        {showDeleteModal && selectedCustomers.length && (
-          <CustomerConfirmModal
-            setShowDeleteModal={setShowDeleteModal}
-            selectedCustomers={selectedCustomers}
-            setSelectedCustomers={setSelectedCustomers}
-          />
-        )}
-
-        {/* Customer List */}
-        <CustomerList
-          customersPromise={customersPromise}
-          selectedCustomers={selectedCustomers}
-          setSelectedCustomers={setSelectedCustomers}
-          visibleColumns={visibleColumns}
-        />
-      </Card>
+      <List<ICustomer>
+        itemsPromise={customersPromise}
+        name='Khách hàng'
+        selectedItems={selectedCustomers}
+        setSelectedItems={setSelectedCustomers}
+        setShowDeleteModal={setShowDeleteModal}
+        setVisibleColumns={setVisibleColumns}
+        visibleColumns={visibleColumns}
+        showDeleteModal={showDeleteModal}
+        addNewHandler={() => navigate('/erp/crm/customers/new')}
+      />
     </>
   );
 }
@@ -231,7 +208,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
 
   if (!session) {
-    return data({ success: false, message: 'Unauthorized' }, { headers });
+    return data(
+      {
+        success: false,
+        toast: {
+          type: 'error',
+          message: 'Bạn cần đăng nhập để thực hiện hành động này.',
+        },
+      },
+      { headers },
+    );
   }
 
   const formData = await request.formData();
@@ -239,10 +225,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     switch (request.method) {
       case 'DELETE':
-        const customerIdsString = formData.get('customerIds') as string;
+        const customerIdsString = formData.get('itemIds') as string;
         if (!customerIdsString) {
           return data(
-            { success: false, message: 'Dữ liệu không hợp lệ.' },
+            {
+              success: false,
+              toast: {
+                type: 'error',
+                message: 'Dữ liệu không hợp lệ.',
+              },
+            },
             { headers },
           );
         }
@@ -250,7 +242,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const customerIds = JSON.parse(customerIdsString);
         if (!Array.isArray(customerIds) || customerIds.length === 0) {
           return data(
-            { success: false, message: 'Dữ liệu không hợp lệ.' },
+            {
+              success: false,
+
+              toast: {
+                type: 'error',
+                message: 'Dữ liệu không hợp lệ.',
+              },
+            },
             { headers },
           );
         }
@@ -260,7 +259,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return data(
           {
             success: true,
-            message: `Đã xóa ${customerIds.length} thành công`,
+            toast: {
+              type: 'success',
+              message: `Đã xóa ${customerIds.length} Khách hàng thành công!`,
+            },
           },
           { headers },
         );
@@ -270,38 +272,53 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const fileType = formData.get('fileType') as string;
         if (!fileType || !['xlsx'].includes(fileType)) {
           return data(
-            { success: false, message: 'Định dạng file không hợp lệ.' },
+            {
+              success: false,
+              toast: {
+                type: 'error',
+                message: 'Định dạng file không hợp lệ.',
+              },
+            },
             { headers },
           );
         }
 
-      // const url = new URL(request.url);
-      // const fileData = await exportCustomer(
-      //   {
-      //     search: url.searchParams.get('search') || '',
-      //   },
-      //   {
-      //     sortBy: url.searchParams.get('sortBy') || 'createdAt',
-      //     sortOrder:
-      //       (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-      //   },
-      //   fileType as 'xlsx',
-      //   session,
-      // );
-      // return data(
-      //   {
-      //     success: true,
-      //     message: `Đã xuất dữ liệu Khách hàng thành công!`,
-      //     fileUrl: fileData.fileUrl,
-      //     fileName: fileData.fileName,
-      //     count: fileData.count,
-      //   },
-      //   { headers },
-      // );
+        const url = new URL(request.url);
+        const fileData = await exportCustomers(
+          {
+            search: url.searchParams.get('search') || '',
+          },
+          {
+            sortBy: url.searchParams.get('sortBy') || 'createdAt',
+            sortOrder:
+              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+          },
+          fileType as 'xlsx',
+          session,
+        );
+        return data(
+          {
+            success: true,
+            toast: {
+              type: 'success',
+              message: `Đã xuất dữ liệu Khách hàng thành công!`,
+            },
+            fileUrl: fileData.fileUrl,
+            fileName: fileData.fileName,
+            count: fileData.count,
+          },
+          { headers },
+        );
 
       default:
         return data(
-          { success: false, message: 'Method not allowed' },
+          {
+            success: false,
+            toast: {
+              type: 'error',
+              message: 'Phương thức không hợp lệ.',
+            },
+          },
           { headers },
         );
     }
@@ -310,7 +327,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data(
       {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi thực hiện hành động',
+        toast: {
+          type: 'error',
+          message: error.message || 'Có lỗi xảy ra khi thực hiện hành động',
+        },
       },
       { headers },
     );

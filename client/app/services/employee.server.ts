@@ -103,6 +103,20 @@ const updateEmployee = async (
   return response as IEmployee;
 };
 
+// Cập nhật thông tin nhân viên hiện tại
+const updateMyEmployee = async (
+  data: IEmployeeUpdate,
+  request: ISessionUser,
+) => {
+  const userId = request.user.id;
+  const response = await fetcher(`/employees/me`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    request,
+  });
+  return response as IEmployee;
+};
+
 // Xóa nhân viên
 const deleteEmployee = async (id: string, request: ISessionUser) => {
   const response = await fetcher(`/employees/${id}`, {
@@ -148,6 +162,7 @@ export {
   getEmployeeById,
   createEmployee,
   updateEmployee,
+  updateMyEmployee,
   deleteEmployee,
   bulkDeleteEmployees,
   getCurrentEmployeeByUserId,

@@ -79,7 +79,7 @@ const ROLES = [
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
       { resourceId: { slug: 'user' }, actions: ['read:own', 'update:own'] },
-      { resourceId: { slug: 'employee' }, actions: ['read:own', 'update:own'] },
+      { resourceId: { slug: 'employee' }, actions: ['read:any', 'update:own'] },
       {
         resourceId: { slug: 'attendance' },
         actions: ['create:own', 'read:own', 'update:own'],
@@ -119,7 +119,7 @@ const ROLES = [
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
       { resourceId: { slug: 'user' }, actions: ['read:own', 'update:own'] },
-      { resourceId: { slug: 'employee' }, actions: ['read:own', 'update:own'] },
+      { resourceId: { slug: 'employee' }, actions: ['read:any', 'update:own'] },
       {
         resourceId: { slug: 'attendance' },
         actions: ['create:own', 'read:own', 'update:own'],

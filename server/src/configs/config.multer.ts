@@ -61,18 +61,19 @@ export const fileFilter = (allowedTypes: string[] = []) => {
     cb: multer.FileFilterCallback
   ) => {
     if (!allowedTypes || allowedTypes.length === 0) {
-      cb(null, true);
-      return;
+      return cb(null, true);
     }
 
     const fileExt = path.extname(file.originalname).toLowerCase().substring(1);
 
     if (allowedTypes.includes(fileExt)) {
-      cb(null, true);
+      return cb(null, true);
     } else {
       cb(
         new BadRequestError(
-          `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`
+          `Định dạng file không hợp lệ. Chỉ cho phép: ${allowedTypes.join(
+            ', '
+          )}.`
         )
       );
     }
@@ -80,10 +81,18 @@ export const fileFilter = (allowedTypes: string[] = []) => {
 };
 
 // Predefined storage configurations
-export const diskStorage = multer({
+export const diskImageStorage = multer({
   storage: storage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: fileFilter(['jpg', 'jpeg', 'png', 'gif']),
+});
+
+export const diskDocStorage = multer({
+  storage: storage('documents'),
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 10MB
   },
 });
 
@@ -98,6 +107,7 @@ export const memoryStorage = multer({
 export default {
   storage,
   fileFilter,
-  diskStorage,
+  diskImageStorage,
+  diskDocStorage,
   memoryStorage,
 };

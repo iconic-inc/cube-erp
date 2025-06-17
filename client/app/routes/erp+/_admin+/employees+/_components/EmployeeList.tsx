@@ -5,7 +5,7 @@ import { IListResponse } from '~/interfaces/response.interface';
 import EmployeePagination from './EmployeePagination';
 import { IListColumn } from '~/interfaces/app.interface';
 import { useState } from 'react';
-import EmptyListRow from '~/components/EmptyListRow';
+import EmptyListRow from '~/components/List/EmptyListRow';
 
 export default function EmployeeList({
   employeesPromise,

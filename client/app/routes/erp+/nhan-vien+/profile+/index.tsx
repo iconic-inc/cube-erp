@@ -12,6 +12,7 @@ import UserProfileForm from '../../../../components/UserProfileForm';
 import { getCurrentUser, updateUser } from '~/services/user.server';
 import CustomButton from '~/widgets/CustomButton';
 import { parseAuthCookie } from '~/services/cookie.server';
+import { updateMyEmployee } from '~/services/employee.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -50,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       avatar: data.avatar as string,
     };
 
-    const updatedEmployee = await updateUser(auth?.user.id, updateData, auth!);
+    const updatedEmployee = await updateMyEmployee(updateData, auth!);
     return dataResponse(
       {
         employee: updatedEmployee,

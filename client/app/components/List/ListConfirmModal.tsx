@@ -1,35 +1,47 @@
 import { useFetcher } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { ICustomer } from '~/interfaces/customer.interface';
 
-export default function CustomerConfirmModal({
+export default function ListConfirmModal<T>({
+  name,
   setShowDeleteModal,
-  selectedCustomers,
-  setSelectedCustomers,
+  selectedItems,
+  setSelectedItems,
 }: {
+  name: string;
   setShowDeleteModal: (show: boolean) => void;
-  selectedCustomers: ICustomer[];
-  setSelectedCustomers: (customers: ICustomer[]) => void;
+  selectedItems: T[];
+  setSelectedItems: (items: T[]) => void;
 }) {
   const bulkDeleteFetcher = useFetcher();
   const [isDeleting, setIsDeleting] = useState(false);
+  const toastIdRef = useRef<any>(null);
 
   useEffect(() => {
     if (bulkDeleteFetcher.data) {
       setShowDeleteModal(false);
       const response = bulkDeleteFetcher.data as {
         success: boolean;
-        message: string;
-        error?: string;
+        toast: {
+          type: 'success' | 'error';
+          message: string;
+        };
       };
       if (response.success) {
-        toast.success(
-          `Đã xóa ${selectedCustomers.length} Khách hàng thành công!`,
-        );
-        setSelectedCustomers([]);
+        toast.update(toastIdRef.current, {
+          type: response.toast.type,
+          render: `Đã xóa ${selectedItems.length} ${name} thành công!`,
+          autoClose: 3000,
+          isLoading: false,
+        });
+        setSelectedItems([]);
       } else {
-        toast.error(response.error || 'Có lỗi xảy ra khi xóa Khách hàng.');
+        toast.update(toastIdRef.current, {
+          type: 'error',
+          render: response.toast.message || `Có lỗi xảy ra khi xóa ${name}.`,
+          autoClose: 3000,
+          isLoading: false,
+        });
       }
       setIsDeleting(false);
     }
@@ -37,9 +49,12 @@ export default function CustomerConfirmModal({
 
   const handleDelete = () => {
     setIsDeleting(true);
-    const customerIds = selectedCustomers.map((customer) => customer.id);
+    toastIdRef.current = toast.loading(
+      `Đang xóa ${selectedItems.length} ${name}...`,
+    );
+    const itemIds = selectedItems.map((item: any) => item.id);
     bulkDeleteFetcher.submit(
-      { customerIds: JSON.stringify(customerIds) },
+      { itemIds: JSON.stringify(itemIds) },
       { method: 'DELETE' },
     );
   };
@@ -52,9 +67,9 @@ export default function CustomerConfirmModal({
       >
         <h3 className='text-lg font-bold mb-4'>Xác nhận xóa</h3>
         <p className='mb-6'>
-          {selectedCustomers.length > 1
-            ? `Bạn có chắc chắn muốn xóa ${selectedCustomers.length} Khách hàng này?`
-            : `Bạn có chắc chắn muốn xóa Khách hàng này?`}
+          {selectedItems.length > 1
+            ? `Bạn có chắc chắn muốn xóa ${selectedItems.length} ${name} này?`
+            : `Bạn có chắc chắn muốn xóa ${name} này?`}
           Thao tác này không thể khôi phục.
         </p>
 

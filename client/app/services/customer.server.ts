@@ -161,6 +161,25 @@ const deleteMultipleCustomers = async (
   }
 };
 
+// Xuất dữ liệu nhân viên
+const exportCustomers = async (
+  query: any = {},
+  options: IPaginationOptions = {},
+  fileType: 'csv' | 'xlsx',
+  request: ISessionUser,
+) => {
+  const searchParams = new URLSearchParams(query);
+  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
+  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
+  return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
+    `/customers/export/${fileType}?${searchParams.toString()}`,
+    {
+      method: 'GET',
+      request,
+    },
+  );
+};
+
 export {
   getCustomers,
   getCustomerById,
@@ -169,4 +188,5 @@ export {
   deleteCustomer,
   getCustomerStatistics,
   deleteMultipleCustomers,
+  exportCustomers,
 };

@@ -201,7 +201,7 @@ const getPermissions = async (roleSlug: string) => {
         $match: {
           $or: [
             {
-              slug: 'admin',
+              slug: roleSlug,
             },
           ],
         },

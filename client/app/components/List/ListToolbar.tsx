@@ -1,16 +1,17 @@
 import { Form, useFetcher, useSearchParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { IListColumn } from '~/interfaces/app.interface';
-import { ICustomer } from '~/interfaces/customer.interface';
-import { action } from '..';
+// import { action } from '..';
 
-export default function CustomerToolbar({
+export default function ListToolbar<T>({
+  name,
   visibleColumns,
   setVisibleColumns,
 }: {
-  visibleColumns: IListColumn<ICustomer>[];
-  setVisibleColumns: (value: IListColumn<ICustomer>[]) => void;
+  name: string;
+  visibleColumns: IListColumn<T>[];
+  setVisibleColumns: (value: IListColumn<T>[]) => void;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(
@@ -38,7 +39,8 @@ export default function CustomerToolbar({
     ]);
   };
 
-  const exportFetcher = useFetcher<typeof action>();
+  const exportFetcher = useFetcher<any>();
+  const toastIdRef = useRef<any>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
@@ -47,12 +49,19 @@ export default function CustomerToolbar({
         success: boolean;
         fileUrl?: string;
         fileName?: string;
-        message?: string;
+        toast: {
+          type: 'success' | 'error';
+          message: string;
+        };
       };
       if (response.success) {
-        toast.success(`Đã xuất dữ liệu Khách hàng thành công!`);
+        toast.update(toastIdRef.current, {
+          render: `Đã xuất dữ liệu ${name} thành công!`,
+          type: response.toast.type,
+          autoClose: 3000,
+          isLoading: false,
+        });
         if (response.fileUrl) {
-          console.log(response);
           const link = document.createElement('a');
           link.href = response.fileUrl;
           link.download = response.fileName || 'customers';
@@ -60,6 +69,14 @@ export default function CustomerToolbar({
           link.click();
           document.body.removeChild(link);
         }
+      } else {
+        toast.update(toastIdRef.current, {
+          render:
+            response.toast.message || `Có lỗi xảy ra khi xuất dữ liệu ${name}.`,
+          type: 'error',
+          autoClose: 3000,
+          isLoading: false,
+        });
       }
       setIsExporting(false);
     }
@@ -77,7 +94,7 @@ export default function CustomerToolbar({
         </span>
         <input
           type='text'
-          placeholder='Tìm kiếm theo tên, điện thoại, email...'
+          placeholder='Tìm kiếm...'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -91,6 +108,7 @@ export default function CustomerToolbar({
           className='flex gap-3'
           onSubmitCapture={(e) => {
             setIsExporting(true);
+            toastIdRef.current = toast.loading(`Đang xuất dữ liệu ${name}...`);
           }}
         >
           <button
