@@ -58,7 +58,11 @@ const navMain = [
       },
       {
         title: 'Chấm công',
-        url: '#',
+        url: '/erp/attendance',
+      },
+      {
+        title: 'Task',
+        url: '/erp/tasks',
       },
     ],
   },

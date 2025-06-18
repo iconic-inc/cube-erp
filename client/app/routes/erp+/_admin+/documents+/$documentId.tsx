@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 
 import { IDocument } from '~/interfaces/document.interface';
@@ -21,9 +21,9 @@ import { data, useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import Defer from '~/components/Defer';
-import WhiteListCard from './_components/WhiteListCard';
 import { Pen, Pencil, XCircle } from 'lucide-react';
 import TextRenderer from '~/components/TextRenderer';
+import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -227,7 +227,7 @@ export default function DocumentDetailPage() {
                     ) : (
                       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
                         {doc_whiteList.map((employee) => (
-                          <WhiteListCard
+                          <BriefEmployeeCard
                             employee={employee}
                             key={employee.id}
                           />

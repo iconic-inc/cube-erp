@@ -3,7 +3,7 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { IEmployee } from '~/interfaces/employee.interface';
 
-export default function WhiteListCard({
+export default function BriefEmployeeCard({
   employee,
   handleRemoveEmployee,
 }: {
@@ -35,6 +35,7 @@ export default function WhiteListCard({
       {handleRemoveEmployee && (
         <Button
           variant='destructive'
+          type='button'
           onClick={() => handleRemoveEmployee(employee)}
           className='px-3 py-2 h-auto text-xs bg-red-500 hover:bg-red-600 mr-4'
         >

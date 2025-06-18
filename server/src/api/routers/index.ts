@@ -24,8 +24,7 @@ router.use('/auth', require('./auth'));
 router.use('/roles', require('./role'));
 router.use('/resources', require('./resource'));
 
-// router.use('/tasks', require('./task'));
-router.use('/roles', require('./role'));
+router.use('/tasks', require('./task'));
 router.use('/customers', require('./customer'));
 router.use('/resources', require('./resource'));
 router.use('/employees', require('./employee'));

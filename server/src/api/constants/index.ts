@@ -9,6 +9,8 @@ export * from './customer.constant';
 export * from './caseService.constant';
 export * from './document.constant';
 export * from './documentCase.constant';
+export * from './task.constant';
+export * from './taskInstance.constant';
 
 export const KEYTOKEN = {
   DOCUMENT_NAME: 'KeyToken',

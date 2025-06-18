@@ -33,7 +33,7 @@ export default function EmployeeDetails() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='space-y-6'>
       {/* Content Header with Back Button */}
       <ContentHeader
         title='Chi tiết nhân viên'
@@ -59,7 +59,7 @@ export default function EmployeeDetails() {
           </Defer>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

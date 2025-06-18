@@ -52,7 +52,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         page: 1,
       },
       user!,
-    );
+    ).catch((error) => {
+      console.error('Error fetching employees:', error);
+      return {
+        success: false,
+        message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
+      };
+    });
 
     return { document, employeesPromise };
   } catch (error) {
