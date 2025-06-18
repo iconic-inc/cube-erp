@@ -2,7 +2,7 @@ import { Link, useSearchParams } from '@remix-run/react';
 import Defer from '~/components/Defer';
 import { IListResponse } from '~/interfaces/response.interface';
 import ItemPagination from './ListPagination';
-import { IListColumn } from '~/interfaces/app.interface';
+import { IListColumn, ILoaderDataPromise } from '~/interfaces/app.interface';
 import EmptyListRow from '~/components/List/EmptyListRow';
 import {
   Table,
@@ -23,7 +23,7 @@ export default function ItemList<T>({
   addNewHandler,
 }: {
   name: string;
-  itemsPromise: Promise<IListResponse<T>>;
+  itemsPromise: ILoaderDataPromise<IListResponse<T>>;
   selectedItems: T[];
   setSelectedItems: (items: T[]) => void;
   visibleColumns: IListColumn<T>[];
@@ -169,10 +169,7 @@ export default function ItemList<T>({
                       {visibleColumns
                         .filter((column) => column.visible)
                         .map((column) => (
-                          <TableCell
-                            key={column.key}
-                            className='px-2 py-4 max-w-[500px]'
-                          >
+                          <TableCell key={column.key} className='max-w-[500px]'>
                             {column.render(item)}
                           </TableCell>
                         ))}

@@ -1,14 +1,10 @@
 import { Await } from '@remix-run/react';
 import { Suspense, ReactNode } from 'react';
-
-interface IResolveError {
-  success: boolean;
-  message: string;
-}
+import { ILoaderDataPromise, IResolveError } from '~/interfaces/app.interface';
 
 interface IDeferProps<T> {
   children: (data: T) => ReactNode;
-  resolve: Promise<T | IResolveError> | (T | IResolveError);
+  resolve: ILoaderDataPromise<T>;
   fallback?: ReactNode;
   errorElement?: (err: IResolveError) => ReactNode;
 }

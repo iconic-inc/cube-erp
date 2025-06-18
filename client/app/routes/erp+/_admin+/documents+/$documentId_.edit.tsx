@@ -29,7 +29,6 @@ import {
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import Defer from '~/components/Defer';
-import WhiteListCard from './_components/WhiteListCard';
 import { Plus, Save, XCircle } from 'lucide-react';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
@@ -39,9 +38,14 @@ import ItemList from '~/components/List/ItemList';
 import { toast } from 'react-toastify';
 import { Badge } from '~/components/ui/badge';
 import { Switch } from '~/components/ui/switch';
+import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  const url = new URL(request.url);
+  const page = Number(url.searchParams.get('page')) || 1;
+  const limit = Number(url.searchParams.get('limit')) || 10;
 
   try {
     // Fetch document details from the API
@@ -50,11 +54,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const employeesPromise = getEmployees(
       {},
       {
-        limit: 500,
-        page: 1,
+        limit,
+        page,
       },
       user!,
-    );
+    ).catch((e) => {
+      console.error('Error fetching employees:', e);
+      return {
+        success: false,
+        message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
+      };
+    });
 
     return { document, employeesPromise };
   } catch (error) {
@@ -290,53 +300,6 @@ export default function DocumentDetailPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label
-                    htmlFor='docUrl'
-                    className='text-gray-700 font-semibold mb-2 block'
-                  >
-                    Đường dẫn
-                  </Label>
-                  <div className='flex items-center space-x-2'>
-                    <Input
-                      id='docUrl'
-                      name='url'
-                      value={document.doc_url}
-                      disabled
-                      className='flex-grow bg-white border-gray-300 focus:ring-purple-500'
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                  <div>
-                    <Label className='text-gray-700 font-semibold mb-2 block'>
-                      Tạo lúc
-                    </Label>
-                    <Input
-                      value={formatDate(
-                        document.createdAt,
-                        'HH:mm - DD/MM/YYYY',
-                      )}
-                      disabled
-                      className='bg-white border-gray-300'
-                    />
-                  </div>
-                  <div>
-                    <Label className='text-gray-700 font-semibold mb-2 block'>
-                      Cập nhật lần cuối lúc
-                    </Label>
-                    <Input
-                      value={formatDate(
-                        document.updatedAt,
-                        'HH:mm - DD/MM/YYYY',
-                      )}
-                      disabled
-                      className='bg-white border-gray-300'
-                    />
-                  </div>
-                </div>
-
                 {creatorUser && (
                   <div className='border-t border-gray-200 pt-6'>
                     <h4 className='col-span-12 text-xl font-bold text-gray-800 mb-4 flex items-center'>
@@ -410,7 +373,7 @@ export default function DocumentDetailPage() {
                     <>
                       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
                         {whiteList.map((employee) => (
-                          <WhiteListCard
+                          <BriefEmployeeCard
                             key={employee.id}
                             employee={employee}
                             handleRemoveEmployee={handleRemoveEmployee}

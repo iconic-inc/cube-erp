@@ -5,6 +5,7 @@ import {
   IEmployeeDocument,
   IEmployeeModel,
 } from '../interfaces/employee.interface';
+import { formatAttributeName } from '@utils/index';
 
 const employeeSchema = new Schema<IEmployeeDocument, IEmployeeModel>(
   {
@@ -38,7 +39,7 @@ const employeeSchema = new Schema<IEmployeeDocument, IEmployeeModel>(
 );
 
 employeeSchema.statics.build = (attrs: IEmployeeCreate) => {
-  return EmployeeModel.create(attrs);
+  return EmployeeModel.create(formatAttributeName(attrs, USER.EMPLOYEE.PREFIX));
 };
 
 export const EmployeeModel = model<IEmployeeDocument, IEmployeeModel>(

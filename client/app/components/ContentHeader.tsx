@@ -7,7 +7,7 @@ export default function ContentHeader({
   title,
   actionContent,
   actionHandler,
-  actionVariant = 'default',
+  actionVariant = 'primary',
   backHandler,
 }: {
   title: string;

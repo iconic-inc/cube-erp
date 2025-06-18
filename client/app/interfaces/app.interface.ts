@@ -6,3 +6,12 @@ export interface IListColumn<T> {
   render: (item: T) => React.ReactNode;
   filterable?: boolean;
 }
+
+export interface IResolveError {
+  success: boolean;
+  message: string;
+}
+
+export type ILoaderDataPromise<T> =
+  | Promise<T | IResolveError>
+  | (T | IResolveError);
