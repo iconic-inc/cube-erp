@@ -11,18 +11,6 @@ const router = Router();
 router.use(authenticationV2);
 
 /**
- * @route GET /api/documents/case/:caseId
- * @desc Get all documents for a specific case
- * @access Private
- */
-router.get(
-  '/case/:caseId',
-  validateObjectId('caseId'),
-  hasPermission('document', 'readAny'),
-  DocumentController.getDocumentsByCase
-);
-
-/**
  * @route GET /api/documents/:id
  * @desc Get document by ID
  * @access Private
@@ -101,17 +89,6 @@ router.delete(
   validateObjectId('id'),
   hasPermission('document', 'deleteAny'),
   DocumentController.deleteDocument
-);
-
-/**
- * @route DELETE /api/documents/:id/case/:caseId
- * @desc Detach document from a case service
- * @access Private
- */
-router.delete(
-  '/:id/case/:caseId',
-  hasPermission('document', 'updateAny'),
-  DocumentController.detachFromCase
 );
 
 module.exports = router;

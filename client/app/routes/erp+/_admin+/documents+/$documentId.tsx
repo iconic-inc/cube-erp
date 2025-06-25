@@ -94,7 +94,7 @@ export default function DocumentDetailPage() {
 
           return (
             <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-              <CardHeader className='bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-6 rounded-t-xl'>
+              <CardHeader className='bg-gradient-to-r from-amber-500 to-yellow-500 text-white py-6 rounded-t-xl'>
                 <CardTitle className='text-white text-3xl font-bold flex items-center justify-between'>
                   {document.doc_name}
                   <Badge

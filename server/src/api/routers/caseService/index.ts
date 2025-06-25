@@ -4,7 +4,19 @@ import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
 import multer from 'multer';
 import { fileFilter, storage } from '@configs/config.multer';
-import { validateObjectId } from '@schemas/index';
+import {
+  validateObjectId,
+  validateSchema,
+  validateQuery,
+} from '@schemas/index';
+import {
+  caseServiceCreateSchema,
+  caseServiceUpdateSchema,
+  caseServiceQuerySchema,
+  caseServiceBulkDeleteSchema,
+  documentIdsSchema,
+  caseDocumentIdsSchema,
+} from '@schemas/caseService.schema';
 
 const router = Router();
 
@@ -17,14 +29,6 @@ const upload = multer({
 // Require authentication for all routes
 router.use(authenticationV2);
 
-// Define the routes
-// Export case services to CSV
-router.get(
-  '/export/csv',
-  hasPermission('caseService', 'readAny'),
-  CaseServiceController.exportCaseServicesToCSV
-);
-
 // Export case services to XLSX
 router.get(
   '/export/xlsx',
@@ -32,12 +36,38 @@ router.get(
   CaseServiceController.exportCaseServicesToXLSX
 );
 
-// attach documents to case services
-router.post(
+// Get tasks associated with a case service
+router.get(
+  '/:id/tasks',
+  validateObjectId('id'),
+  hasPermission('caseService', 'readAny'),
+  CaseServiceController.getCaseServiceTasks
+);
+
+// Get documents attached to a case service
+router.get(
   '/:id/documents',
   validateObjectId('id'),
+  hasPermission('caseService', 'readAny'),
+  CaseServiceController.getCaseServiceDocuments
+);
+
+// attach documents to case services
+router.post(
+  '/:caseId/documents',
+  validateObjectId('caseId'),
+  validateSchema(documentIdsSchema),
   hasPermission('caseService', 'updateAny'),
-  CaseServiceController.attachToCase
+  CaseServiceController.attachDocToCase
+);
+
+// detach documents from a case service
+router.delete(
+  '/:caseId/documents',
+  validateObjectId('caseId'),
+  validateSchema(caseDocumentIdsSchema),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.detachDocFromCase
 );
 
 // Import case services from CSV or XLSX
@@ -51,6 +81,7 @@ router.post(
 // Create a new case service
 router.post(
   '/',
+  validateSchema(caseServiceCreateSchema),
   hasPermission('caseService', 'createAny'),
   CaseServiceController.createCaseService
 );
@@ -66,6 +97,7 @@ router.get(
 // Get all case services with filtering, pagination, search, and sorting
 router.get(
   '/',
+  validateQuery(caseServiceQuerySchema),
   hasPermission('caseService', 'readAny'),
   CaseServiceController.getAllCaseServices
 );
@@ -74,16 +106,17 @@ router.get(
 router.put(
   '/:id',
   validateObjectId('id'),
+  validateSchema(caseServiceUpdateSchema),
   hasPermission('caseService', 'updateAny'),
   CaseServiceController.updateCaseService
 );
 
-// Delete a case service
+// Delete multiple case services
 router.delete(
-  '/:id',
-  validateObjectId('id'),
+  '/bulk',
+  validateSchema(caseServiceBulkDeleteSchema),
   hasPermission('caseService', 'deleteAny'),
-  CaseServiceController.deleteCaseService
+  CaseServiceController.bulkDeleteCaseServices
 );
 
 module.exports = router;

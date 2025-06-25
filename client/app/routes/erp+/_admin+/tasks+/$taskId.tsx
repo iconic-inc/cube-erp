@@ -1,8 +1,7 @@
-import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import { LoaderFunctionArgs } from '@remix-run/node';
 
-import { deleteTask, getTaskById } from '~/services/task.server';
-import { isAuthenticated } from '~/services/auth.server';
-import { data, useLoaderData, useNavigate } from '@remix-run/react';
+import { getTaskById } from '~/services/task.server';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import TaskDetail from './_components/TaskDetail';

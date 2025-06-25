@@ -16,7 +16,7 @@ export const TASK = {
 
 export const TASK_PRIORITY_BADGE_CLASSES = {
   low: 'bg-green-500 text-white px-3 py-1 rounded-full',
-  medium: 'bg-yellow-500 text-gray-900 px-3 py-1 rounded-full',
+  medium: 'bg-yellow-500 text-white px-3 py-1 rounded-full',
   high: 'bg-orange-500 text-white px-3 py-1 rounded-full',
   urgent: 'bg-red-500 text-white px-3 py-1 rounded-full',
 } as const;

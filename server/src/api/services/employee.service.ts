@@ -278,7 +278,7 @@ const getEmployeeByUserId = async (emp_user: string) => {
     throw new NotFoundError('Employee not found');
   }
 
-  return getReturnData(employee);
+  return getReturnData(employee as any) as Required<IEmployeeDetail>;
 };
 
 const getCurrentEmployeeByUserId = async (emp_user: string) => {

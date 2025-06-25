@@ -11,6 +11,7 @@
     "gen:metadata": "ts-node src/scripts/genMetadata.ts",
     "gen:resource": "ts-node src/scripts/genResource.ts",
     "gen:role": "ts-node src/scripts/genRole.ts",
+    "gen:task-template": "ts-node src/scripts/genTaskTemplate.ts",
     "build": "tsc && tsc-alias"
   },
   "keywords": [],

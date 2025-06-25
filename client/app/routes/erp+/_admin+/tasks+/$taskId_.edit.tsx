@@ -127,8 +127,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           endDate: formData.get('endDate') as string,
           status: formData.get('status') as keyof typeof TASK.STATUS,
           priority: formData.get('priority') as keyof typeof TASK.PRIORITY,
+          caseOrder: +(formData.get('caseOrder') as string) || 0,
         };
-        console.log('Updating task with data:', data);
 
         // Kiểm tra dữ liệu bắt buộc
         if (

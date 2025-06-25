@@ -3,8 +3,6 @@ import { HydratedDocument, Model, Types } from 'mongoose';
 import { IEmployeePopulate } from './employee.interface';
 import { ICaseServicePopulate } from './caseService.interface';
 
-type Values<T> = T[keyof T];
-
 export interface ITaskPopulate {
   id: string;
   tsk_name: string;
@@ -24,13 +22,10 @@ export interface ITask extends Omit<ITaskPopulate, 'tsk_assignees'> {
   tsk_description: string;
 }
 
-export interface ITaskDetail
-  extends Omit<ITaskPopulate, 'updatedAt' | 'createdAt'> {
+export interface ITaskDetail extends ITaskPopulate {
   tsk_description?: string;
   tsk_caseService?: ICaseServicePopulate;
   tsk_caseOrder?: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ITaskCreate {

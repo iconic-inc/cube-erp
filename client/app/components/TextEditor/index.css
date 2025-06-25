@@ -1,6 +1,4 @@
 #quill-container {
-  height: 100%;
-
   img {
     max-width: 50%;
   }
@@ -13,7 +11,7 @@
   }
 
   .ql-container {
-    height: 100%;
+    flex: 1;
     max-height: 500px;
     overflow-y: auto;
   }

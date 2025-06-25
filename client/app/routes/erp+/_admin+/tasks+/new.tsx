@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Link,
   useLocation,
@@ -12,11 +11,11 @@ import { createTask } from '~/services/task.server';
 import { toast } from 'react-toastify';
 import { ITaskCreate } from '~/interfaces/task.interface';
 import TaskDetailForm from './_components/TaskDetailForm';
-import { Button } from '~/components/ui/button';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { getEmployees } from '~/services/employee.server';
 import { TASK } from '~/constants/task.constant';
+import { getCaseServiceById } from '~/services/case.server';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -24,6 +23,7 @@ type ToastType = 'success' | 'error' | 'info' | 'warning';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
   const url = new URL(request.url);
+  const caseId = url.searchParams.get('caseId');
   const page = Number(url.searchParams.get('page')) || 1;
   const limit = Number(url.searchParams.get('limit')) || 100;
 
@@ -43,15 +43,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
     };
   });
+  const casePromise = caseId
+    ? getCaseServiceById(caseId, auth!).catch((e) => {
+        console.error('Error fetching case:', e);
+        return {
+          success: false,
+          message: 'Xảy ra lỗi khi lấy thông tin Case',
+        };
+      })
+    : undefined;
 
   // Trả về dữ liệu cần thiết cho trang NewTask
   return {
     employeesPromise,
+    casePromise,
   };
 };
 
 export default function NewTask() {
-  const { employeesPromise } = useLoaderData<typeof loader>();
+  const { employeesPromise, casePromise } = useLoaderData<typeof loader>();
   const location = useLocation();
   const actionData = location.state?.actionData;
 
@@ -87,6 +97,7 @@ export default function NewTask() {
         employees={employeesPromise}
         formId={formId}
         type='create'
+        casePromise={casePromise}
       />
     </div>
   );
@@ -110,8 +121,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           description: formData.get('description') as string,
           startDate: formData.get('startDate') as string,
           endDate: formData.get('endDate') as string,
-          status: 'not_started',
+          status: formData.get('status') as keyof typeof TASK.STATUS,
           priority: formData.get('priority') as keyof typeof TASK.PRIORITY,
+          caseService: formData.get('caseService') as string,
+          caseOrder: +(formData.get('caseOrder') as string) || 0,
         };
 
         // Kiểm tra dữ liệu bắt buộc

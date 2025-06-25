@@ -7,11 +7,13 @@ export default function ListConfirmModal<T>({
   setShowDeleteModal,
   selectedItems,
   setSelectedItems,
+  deleteHandleRoute,
 }: {
   name: string;
   setShowDeleteModal: (show: boolean) => void;
   selectedItems: T[];
   setSelectedItems: (items: T[]) => void;
+  deleteHandleRoute?: string;
 }) {
   const bulkDeleteFetcher = useFetcher();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -55,7 +57,7 @@ export default function ListConfirmModal<T>({
     const itemIds = selectedItems.map((item: any) => item.id);
     bulkDeleteFetcher.submit(
       { itemIds: JSON.stringify(itemIds) },
-      { method: 'DELETE' },
+      { method: 'DELETE', action: deleteHandleRoute || '.' },
     );
   };
 

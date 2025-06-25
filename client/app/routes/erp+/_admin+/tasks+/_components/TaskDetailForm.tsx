@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
 
 import { action } from '~/routes/erp+/_admin+/tasks+/new';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { TASK } from '~/constants/task.constant';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { IEmployee } from '~/interfaces/employee.interface';
+import { IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
@@ -35,17 +35,21 @@ import {
 } from '~/components/ui/alert-dialog';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
+import { ICaseService } from '~/interfaces/case.interface';
+import CaseServiceBrief from './CaseServiceBrief';
 
 export default function TaskDetailForm({
   formId,
   employees,
   type,
   taskPromise,
+  casePromise,
 }: {
   formId: string;
-  employees: ILoaderDataPromise<IListResponse<IEmployee>>;
+  employees: ILoaderDataPromise<IListResponse<IEmployeeBrief>>;
   type: 'create' | 'update';
   taskPromise?: ILoaderDataPromise<ITask>;
+  casePromise?: ILoaderDataPromise<ICaseService>;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
   const toastIdRef = useRef<any>(null);
@@ -53,8 +57,9 @@ export default function TaskDetailForm({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [assignees, setAssignees] = useState<IEmployee[]>([]);
+  const [assignees, setAssignees] = useState<IEmployeeBrief[]>([]);
   const [startDate, setStartDate] = useState<Date>(new Date());
+  const [caseOrder, setCaseOrder] = useState<number>(0);
   const [endDate, setEndDate] = useState<Date>(
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   );
@@ -63,19 +68,19 @@ export default function TaskDetailForm({
 
   // State for task status
   const [status, setStatus] = useState<keyof typeof TASK.STATUS>('not_started');
+  const [caseService, setCaseService] = useState<ICaseService | null>(null);
 
   // Thêm state để theo dõi lỗi
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
 
-  const [selected, setSelectedItems] = useState<IEmployee[]>([]);
+  const [selected, setSelectedItems] = useState<IEmployeeBrief[]>([]);
 
-  const [employeeToRemove, setEmployeeToRemove] = useState<IEmployee | null>(
-    null,
-  );
-  const [employeesToAdd, setEmployeesToAdd] = useState<IEmployee[]>([]);
+  const [employeeToRemove, setEmployeeToRemove] =
+    useState<IEmployeeBrief | null>(null);
+  const [employeesToAdd, setEmployeesToAdd] = useState<IEmployeeBrief[]>([]);
 
-  const handleRemoveAssignee = (employee: IEmployee) => {
+  const handleRemoveAssignee = (employee: IEmployeeBrief) => {
     setEmployeeToRemove(employee);
   };
 
@@ -88,7 +93,7 @@ export default function TaskDetailForm({
     }
   };
 
-  const handleAddAssignees = (employees: IEmployee[]) => {
+  const handleAddAssignees = (employees: IEmployeeBrief[]) => {
     if (employees.length === 0) {
       toast.error('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
       return;
@@ -214,13 +219,14 @@ export default function TaskDetailForm({
     }
   }, [fetcher.data]);
 
+  // false by default if type is 'update', true after resolve the casePromise
+  const [isContentReady, setIsContentReady] = useState(type !== 'update');
   // Fetch and load task data when in edit mode
   useEffect(() => {
     if (type === 'update' && taskPromise) {
       const loadTask = async () => {
         try {
           const task = await taskPromise;
-          console.log('taskPromise', task);
           if (task && 'id' in task) {
             setName(task.tsk_name || '');
             setDescription(task.tsk_description || '');
@@ -230,6 +236,8 @@ export default function TaskDetailForm({
             setStatus(
               (task.tsk_status as keyof typeof TASK.STATUS) || 'not_started',
             );
+            setCaseService(task.tsk_caseService || null);
+            setCaseOrder(task.tsk_caseOrder || 0);
 
             // Convert string dates to Date objects
             if (task.tsk_startDate) {
@@ -254,9 +262,33 @@ export default function TaskDetailForm({
         }
       };
 
-      loadTask();
+      loadTask().then(() => {
+        setIsContentReady(true);
+      });
     }
-  }, [type, taskPromise]);
+    if (type === 'create' && casePromise) {
+      const loadCase = async () => {
+        try {
+          const caseData = await casePromise;
+          if (caseData && 'id' in caseData) {
+            setCaseService(caseData);
+            setAssignees([
+              ...(caseData.case_assignees || []),
+              caseData.case_leadAttorney,
+            ]);
+            setStartDate(new Date(caseData.case_startDate));
+          } else {
+            console.error('Case data is not in the expected format:', caseData);
+            toast.error('Không thể tải dữ liệu hồ sơ. Vui lòng thử lại sau.');
+          }
+        } catch (error) {
+          console.error('Error loading case data:', error);
+          toast.error('Không thể tải dữ liệu hồ sơ. Vui lòng thử lại sau.');
+        }
+      };
+      loadCase();
+    }
+  }, [type, taskPromise, casePromise]);
 
   return (
     <fetcher.Form
@@ -266,25 +298,49 @@ export default function TaskDetailForm({
       className='space-y-6'
     >
       {/* Task Name */}
-      <div>
-        <Label
-          htmlFor='name'
-          className='text-gray-700 font-semibold mb-2 block'
-        >
-          Tên Task
-        </Label>
-        <Input
-          id='name'
-          name='name'
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className='bg-white border-gray-300'
-          placeholder='Nhập tên Task'
-          required
-        />
-        {errors.name && (
-          <span className='text-red-500 text-sm'>{errors.name}</span>
-        )}
+      <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
+        <div className='md:col-span-8'>
+          <Label
+            htmlFor='name'
+            className='text-gray-700 font-semibold mb-2 block'
+          >
+            Tên Task
+          </Label>
+          <Input
+            id='name'
+            name='name'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className='bg-white border-gray-300'
+            placeholder='Nhập tên Task'
+            required
+          />
+          {errors.name && (
+            <span className='text-red-500 text-sm'>{errors.name}</span>
+          )}
+        </div>
+
+        <div className='md:col-span-4'>
+          <Label
+            htmlFor='caseOrder'
+            className='text-gray-700 font-semibold mb-2 block'
+          >
+            Thứ tự
+          </Label>
+          <Input
+            id='caseOrder'
+            name='caseOrder'
+            type='number'
+            value={caseOrder}
+            onChange={(e) => setCaseOrder(Number(e.target.value))}
+            className='bg-white border-gray-300'
+            placeholder='Nhập tên Task'
+            required
+          />
+          {errors.name && (
+            <span className='text-red-500 text-sm'>{errors.name}</span>
+          )}
+        </div>
       </div>
 
       {/* Task Description */}
@@ -301,6 +357,7 @@ export default function TaskDetailForm({
               <TextEditor
                 name='description'
                 value={description}
+                isReady={isContentReady}
                 onChange={handleDescriptionChange}
                 placeholder='Nhập mô tả chi tiết cho Task'
               />
@@ -407,6 +464,19 @@ export default function TaskDetailForm({
         </div>
       </div>
 
+      <div className='flex items-center justify-center border-t border-gray-200 pt-6'>
+        {caseService ? (
+          <>
+            <CaseServiceBrief caseService={caseService} />
+            <input type='hidden' name='caseService' value={caseService.id} />
+          </>
+        ) : (
+          <Button variant='primary' type='button'>
+            <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>
+          </Button>
+        )}
+      </div>
+
       {/* Assignees */}
       <div className='border-t border-gray-200 pt-6'>
         <Label
@@ -505,7 +575,7 @@ export default function TaskDetailForm({
             </AlertDialogContent>
           </AlertDialog>
 
-          <ItemList<IEmployee>
+          <ItemList<IEmployeeBrief>
             addNewHandler={() => {
               navigate('/erp/employees/new');
             }}

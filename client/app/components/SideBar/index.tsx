@@ -6,7 +6,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '~/components/ui/sidebar';
-import { Bot, Folder, User2 } from 'lucide-react';
+import { Folder, User2, IdCard } from 'lucide-react';
 import { loader } from '../../routes/erp+/_admin+/_layout';
 import SideNav from './SideNav';
 import { NavUser } from './NavUser';
@@ -49,7 +49,7 @@ const navMain = [
   {
     title: 'Quản lý nhân sự',
     url: '#',
-    icon: User2,
+    icon: IdCard,
     isActive: true,
     items: [
       {
@@ -69,7 +69,7 @@ const navMain = [
   {
     title: 'Quản lý khách hàng',
     url: '#',
-    icon: Bot,
+    icon: User2,
     isActive: true,
     items: [
       {
@@ -83,7 +83,7 @@ const navMain = [
     ],
   },
   {
-    title: 'Quản lý tài liệu',
+    title: 'Khác',
     url: '#',
     icon: Folder,
     isActive: true,
@@ -92,10 +92,10 @@ const navMain = [
         title: 'Tài liệu',
         url: '/erp/documents',
       },
-      {
-        title: 'Thư viện mẫu',
-        url: '/erp/documents/templates',
-      },
+      // {
+      //   title: 'Thư viện mẫu',
+      //   url: '/erp/documents/templates',
+      // },
     ],
   },
 ];

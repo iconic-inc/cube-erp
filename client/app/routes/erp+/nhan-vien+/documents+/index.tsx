@@ -16,7 +16,6 @@ import { IListResponse } from '~/interfaces/response.interface';
 import { IListColumn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
-import { action as uploadAction } from '~/routes/api+/documents+/upload';
 import { toast } from 'react-toastify';
 import { IEmployee } from '~/interfaces/employee.interface';
 
@@ -66,9 +65,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMDocuments() {
   const { documentsPromise } = useLoaderData<typeof loader>();
 
-  const [selectedDocuments, setSelectedDocuments] = useState<IDocument[]>([]);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IDocument>[]
   >([
@@ -146,7 +142,7 @@ export default function HRMDocuments() {
       },
     },
   ]);
-  const uploadFetcher = useFetcher<typeof uploadAction>();
+  const uploadFetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
 
   const navigate = useNavigate();
@@ -172,7 +168,6 @@ export default function HRMDocuments() {
       uploadFetcher.submit(formData, {
         method: 'POST',
         encType: 'multipart/form-data',
-        action: '/api/documents/upload',
       });
     };
 
@@ -221,12 +216,8 @@ export default function HRMDocuments() {
 
       <List<IDocument>
         itemsPromise={documentsPromise}
-        selectedItems={selectedDocuments}
-        setSelectedItems={setSelectedDocuments}
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
-        setShowDeleteModal={setShowDeleteModal}
-        showDeleteModal={showDeleteModal}
         addNewHandler={addNewHandler}
         name='Tài liệu'
       />

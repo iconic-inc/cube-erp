@@ -1,48 +1,49 @@
-import React, { useEffect, useRef, useState } from 'react';
-import DocumentPreview from '../DocumentPreview';
+import { useEffect, useRef, useState } from 'react';
 import { IDocument } from '~/interfaces/document.interface';
 import DocumentUploader from './DocumentUploader';
-import DocumentMetadata from './DocumentMetadata';
 import { useFetcher } from '@remix-run/react';
 import { toast } from 'react-toastify';
 import { action } from '~/routes/api+/documents+/upload';
+import { IListResponse } from '~/interfaces/response.interface';
+import ItemList from '~/components/List/ItemList';
+import LoadingCard from '~/components/LoadingCard';
+import ErrorCard from '~/components/ErrorCard';
+import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 
 interface DocumentPickerProps {
-  multiple?: boolean;
   selected?: IDocument[];
   defaultActiveTab?: number;
   onClose: () => void;
   onSelect: (selectedDocuments: IDocument[]) => void;
+  documentGetter: () => Promise<IListResponse<IDocument>>;
 }
 
 export default function DocumentPicker({
   selected = [],
-  multiple = false,
   defaultActiveTab = 2,
   onClose,
   onSelect,
+  documentGetter,
 }: DocumentPickerProps) {
-  const [documents, setDocuments] = useState<IDocument[]>([]);
+  const [documents, setDocuments] = useState<IListResponse<IDocument>>({
+    data: [],
+    pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDocuments, setSelectedDocuments] =
     useState<IDocument[]>(selected);
   const [activeTab, setActiveTab] = useState(defaultActiveTab);
 
   const handleDocumentClick = (id: string) => {
-    if (multiple) {
-      setSelectedDocuments((prev) => {
-        const res = prev.find((doc) => doc.id === id)
-          ? prev.filter((doc) => doc.id !== id) // Deselect if already selected
-          : [...prev, documents.find((doc) => doc.id === id)!]; // Add to selection
+    setSelectedDocuments((prev) => {
+      const res = prev.find((doc) => doc.id === id)
+        ? prev.filter((doc) => doc.id !== id) // Deselect if already selected
+        : [...prev, documents.data.find((doc) => doc.id === id)!]; // Add to selection
 
-        return res;
-      });
-    } else {
-      setSelectedDocuments((prev) =>
-        prev.find((doc) => doc.id === id)
-          ? [{} as IDocument] // Deselect if already selected
-          : [documents.find((doc) => doc.id === id)!],
-      ); // Allow only one selection
-    }
+      return res;
+    });
   };
 
   const handleConfirm = () => {
@@ -52,10 +53,15 @@ export default function DocumentPicker({
 
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/data?getter=getDocuments');
-      const documents = (await res.json()) as IDocument[];
+      try {
+        const documents = await documentGetter();
 
-      setDocuments(documents);
+        setDocuments(documents);
+      } catch (error: any) {
+        console.error('Error fetching documents:', error);
+        setError(error.message || 'Có lỗi xảy ra khi tải tài liệu');
+      }
+      setIsLoading(false);
     })();
 
     const escapeHandler = (e: KeyboardEvent) => {
@@ -72,6 +78,7 @@ export default function DocumentPicker({
   const fetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   useEffect(() => {
     switch (fetcher.state) {
       case 'submitting':
@@ -94,16 +101,14 @@ export default function DocumentPicker({
           setLoading(false);
 
           if (toastData.type === 'success') {
-            if (
-              fetcher.formMethod === 'DELETE' &&
-              fetcher.data?.documents.length
-            ) {
-              setSelectedDocuments((prev) =>
-                prev.filter((doc) => doc.id !== fetcher.data?.documents[0]?.id),
-              );
-              setDocuments((prev) =>
-                prev.filter((doc) => doc.id !== fetcher.data?.documents[0]?.id),
-              );
+            if (fetcher.formMethod === 'DELETE') {
+              setDocuments((prev) => ({
+                ...prev,
+                data: prev.data.filter(
+                  (doc) => !selectedDocuments.some((d) => d.id === doc.id),
+                ),
+              }));
+              setSelectedDocuments([]);
             }
           }
 
@@ -119,9 +124,7 @@ export default function DocumentPicker({
       <div className='flex flex-col bg-white gap-4 p-6 rounded-lg shadow-lg w-full h-full overflow-y-auto'>
         <div className='flex-grow grid grid-cols-12 divide-x divide-zinc-200 gap-4'>
           <div
-            className={`${
-              activeTab === 1 ? 'col-span-12' : 'col-span-9'
-            } flex-grow w-full h-full divide-y divide-zinc-200 transition-all`}
+            className={`col-span-12 flex-grow w-full h-full divide-y divide-zinc-200 transition-all`}
           >
             <div className='w-full flex gap-4 px-4'>
               <button
@@ -147,76 +150,140 @@ export default function DocumentPicker({
             {activeTab === 1 && (
               <DocumentUploader
                 handleDocumentUploaded={(documents) => {
-                  setDocuments((prev) => [...prev, ...documents]);
-                  if (multiple)
-                    setSelectedDocuments((prev) => [...prev, ...documents]);
-                  else setSelectedDocuments([documents[0]]);
+                  setDocuments((prev) => ({
+                    ...prev,
+                    data: [...prev.data, ...documents],
+                  }));
+
+                  setSelectedDocuments((prev) => [...prev, ...documents]);
 
                   setActiveTab(2);
                 }}
               />
             )}
-            {activeTab === 2 && (
-              <ul className='flex gap-4 pt-4'>
-                {documents.map((document, index) => (
-                  <div
-                    key={index}
-                    className={`border-2 rounded-lg aspect-square cursor-pointer flex justify-center items-center transition-all ${
-                      selectedDocuments.find((doc) => doc?.id === document?.id)
-                        ? 'border-blue-500'
-                        : 'border-gray-300'
-                    } overflow-hidden`}
-                    onClick={() => handleDocumentClick(document.id)}
-                  >
-                    {document.doc_name}
+
+            {isLoading && <LoadingCard />}
+            {error && <ErrorCard message={error} />}
+            {activeTab === 2 && !error && !isLoading && (
+              <>
+                <div className='p-4 border-b border-gray-200 flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center justify-between'>
+                  <div className='relative w-full md:flex-grow md:max-w-md'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined'>
+                      search
+                    </span>
+                    <input
+                      type='text'
+                      placeholder='Tìm kiếm...'
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    />
                   </div>
-                ))}
-              </ul>
+                  <div></div>
+                </div>
+
+                <ItemList<IDocument>
+                  itemsPromise={{
+                    data: documents.data.filter((doc) =>
+                      doc.doc_name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase()),
+                    ),
+                    pagination: documents.pagination,
+                  }}
+                  addNewHandler={() => setActiveTab(1)}
+                  name='Tài liệu'
+                  selectedItems={selectedDocuments}
+                  setSelectedItems={setSelectedDocuments}
+                  visibleColumns={[
+                    {
+                      key: 'name',
+                      title: 'Tên tài liệu',
+                      visible: true,
+                      render: (doc) => (
+                        <span className='text-sm font-medium text-gray-800'>
+                          {doc.doc_name}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'createdBy',
+                      title: 'Người tạo',
+                      visible: true,
+                      render: (doc) => (
+                        <span className='text-sm text-gray-600'>
+                          {`${doc.doc_createdBy.emp_user?.usr_firstName} ${doc.doc_createdBy.emp_user?.usr_lastName}`}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'isPublic',
+                      title: 'Chế độ truy cập',
+                      visible: true,
+                      render: (doc) => (
+                        <Badge
+                          className={`${doc.doc_isPublic ? 'bg-green-500' : 'bg-yellow-500'} text-white`}
+                        >
+                          {doc.doc_isPublic ? 'Công khai' : 'Hạn chế'}
+                        </Badge>
+                      ),
+                    },
+                    {
+                      key: 'actions',
+                      title: 'Hành động',
+                      visible: true,
+                      render: (doc) => (
+                        <Button
+                          onClick={() => handleDocumentClick(doc.id)}
+                          variant={
+                            selectedDocuments.find((d) => d.id === doc.id)
+                              ? 'destructive'
+                              : 'primary'
+                          }
+                        >
+                          {selectedDocuments.find((d) => d.id === doc.id)
+                            ? 'Bỏ chọn'
+                            : 'Chọn'}
+                        </Button>
+                      ),
+                    },
+                  ]}
+                  showPagination={false}
+                />
+              </>
             )}
           </div>
-
-          {activeTab === 1 || (
-            <div className='col-span-3 h-full pl-4 flex flex-col gap-4'>
-              <DocumentPreview src={selectedDocuments[0]?.doc_url} />
-              <DocumentMetadata
-                document={
-                  documents.find(
-                    (doc) => doc.id === selectedDocuments[0]?.id,
-                  ) || ({} as any)
-                }
-              />
-            </div>
-          )}
         </div>
 
         <div className='h-fit flex justify-between'>
           <div className='flex gap-4'>
-            <button
-              onClick={onClose}
-              className='bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition'
-              type='button'
-            >
+            <Button onClick={onClose} variant='secondary' type='button'>
               Hủy bỏ
-            </button>
+            </Button>
 
             {selectedDocuments.length > 0 && (
-              <button
+              <Button
+                variant='destructive'
                 onClick={() => {
-                  selectedDocuments.map((doc) =>
-                    fetcher.submit(null, {
+                  fetcher.submit(
+                    {
+                      itemIds: JSON.stringify(
+                        selectedDocuments.map((doc) => doc.id),
+                      ),
+                    },
+                    {
                       method: 'DELETE',
-                      action: `/cmsdesk/documents/${doc.id}`,
-                    }),
+                      action: `/erp/documents`,
+                    },
                   );
                 }}
                 disabled={loading}
-                className='bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition'
                 type='button'
-                title='Xóa ảnh đã chọn'
-                aria-label='Xóa ảnh đã chọn'
+                title='Xóa tài liệu đã chọn'
+                aria-label='Xóa tài liệu đã chọn'
               >
-                {multiple ? 'Xóa tất cả' : 'Xóa ảnh'}
-              </button>
+                Xóa Tài liệu đã chọn
+              </Button>
             )}
           </div>
 

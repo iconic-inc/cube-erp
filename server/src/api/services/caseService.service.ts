@@ -1,578 +1,1020 @@
-import { CaseServiceModel } from '@models/caseService.model';
-import { Types } from 'mongoose';
-import { IResponseList } from '../interfaces/response.interface';
-
-import { BadRequestError, NotFoundError } from '../core/errors';
-import {
-  formatAttributeName,
-  getReturnData,
-  getReturnList,
-} from '@utils/index';
-import { CASE_SERVICE } from '../constants';
-import { createObjectCsvWriter } from 'csv-writer';
-import xlsx from 'xlsx';
-import fs from 'fs';
-import path from 'path';
-import { TMP_FOLDER } from '@constants/index';
+import mongoose, { Types } from 'mongoose';
 import {
   ICaseServiceCreate,
+  ICaseServiceQuery,
+  ICaseServiceUpdate,
   ICaseServiceResponse,
 } from '../interfaces/caseService.interface';
+import { BadRequestError, NotFoundError } from '../core/errors';
+import { DocumentModel } from '@models/document.model';
+import { DocumentCaseModel } from '@models/documentCase.model';
+import { IDocumentQuery } from '../interfaces/document.interface';
+import {
+  getReturnList,
+  getReturnData,
+  formatAttributeName,
+  removeNestedNullish,
+} from '@utils/index';
+import { getEmployeeByUserId } from './employee.service';
+import { CaseServiceModel } from '@models/caseService.model';
+import { CASE_SERVICE, TASK } from '../constants';
+import { TaskTemplateModel } from '@models/taskTemplate.model';
+import { TaskModel } from '@models/task.model';
+import '@utils/date.util'; // Ensure date utilities are loaded
+import { getTasks } from './task.service';
 
-const getAllCaseServices = async (query: any) => {
-  const {
-    page = 1,
-    limit = 10,
-    sort = 'createdAt',
-    order = 'desc',
-    search = '',
-    status,
-    startDate,
-    endDate,
-    leadAttorney,
-    customer,
-  } = query;
+const getCaseServices = async (
+  query: ICaseServiceQuery = {}
+): Promise<{
+  data: ICaseServiceResponse[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}> => {
+  try {
+    // Apply pagination options
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy,
+      sortOrder,
+      status,
+      startDate,
+      endDate,
+      customerId,
+      leadAttorneyId,
+    } = query;
 
-  // Build the filter query
-  const filterQuery: any = {};
+    // Build the aggregation pipeline
+    const pipeline: any[] = [];
 
-  if (status) {
-    filterQuery.case_status = status;
-  }
+    // Stage 1: Match by filters
+    const matchConditions: any = {};
 
-  if (leadAttorney) {
-    filterQuery.case_leadAttorney = new Types.ObjectId(leadAttorney as string);
-  }
+    // Add search filter if provided
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+      matchConditions.$or = [
+        { case_code: searchRegex },
+        { case_notes: searchRegex },
+      ];
+    }
 
-  if (customer) {
-    filterQuery.case_customer = new Types.ObjectId(customer as string);
-  }
+    // Add status filter if provided
+    if (status) {
+      matchConditions.case_status = status;
+    }
 
-  // Handle date range filtering
-  if (startDate) {
-    filterQuery.case_startDate = { $gte: new Date(startDate as string) };
-  }
+    // Add date range filters if provided
+    if (startDate || endDate) {
+      matchConditions.case_startDate = {};
 
-  if (endDate) {
-    filterQuery.case_endDate = { $lte: new Date(endDate as string) };
-  }
+      if (startDate) {
+        matchConditions.case_startDate.$gte = new Date(startDate);
+      }
 
-  // Handle search
-  if (search) {
-    filterQuery.$or = [
-      { case_code: { $regex: search, $options: 'i' } },
-      { case_notes: { $regex: search, $options: 'i' } },
-    ];
-  }
+      if (endDate) {
+        if (!matchConditions.case_startDate) {
+          matchConditions.case_startDate = {};
+        }
+        matchConditions.case_startDate.$lte = new Date(endDate);
+      }
+    }
 
-  // Calculate pagination
-  const pageNum = parseInt(page as string);
-  const limitNum = parseInt(limit as string);
-  const skip = (pageNum - 1) * limitNum;
+    // Add customer filter if provided
+    if (customerId) {
+      matchConditions.case_customer = new Types.ObjectId(customerId);
+    }
 
-  // Build sort object
-  const sortObj: any = {};
-  sortObj[sort as string] = order === 'asc' ? 1 : -1;
+    // Add lead attorney filter if provided
+    if (leadAttorneyId) {
+      matchConditions.case_leadAttorney = new Types.ObjectId(leadAttorneyId);
+    }
 
-  // Execute query with populate
-  const caseServices = await CaseServiceModel.find(filterQuery)
-    .populate('case_customer', 'cus_firstName cus_lastName cus_email')
-    .populate({
-      path: 'case_leadAttorney',
-      select: 'employeeCode position department',
-      populate: {
-        path: 'userId',
-        select: 'usr_firstName usr_lastName usr_email',
+    // Add match stage if we have any conditions
+    if (Object.keys(matchConditions).length > 0) {
+      pipeline.push({ $match: matchConditions });
+    }
+
+    // Stage 2: Lookup customer information
+    pipeline.push({
+      $lookup: {
+        from: 'customers',
+        localField: 'case_customer',
+        foreignField: '_id',
+        as: 'case_customer',
       },
-    })
-    .populate({
-      path: 'case_associateAttorney',
-      select: 'employeeCode position department',
-      populate: {
-        path: 'userId',
-        select: 'usr_firstName usr_lastName usr_email',
-      },
-    })
-    .populate({
-      path: 'case_paralegal',
-      select: 'employeeCode position department',
-      populate: {
-        path: 'userId',
-        select: 'usr_firstName usr_lastName usr_email',
-      },
-    })
-    .sort(sortObj)
-    .skip(skip)
-    .limit(limitNum)
-    .lean();
+    });
 
-  // Get total count for pagination
-  const total = await CaseServiceModel.countDocuments(filterQuery);
+    // Stage 3: Lookup lead attorney information
+    pipeline.push({
+      $lookup: {
+        from: 'employees',
+        localField: 'case_leadAttorney',
+        foreignField: '_id',
+        as: 'case_leadAttorney',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'emp_user',
+              foreignField: '_id',
+              as: 'emp_user',
+            },
+          },
+          {
+            $unwind: { path: '$emp_user', preserveNullAndEmptyArrays: true },
+          },
+        ],
+      },
+    });
 
-  return {
-    data: getReturnList(caseServices) as any[],
-    pagination: {
-      total,
-      page: pageNum,
-      limit: limitNum,
-      totalPages: Math.ceil(total / limitNum),
-    },
-  } as IResponseList<ICaseServiceResponse>;
+    // Stage 4: Lookup assignees information if available
+    pipeline.push({
+      $lookup: {
+        from: 'employees',
+        localField: 'case_assignees',
+        foreignField: '_id',
+        as: 'case_assignees',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'emp_user',
+              foreignField: '_id',
+              as: 'emp_user',
+            },
+          },
+          {
+            $unwind: { path: '$emp_user', preserveNullAndEmptyArrays: true },
+          },
+        ],
+      },
+    });
+
+    // Stage 5: Unwind the arrays to work with single documents
+    pipeline.push({
+      $unwind: { path: '$case_customer', preserveNullAndEmptyArrays: true },
+    });
+    pipeline.push({
+      $unwind: { path: '$case_leadAttorney', preserveNullAndEmptyArrays: true },
+    });
+
+    // Stage 6: Project to include only necessary fields and transform to match ICaseServiceResponse
+    pipeline.push({
+      $project: {
+        _id: 1,
+        case_customer: {
+          _id: 1,
+          cus_firstName: '$case_customer.cus_firstName',
+          cus_lastName: '$case_customer.cus_lastName',
+          cus_code: '$case_customer.cus_code',
+        },
+        case_code: 1,
+        case_leadAttorney: {
+          _id: 1,
+          emp_user: {
+            _id: 1,
+            usr_username: '$case_leadAttorney.emp_user.usr_username',
+            usr_email: '$case_leadAttorney.emp_user.usr_email',
+            usr_firstName: '$case_leadAttorney.emp_user.usr_firstName',
+            usr_lastName: '$case_leadAttorney.emp_user.usr_lastName',
+          },
+          emp_code: '$case_leadAttorney.emp_code',
+          emp_position: '$case_leadAttorney.emp_position',
+          emp_department: '$case_leadAttorney.emp_department',
+        },
+        case_assignees: {
+          $map: {
+            input: '$case_assignees',
+            as: 'assignee',
+            in: {
+              _id: 1,
+              emp_user: {
+                _id: 1,
+                usr_username: '$$assignee.emp_user.usr_username',
+                usr_email: '$$assignee.emp_user.usr_email',
+                usr_firstName: '$$assignee.emp_user.usr_firstName',
+                usr_lastName: '$$assignee.emp_user.usr_lastName',
+              },
+              emp_code: '$$assignee.emp_code',
+              emp_position: '$$assignee.emp_position',
+              emp_department: '$$assignee.emp_department',
+            },
+          },
+        },
+        case_notes: 1,
+        case_status: 1,
+        case_startDate: 1,
+        case_endDate: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+
+    // Stage 7: Sort the results
+    const sortField = sortBy ? `${sortBy}` : 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({
+      $sort: { [sortField]: sortDirection },
+    });
+
+    // Get total count first (for pagination)
+    const countPipeline = [...pipeline]; // Clone the pipeline
+    countPipeline.push({ $count: 'total' });
+    const countResult = await CaseServiceModel.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Stage 8: Apply pagination
+    pipeline.push({ $skip: (page - 1) * limit });
+    pipeline.push({ $limit: +limit });
+
+    // Execute the aggregation
+    const caseServices = await CaseServiceModel.aggregate(pipeline);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: getReturnList(caseServices) as ICaseServiceResponse[],
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
+  } catch (error) {
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi lấy danh sách Hồ sơ vụ việc: ${error.message}`
+      );
+    }
+    throw error;
+  }
 };
 
 const getCaseServiceById = async (id: string) => {
-  const caseService = await CaseServiceModel.findById(id)
-    .populate(
-      'case_customer',
-      'customer_firstName customer_lastName customer_email'
-    )
-    .populate(
-      'case_leadAttorney',
-      'employee_firstName employee_lastName employee_email'
-    )
-    .populate(
-      'case_associateAttorney',
-      'employee_firstName employee_lastName employee_email'
-    )
-    .populate(
-      'case_paralegal',
-      'employee_firstName employee_lastName employee_email'
-    );
+  if (!Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('ID Hồ sơ vụ việc không hợp lệ');
+  }
 
+  const caseService = await CaseServiceModel.findById(id)
+    .populate([
+      {
+        path: 'case_customer',
+        select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+      },
+      {
+        path: 'case_leadAttorney',
+        select: 'emp_user emp_code emp_position emp_department',
+        populate: {
+          path: 'emp_user',
+          select: 'usr_username usr_email usr_firstName usr_lastName',
+        },
+      },
+      {
+        path: 'case_assignees',
+        select: 'emp_user emp_code emp_position emp_department',
+        populate: {
+          path: 'emp_user',
+          select: 'usr_username usr_email usr_firstName usr_lastName',
+        },
+      },
+    ])
+    .lean();
   if (!caseService) {
-    throw new NotFoundError('Case service not found');
+    throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
   }
 
   return getReturnData(caseService);
 };
 
 const createCaseService = async (caseServiceData: ICaseServiceCreate) => {
-  // Generate a unique case code if not provided
-  if (!caseServiceData.code) {
-    const timestamp = Date.now().toString();
-    const randomNum = Math.floor(Math.random() * 9000 + 1000).toString();
-    caseServiceData.code = `CS-${timestamp.substring(
-      timestamp.length - 4
-    )}${randomNum}`;
+  const [foundCase, taskTemplate] = await Promise.all([
+    CaseServiceModel.findOne({
+      case_code: caseServiceData.code,
+    }),
+    TaskTemplateModel.findOne({ tpl_key: 'default' }).lean(),
+  ]);
+  if (foundCase) {
+    throw new BadRequestError('Mã Hồ sơ vụ việc đã tồn tại');
+  }
+  if (!taskTemplate) {
+    throw new NotFoundError('Không tìm thấy mẫu công việc mặc định');
   }
 
-  const newCaseService = await CaseServiceModel.build(caseServiceData);
-  return getReturnData(newCaseService);
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const [caseService] = await CaseServiceModel.create(
+      [formatAttributeName(caseServiceData, CASE_SERVICE.PREFIX)],
+      { session }
+    );
+    if (!caseService) {
+      throw new BadRequestError('Không thể tạo Hồ sơ vụ việc');
+    }
+
+    for (const step of taskTemplate.tpl_steps) {
+      const [task] = await TaskModel.create(
+        [
+          formatAttributeName(
+            {
+              ...step,
+              _id: undefined, // Remove _id to avoid conflicts
+              caseService: caseService._id,
+              startDate: new Date().addDays(step.caseOrder - 1), // Default start date is relative to case order (0-6)
+              endDate: new Date().addDays(step.caseOrder), // Default end date is one day after start date (1-7)
+              assignees: [
+                ...(caseServiceData.assignees || []),
+                caseServiceData.leadAttorney,
+              ],
+            },
+            TASK.PREFIX
+          ),
+        ],
+        { session }
+      );
+      if (!task) {
+        throw new BadRequestError('Không thể tạo công việc');
+      }
+    }
+    await session.commitTransaction();
+
+    return getReturnData(caseService);
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
-const updateCaseService = async (
-  id: string,
-  caseServiceData: Partial<ICaseServiceCreate>
+const updateCaseService = async (id: string, data: ICaseServiceUpdate) => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('ID Hồ sơ vụ việc không hợp lệ');
+  }
+
+  // Check if case service exists
+  const existingCaseService = await CaseServiceModel.findById(id);
+  if (!existingCaseService) {
+    throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
+  }
+
+  // Check if the new code already exists (if code is being updated)
+  if (data.code && data.code !== existingCaseService.case_code) {
+    const duplicateCase = await CaseServiceModel.findOne({
+      case_code: data.code,
+      _id: { $ne: id },
+    });
+    if (duplicateCase) {
+      throw new BadRequestError('Mã Hồ sơ vụ việc đã tồn tại');
+    }
+  }
+
+  try {
+    const updatedCaseService = await CaseServiceModel.findByIdAndUpdate(
+      id,
+      {
+        $set: formatAttributeName(
+          removeNestedNullish({
+            ...data,
+            customer: data.customer,
+            leadAttorney: data.leadAttorney,
+            assignees: data.assignees,
+            code: data.code,
+            notes: data.notes,
+            status: data.status,
+            startDate: data.startDate ? new Date(data.startDate) : undefined,
+            endDate: data.endDate ? new Date(data.endDate) : undefined,
+          }),
+          CASE_SERVICE.PREFIX
+        ),
+      },
+      { new: true }
+    )
+      .populate([
+        {
+          path: 'case_customer',
+          select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+        },
+        {
+          path: 'case_leadAttorney',
+          select: 'emp_user emp_code emp_position emp_department',
+          populate: {
+            path: 'emp_user',
+            select: 'usr_username usr_email usr_firstName usr_lastName',
+          },
+        },
+        {
+          path: 'case_assignees',
+          select: 'emp_user emp_code emp_position emp_department',
+          populate: {
+            path: 'emp_user',
+            select: 'usr_username usr_email usr_firstName usr_lastName',
+          },
+        },
+      ])
+      .lean();
+
+    if (!updatedCaseService) {
+      throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc sau khi cập nhật');
+    }
+
+    return getReturnData(updatedCaseService);
+  } catch (error) {
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi cập nhật Hồ sơ vụ việc: ${error.message}`
+      );
+    }
+    throw error;
+  }
+};
+
+const deleteCaseService = async (id: string) => {};
+
+const bulkDeleteCaseServices = async (ids: string[]) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    await CaseServiceModel.deleteMany({ _id: { $in: ids } }, { session });
+    await DocumentCaseModel.deleteMany(
+      { caseService: { $in: ids } },
+      { session }
+    );
+    await TaskModel.deleteMany({ tsk_caseService: { $in: ids } }, { session });
+    await DocumentCaseModel.deleteMany(
+      { caseService: { $in: ids } },
+      { session }
+    );
+    await session.commitTransaction();
+    return { success: true, message: 'Bulk delete successful' };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const importCaseServices = async (filePath: string) => {};
+
+const exportCaseServicesToXLSX = async (query: any) => {};
+
+/**
+ * Attach document to a case
+ * @param {string[]} documentIds - Document ID
+ * @param {string} caseId - Case service ID
+ * @param {string} userId - user ID of the employee making the request
+ */
+const attachDocumentToCase = async (
+  documentIds: string[],
+  caseId: string,
+  userId: string
 ) => {
-  // Find and update
-  const updatedCaseService = await CaseServiceModel.findByIdAndUpdate(
-    id,
-    { $set: formatAttributeName(caseServiceData, CASE_SERVICE.PREFIX) },
-    { new: true, runValidators: true }
-  ).populate(
-    'case_customer case_leadAttorney case_associateAttorney case_paralegal'
-  );
+  // Input already validated before going to controller using zod
 
-  if (!updatedCaseService) {
-    throw new NotFoundError('Case service not found');
-  }
+  try {
+    const [docRes, caseRes, employeeRes] = await Promise.allSettled([
+      DocumentModel.find({
+        _id: { $in: documentIds },
+      }),
+      CaseServiceModel.findById(caseId),
+      getEmployeeByUserId(userId),
+    ]);
 
-  return getReturnData(updatedCaseService);
-};
+    if (
+      docRes.status === 'rejected' ||
+      caseRes.status === 'rejected' ||
+      employeeRes.status === 'rejected'
+    ) {
+      throw new BadRequestError(
+        'Không tìm thấy tài liệu, Hồ sơ vụ việc hoặc nhân viên'
+      );
+    }
 
-const deleteCaseService = async (id: string) => {
-  const deletedCaseService = await CaseServiceModel.findByIdAndDelete(id);
+    const documents = docRes.value;
+    const caseService = caseRes.value;
+    const employee = employeeRes.value;
 
-  if (!deletedCaseService) {
-    throw new NotFoundError('Case service not found');
-  }
+    if (!caseService) {
+      throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
+    }
 
-  return getReturnData(deletedCaseService);
-};
+    // Check which documents exist
+    const foundDocumentIds = documents.map((doc) => doc._id.toString());
+    const notFoundDocumentIds = documentIds.filter(
+      (id) => !foundDocumentIds.includes(id)
+    );
+    if (notFoundDocumentIds.length > 0) {
+      throw new NotFoundError(`Không tìm thấy tài liệu.`);
+    }
 
-/**
- * Export case services to CSV
- */
-const exportCaseServicesToCSV = async (query: any) => {
-  const { status, startDate, endDate, leadAttorney, customer } = query;
+    // Check which documents are already attached to this case
+    const existingRelations = await DocumentCaseModel.find({
+      document: { $in: documentIds },
+      caseService: caseId,
+    });
 
-  // Build the filter query
-  const filterQuery: any = {};
+    const alreadyAttachedDocumentIds = existingRelations.map((rel) =>
+      rel.document.toString()
+    );
+    const documentsToAttach = documentIds.filter(
+      (id) =>
+        !alreadyAttachedDocumentIds.includes(id) &&
+        foundDocumentIds.includes(id)
+    );
 
-  if (status) {
-    filterQuery.case_status = status;
-  }
-
-  if (leadAttorney) {
-    filterQuery.case_leadAttorney = new Types.ObjectId(leadAttorney as string);
-  }
-
-  if (customer) {
-    filterQuery.case_customer = new Types.ObjectId(customer as string);
-  }
-
-  // Handle date range filtering
-  if (startDate) {
-    filterQuery.case_startDate = { $gte: new Date(startDate as string) };
-  }
-
-  if (endDate) {
-    filterQuery.case_endDate = { $lte: new Date(endDate as string) };
-  }
-
-  // Fetch cases with their related data
-  const caseServices = await getAllCaseServices(filterQuery);
-
-  // Create a CSV file
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}-${
-    now.getMonth() + 1
-  }-${now.getDate()}`;
-  const fileName = `case-services-export-${timestamp}.csv`;
-  const filePath = path.join(TMP_FOLDER, fileName);
-
-  // Ensure tmp directory exists
-  if (!fs.existsSync(TMP_FOLDER)) {
-    fs.mkdirSync(TMP_FOLDER, { recursive: true });
-  }
-
-  const csvWriter = createObjectCsvWriter({
-    path: filePath,
-    header: [
-      { id: 'case_code', title: 'Case Code' },
-      { id: 'customer', title: 'Customer' },
-      { id: 'leadAttorney', title: 'Lead Attorney' },
-      { id: 'associateAttorney', title: 'Associate Attorney' },
-      { id: 'paralegal', title: 'Paralegal' },
-      { id: 'case_notes', title: 'Notes' },
-      { id: 'case_status', title: 'Status' },
-      { id: 'case_startDate', title: 'Start Date' },
-      { id: 'case_endDate', title: 'End Date' },
-      { id: 'createdAt', title: 'Created At' },
-      { id: 'updatedAt', title: 'Updated At' },
-    ],
-  });
-
-  // Format the data for CSV export
-  const formattedData = caseServices.data.map((cs) => {
-    const customer = cs.case_customer
-      ? `${cs.case_customer.cus_firstName} ${cs.case_customer.cus_lastName}`
-      : 'N/A';
-
-    const leadAttorney = cs.case_leadAttorney
-      ? `${cs.case_leadAttorney.emp_user.usr_firstName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
-      : 'N/A';
-
-    const associateAttorney = cs.case_associateAttorney
-      ? `${cs.case_associateAttorney.emp_user.usr_firstName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
-      : 'N/A';
-
-    const paralegal = cs.case_paralegal
-      ? `${cs.case_paralegal.emp_user.usr_firstName} ${cs.case_paralegal.emp_user.usr_lastName}`
-      : 'N/A';
-
-    return {
-      ...cs,
-      customer,
-      leadAttorney,
-      associateAttorney,
-      paralegal,
-      case_startDate: cs.case_startDate
-        ? new Date(cs.case_startDate).toLocaleDateString()
-        : 'N/A',
-      case_endDate: cs.case_endDate
-        ? new Date(cs.case_endDate).toLocaleDateString()
-        : 'N/A',
-      createdAt: new Date(cs.createdAt).toLocaleString(),
-      updatedAt: new Date(cs.updatedAt).toLocaleString(),
+    // Prepare result summary
+    const result = {
+      success: true,
+      message: '',
+      details: {
+        total: documentIds.length,
+        alreadyAttached: alreadyAttachedDocumentIds.length,
+        newlyAttached: documentsToAttach.length,
+        notFound: notFoundDocumentIds.length,
+        alreadyAttachedIds: alreadyAttachedDocumentIds,
+        newlyAttachedIds: documentsToAttach,
+        notFoundIds: notFoundDocumentIds,
+      },
     };
-  });
 
-  // Write the CSV file
-  await csvWriter.writeRecords(formattedData);
+    // Create new document-case relationships for documents that aren't already attached
+    if (documentsToAttach.length > 0) {
+      const relations = documentsToAttach.map((docId) => ({
+        document: docId,
+        caseService: caseId,
+        createdBy: employee.id,
+      }));
 
-  return { filePath, fileName };
+      await DocumentCaseModel.insertMany(relations);
+    }
+
+    // Generate appropriate message based on results
+    const messages = [];
+    if (result.details.newlyAttached > 0) {
+      messages.push(
+        `${result.details.newlyAttached} tài liệu đã được đính kèm mới`
+      );
+    }
+    if (result.details.alreadyAttached > 0) {
+      messages.push(
+        `${result.details.alreadyAttached} tài liệu đã được đính kèm trước đó`
+      );
+    }
+    if (result.details.notFound > 0) {
+      messages.push(`${result.details.notFound} tài liệu không tìm thấy`);
+    }
+
+    if (messages.length === 0) {
+      result.message = 'Không có tài liệu nào được xử lý';
+    } else {
+      result.message = messages.join(', ');
+    }
+
+    // Add success indicator based on whether any new attachments were made
+    if (
+      result.details.newlyAttached === 0 &&
+      result.details.alreadyAttached === 0 &&
+      result.details.notFound > 0
+    ) {
+      result.success = false;
+      result.message = 'Không tìm thấy tài liệu nào để đính kèm';
+    }
+
+    return result;
+  } catch (error) {
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi đính kèm tài liệu vào Hồ sơ vụ việc: ${error.message}`
+      );
+    }
+    throw error;
+  }
 };
 
 /**
- * Export case services to XLSX
+ * Detach document from a case
+ * @param {string} documentId - Document ID
+ * @param {string} caseId - Case service ID
+ * @param {string} employeeId - ID of the employee making the request
  */
-const exportCaseServicesToXLSX = async (query: any) => {
-  const { status, startDate, endDate, leadAttorney, customer } = query;
+const detachDocumentFromCase = async (
+  caseDocumentIds: string[],
+  caseId: string
+) => {
+  const caseDocuments = await DocumentCaseModel.find({
+    _id: { $in: caseDocumentIds },
+  });
 
-  // Build the filter query
-  const filterQuery: any = {};
-
-  if (status) {
-    filterQuery.case_status = status;
-  }
-
-  if (leadAttorney) {
-    filterQuery.case_leadAttorney = new Types.ObjectId(leadAttorney as string);
-  }
-
-  if (customer) {
-    filterQuery.case_customer = new Types.ObjectId(customer as string);
-  }
-
-  // Handle date range filtering
-  if (startDate) {
-    filterQuery.case_startDate = { $gte: new Date(startDate as string) };
-  }
-
-  if (endDate) {
-    filterQuery.case_endDate = { $lte: new Date(endDate as string) };
-  }
-
-  // Fetch cases with their related data
-  const caseServices = await getAllCaseServices(filterQuery);
-
-  // Format the data for XLSX export
-  const formattedData = caseServices.data.map((cs) => {
-    const customer = cs.case_customer
-      ? `${cs.case_customer.cus_firstName} ${cs.case_customer.cus_lastName}`
-      : 'N/A';
-
-    const leadAttorney = cs.case_leadAttorney
-      ? `${cs.case_leadAttorney.emp_user.usr_firstName} ${cs.case_leadAttorney.emp_user.usr_lastName}`
-      : 'N/A';
-
-    const associateAttorney = cs.case_associateAttorney
-      ? `${cs.case_associateAttorney.emp_user.usr_firstName} ${cs.case_associateAttorney.emp_user.usr_lastName}`
-      : 'N/A';
-
-    const paralegal = cs.case_paralegal
-      ? `${cs.case_paralegal.emp_user.usr_firstName} ${cs.case_paralegal.emp_user.usr_lastName}`
-      : 'N/A';
-
+  if (!caseDocuments.length) {
     return {
-      'Case Code': cs.case_code,
-      Customer: customer,
-      'Lead Attorney': leadAttorney,
-      'Associate Attorney': associateAttorney,
-      Paralegal: paralegal,
-      Notes: cs.case_notes || 'N/A',
-      Status: cs.case_status,
-      'Start Date': cs.case_startDate
-        ? new Date(cs.case_startDate).toLocaleDateString()
-        : 'N/A',
-      'End Date': cs.case_endDate
-        ? new Date(cs.case_endDate).toLocaleDateString()
-        : 'N/A',
-      'Created At': new Date(cs.createdAt).toLocaleString(),
-      'Updated At': new Date(cs.updatedAt).toLocaleString(),
+      message:
+        'Không tìm thấy tài liệu nào được đính kèm vào Hồ sơ vụ việc này',
+      success: true,
     };
-  });
-
-  // Create a workbook and worksheet
-  const workbook = xlsx.utils.book_new();
-  const worksheet = xlsx.utils.json_to_sheet(formattedData);
-
-  // Add the worksheet to the workbook
-  xlsx.utils.book_append_sheet(workbook, worksheet, 'Case Services');
-
-  // Generate the XLSX file
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}-${
-    now.getMonth() + 1
-  }-${now.getDate()}`;
-  const fileName = `case-services-export-${timestamp}.xlsx`;
-  const filePath = path.join(TMP_FOLDER, fileName);
-
-  // Ensure tmp directory exists
-  if (!fs.existsSync(TMP_FOLDER)) {
-    fs.mkdirSync(TMP_FOLDER, { recursive: true });
   }
 
-  // Write the workbook to file
-  xlsx.writeFile(workbook, filePath);
+  await DocumentCaseModel.deleteMany({
+    _id: { $in: caseDocumentIds },
+    caseService: caseId,
+  });
 
-  return { filePath, fileName };
+  return {
+    message: 'Tài liệu đã được gỡ khỏi Hồ sơ vụ việc thành công',
+    success: true,
+  };
 };
 
 /**
- * Process import data from CSV or XLSX
+ * Get documents by case
+ * @param {string} caseId - Case service ID
+ * @param {string} userId - ID of the employee making the request
+ * @param {IDocumentQuery} query - Query parameters for filtering documents
  */
-const processImportData = async (importData: any[]) => {
-  const processedData = [];
-  const errors = [];
+const getCaseServiceDocuments = async (
+  caseId: string,
+  userId: string,
+  query: IDocumentQuery = {}
+) => {
+  if (!Types.ObjectId.isValid(caseId)) {
+    throw new BadRequestError('Invalid case ID');
+  }
 
-  for (const [index, item] of importData.entries()) {
-    try {
-      // Map the imported data to the CaseService model format
-      const caseServiceData: any = {
-        code: item['Case Code'] || item['case_code'],
-        customer: item['Customer ID'] || item['customer'] || null,
-        leadAttorney: item['Lead Attorney ID'] || item['leadAttorney'] || null,
-        associateAttorney:
-          item['Associate Attorney ID'] || item['associateAttorney'] || null,
-        paralegal: item['Paralegal ID'] || item['paralegal'] || null,
-        notes: item['Notes'] || item['case_notes'] || null,
-        status: item['Status'] || item['case_status'] || 'open',
-        startDate:
-          item['Start Date'] ||
-          item['case_startDate'] ||
-          new Date().toISOString(),
-        endDate: item['End Date'] || item['case_endDate'] || null,
-      };
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy,
+      sortOrder = 'desc',
+      type,
+      startDate,
+      endDate,
+    } = query;
 
-      // Validate required fields
-      if (!caseServiceData.customer || !caseServiceData.leadAttorney) {
-        throw new Error('Customer and Lead Attorney are required');
+    const employee = await getEmployeeByUserId(userId);
+    const employeeId = employee.id;
+
+    // Build the aggregation pipeline starting from DocumentCase
+    const pipeline: any[] = [];
+
+    // Stage 1: Match documents attached to this case service
+    pipeline.push({
+      $match: {
+        caseService: new Types.ObjectId(caseId),
+      },
+    });
+
+    // Stage 2: Lookup to get document details
+    pipeline.push({
+      $lookup: {
+        from: 'documents',
+        localField: 'document',
+        foreignField: '_id',
+        as: 'document',
+      },
+    });
+
+    // Stage 3: Unwind document array
+    pipeline.push({
+      $unwind: {
+        path: '$document',
+        preserveNullAndEmptyArrays: false,
+      },
+    });
+
+    // Stage 4: Check document access permissions
+    pipeline.push({
+      $match: {
+        $or: [
+          { 'document.doc_isPublic': true },
+          { 'document.doc_createdBy': new Types.ObjectId(employeeId) },
+          {
+            'document.doc_whiteList': { $in: [new Types.ObjectId(employeeId)] },
+          },
+        ],
+      },
+    });
+
+    // Stage 5: Lookup to populate document creator information
+    pipeline.push({
+      $lookup: {
+        from: 'employees',
+        localField: 'document.doc_createdBy',
+        foreignField: '_id',
+        as: 'document.doc_createdBy',
+      },
+    });
+
+    // Stage 6: Unwind createdBy array
+    pipeline.push({
+      $unwind: {
+        path: '$document.doc_createdBy',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 7: Lookup to populate user information for creator
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'document.doc_createdBy.emp_user',
+        foreignField: '_id',
+        as: 'document.doc_createdBy.emp_user',
+      },
+    });
+
+    // Stage 8: Unwind the user array for creator
+    pipeline.push({
+      $unwind: {
+        path: '$document.doc_createdBy.emp_user',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 9: Lookup to populate whitelist information
+    pipeline.push({
+      $lookup: {
+        from: 'employees',
+        localField: 'document.doc_whiteList',
+        foreignField: '_id',
+        as: 'document.doc_whiteList',
+      },
+    });
+
+    // Stage 10: Lookup to populate user information for whitelist employees
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'document.doc_whiteList.emp_user',
+        foreignField: '_id',
+        as: 'whitelistUsers',
+      },
+    });
+
+    // Stage 11: Add user information to each employee in whitelist
+    pipeline.push({
+      $addFields: {
+        'document.doc_whiteList': {
+          $map: {
+            input: '$document.doc_whiteList',
+            as: 'employee',
+            in: {
+              $mergeObjects: [
+                '$$employee',
+                {
+                  emp_user: {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: '$whitelistUsers',
+                          as: 'user',
+                          cond: { $eq: ['$$user._id', '$$employee.emp_user'] },
+                        },
+                      },
+                      0,
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+
+    // Stage 12: Lookup to populate the employee who attached the document
+    pipeline.push({
+      $lookup: {
+        from: 'employees',
+        localField: 'createdBy',
+        foreignField: '_id',
+        as: 'createdBy',
+      },
+    });
+
+    // Stage 13: Unwind createdBy array
+    pipeline.push({
+      $unwind: {
+        path: '$createdBy',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 14: Lookup to populate user information for the one who attached
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'createdBy.emp_user',
+        foreignField: '_id',
+        as: 'createdBy.emp_user',
+      },
+    });
+
+    // Stage 15: Unwind the user array for the one who attached
+    pipeline.push({
+      $unwind: {
+        path: '$createdBy.emp_user',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 16: Apply search filter if provided
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'document.doc_name': searchRegex },
+            { 'document.doc_description': searchRegex },
+            { 'document.doc_type': searchRegex },
+            { 'document.doc_createdBy.emp_code': searchRegex },
+            { 'createdBy.emp_code': searchRegex },
+          ],
+        },
+      });
+    }
+
+    // Stage 17: Filter by document type if provided
+    if (type) {
+      pipeline.push({
+        $match: { 'document.doc_type': type },
+      });
+    }
+
+    // Stage 18: Filter by date range if provided
+    if (startDate || endDate) {
+      const dateFilter: any = {};
+
+      if (startDate) {
+        dateFilter.$gte = new Date(startDate);
       }
 
-      // Generate case code if not provided
-      if (!caseServiceData.code) {
-        const timestamp = Date.now().toString();
-        const randomNum = Math.floor(Math.random() * 9000 + 1000).toString();
-        caseServiceData.code = `CS-${timestamp.substring(
-          timestamp.length - 4
-        )}${randomNum}`;
+      if (endDate) {
+        dateFilter.$lte = new Date(endDate);
       }
 
-      processedData.push(caseServiceData);
-    } catch (error: any) {
-      errors.push({
-        row: index + 2, // +2 because index is 0-based and we skip the header row
-        error: error.message,
+      pipeline.push({
+        $match: { 'document.createdAt': dateFilter },
       });
     }
-  }
 
-  return { processedData, errors };
+    // Stage 19: Project to include only necessary fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        caseService: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        createdBy: {
+          _id: 1,
+          emp_code: 1,
+          emp_position: 1,
+          emp_user: {
+            _id: 1,
+            usr_firstName: 1,
+            usr_lastName: 1,
+            usr_email: 1,
+            usr_username: 1,
+          },
+        },
+        document: {
+          _id: 1,
+          doc_name: 1,
+          doc_type: 1,
+          doc_description: 1,
+          doc_url: 1,
+          doc_isPublic: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          doc_createdBy: {
+            _id: 1,
+            emp_code: 1,
+            emp_position: 1,
+            emp_user: {
+              _id: 1,
+              usr_firstName: 1,
+              usr_lastName: 1,
+              usr_email: 1,
+              usr_username: 1,
+              usr_msisdn: 1,
+              usr_avatar: 1,
+              usr_status: 1,
+              usr_role: 1,
+            },
+          },
+          doc_whiteList: {
+            _id: 1,
+            emp_code: 1,
+            emp_position: 1,
+            emp_user: {
+              _id: 1,
+              usr_firstName: 1,
+              usr_lastName: 1,
+              usr_email: 1,
+              usr_username: 1,
+            },
+          },
+        },
+      },
+    });
+
+    // Stage 20: Sort the results
+    const sortField = sortBy ? `document.${sortBy}` : 'document.createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({
+      $sort: { [sortField]: sortDirection },
+    });
+
+    // Get total count first (for pagination)
+    const countPipeline = [...pipeline]; // Clone the pipeline
+    countPipeline.push({ $count: 'total' });
+    const countResult = await DocumentCaseModel.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Stage 21: Apply pagination
+    pipeline.push({ $skip: (page - 1) * limit });
+    pipeline.push({ $limit: +limit });
+
+    // Execute the aggregation
+    const documentCases = await DocumentCaseModel.aggregate(pipeline);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: getReturnList(documentCases),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
+  } catch (error) {
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi lấy danh sách tài liệu của Hồ sơ vụ việc: ${error.message}`
+      );
+    }
+    throw error;
+  }
 };
 
 /**
- * Import case services
+ * Get tasks associated with a case service
+ * @param {string} caseId - Case service ID
  */
-const importCaseServices = async (filePath: string) => {
-  // Determine file type
-  const fileType = path.extname(filePath).toLowerCase();
-  let importData;
-  if (fileType === '.csv') {
-    importData = parseCSVFile(filePath);
-  } else if (fileType === '.xlsx') {
-    importData = parseXLSXFile(filePath);
-  } else {
-    throw new BadRequestError(
-      'Unsupported file type. Only CSV and XLSX are allowed.'
-    );
-  }
-  // Process the imported data
-  const { processedData, errors } = await processImportData(importData);
-  if (errors.length > 0) {
-    throw new BadRequestError(
-      `Errors found in the following rows: ${errors
-        .map((error) => `Row ${error.row}: ${error.error}`)
-        .join(', ')}`
-    );
-  }
-  const createdCaseServices = [];
-
-  for (const data of processedData) {
-    try {
-      const newCaseService = await CaseServiceModel.build(data);
-      createdCaseServices.push(getReturnData(newCaseService));
-    } catch (error: any) {
-      errors.push({
-        row: data,
-        error: error.message,
-      });
-    }
+const getCaseServiceTasks = async (caseId: string) => {
+  if (!Types.ObjectId.isValid(caseId)) {
+    throw new BadRequestError('Invalid case ID');
   }
 
-  return { createdCaseServices, errors };
-};
-
-/**
- * Parse CSV file
- */
-const parseCSVFile = (filePath: string) => {
-  try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const rows = fileContent.trim().split('\n');
-    const headers = rows[0].split(',').map((header) => header.trim());
-
-    const importData = [];
-
-    // Process each row (skip header row)
-    for (let i = 1; i < rows.length; i++) {
-      const rowData = rows[i].split(',').map((cell) => cell.trim());
-      const rowObj: any = {};
-
-      headers.forEach((header, index) => {
-        rowObj[header] = rowData[index] || null;
-      });
-
-      importData.push(rowObj);
-    }
-
-    return importData;
-  } catch (error: any) {
-    throw new BadRequestError(`Error parsing CSV file: ${error.message}`);
-  }
-};
-
-/**
- * Parse XLSX file
- */
-const parseXLSXFile = (filePath: string) => {
-  try {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-
-    // Convert to JSON
-    return xlsx.utils.sheet_to_json(worksheet);
-  } catch (error: any) {
-    throw new BadRequestError(`Error parsing XLSX file: ${error.message}`);
-  }
-};
-
-// attach documents to case services
-const attachDocumentsToCase = async (
-  caseServiceId: string,
-  documents: Express.Multer.File[]
-) => {
-  if (!documents || documents.length === 0) {
-    throw new BadRequestError('No documents provided for attachment');
-  }
-  const caseService = await CaseServiceModel.findById(caseServiceId);
-  if (!caseService) {
-    throw new NotFoundError('Case service not found');
-  }
-  const documentIds = documents.map((doc) => doc.id);
-
-  await caseService.save();
-  return getReturnData(caseService);
-};
-
-// detach documents from case services
-const detachDocumentsFromCase = async (
-  caseServiceId: string,
-  documentIds: string[]
-) => {
-  if (!documentIds || documentIds.length === 0) {
-    throw new BadRequestError('No document IDs provided for detachment');
-  }
-  const caseService = await CaseServiceModel.findById(caseServiceId);
-  if (!caseService) {
-    throw new NotFoundError('Case service not found');
-  }
-  await caseService.save();
-  return getReturnData(caseService);
+  // Find all tasks associated with this case
+  return await getTasks({
+    caseService: caseId,
+    limit: 1000,
+    sortBy: 'tsk_caseOrder',
+    sortOrder: 'asc',
+  });
 };
 
 export {
-  getAllCaseServices,
+  getCaseServices,
   getCaseServiceById,
+  getCaseServiceTasks,
   createCaseService,
   updateCaseService,
   deleteCaseService,
-  exportCaseServicesToCSV,
-  exportCaseServicesToXLSX,
-  processImportData,
+  bulkDeleteCaseServices,
   importCaseServices,
-  parseCSVFile,
-  parseXLSXFile,
+  exportCaseServicesToXLSX,
+  attachDocumentToCase,
+  detachDocumentFromCase,
+  getCaseServiceDocuments,
 };

@@ -30,7 +30,7 @@ export default function CustomerDetails() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='w-full space-y-8'>
       <ContentHeader
         title='Chi tiết khách hàng'
         actionContent={
@@ -77,36 +77,6 @@ export default function CustomerDetails() {
           );
         }}
       </Defer>
-    </>
+    </div>
   );
 }
-
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  switch (request.method) {
-    case 'DELETE':
-      const { session, headers } = await isAuthenticated(request);
-      await deleteCustomer(params.customerId!, session!);
-      return data(
-        {
-          toast: {
-            type: 'success' as const,
-            message: 'Xóa Khách hàng thành công',
-          },
-        },
-        { headers },
-      );
-    default:
-      return data(
-        {
-          toast: {
-            type: 'error' as const,
-            message: 'Phương thức không hợp lệ',
-          },
-        },
-        {
-          status: 405,
-          statusText: 'Method Not Allowed',
-        },
-      );
-  }
-};

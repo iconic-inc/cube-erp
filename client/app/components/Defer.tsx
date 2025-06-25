@@ -1,6 +1,9 @@
 import { Await } from '@remix-run/react';
 import { Suspense, ReactNode } from 'react';
 import { ILoaderDataPromise, IResolveError } from '~/interfaces/app.interface';
+import ErrorCard from './ErrorCard';
+import LoadingCard from './LoadingCard';
+import { isResolveError } from '~/lib';
 
 interface IDeferProps<T> {
   children: (data: T) => ReactNode;
@@ -12,30 +15,22 @@ interface IDeferProps<T> {
 export default function Defer<T>({
   children,
   resolve,
-  fallback = <div>Loading...</div>,
+  fallback = <LoadingCard />,
   errorElement = (error: IResolveError) => (
-    <span className='text-red-500'>
-      {error.message || 'Có lỗi xảy ra khi lấy dữ liệu.'}
-    </span>
+    <ErrorCard message={error.message || 'Có lỗi xảy ra khi lấy dữ liệu.'} />
   ),
 }: IDeferProps<T>) {
-  const isError = (data: any): data is IResolveError => {
-    return (
-      data &&
-      typeof data.success === 'boolean' &&
-      typeof data.message === 'string'
-    );
-  };
-
   return (
     <Suspense fallback={fallback}>
       <Await
         resolve={resolve}
-        errorElement={
-          <span className='text-red-500'>Có lỗi xảy ra khi lấy dữ liệu.</span>
-        }
+        errorElement={errorElement({
+          success: false,
+          message:
+            'Có lỗi xảy ra. Vui lòng thử lại sau hoặc liên hệ với bộ phận hỗ trợ nếu vấn đề vẫn tiếp diễn.',
+        })}
       >
-        {(data) => (isError(data) ? errorElement(data) : children(data))}
+        {(data) => (isResolveError(data) ? errorElement(data) : children(data))}
       </Await>
     </Suspense>
   );

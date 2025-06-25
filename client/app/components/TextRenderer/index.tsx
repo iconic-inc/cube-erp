@@ -1,15 +1,18 @@
+import { cn } from '~/lib/utils';
 import './index.css';
 
 export default function TextRenderer({
   content,
   truncate,
+  className,
 }: {
   content: string;
   truncate?: boolean;
+  className?: string;
 }) {
   return (
     <section
-      className='text-renderer'
+      className={cn('text-gray-800 leading-relaxed', className)}
       style={
         truncate
           ? {

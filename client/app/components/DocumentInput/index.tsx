@@ -1,22 +1,19 @@
 import { UploadCloud } from 'lucide-react';
-import ImagePreview from './DocumentPreview';
-import ImagePicker from './DocumentPicker';
+import DocumentPicker from './DocumentPicker';
 import { useState } from 'react';
-import { IImage } from '~/interfaces/image.interface';
-import { isEmptyObj } from '~/utils';
+import { IDocument } from '~/interfaces/document.interface';
 
-export default function ImageInput({
+export default function DocumentInput({
   label,
   name,
   value,
   onChange,
-  multiple = false,
   ...props
 }: {
   name: string;
   label?: string;
-  value: IImage | IImage[];
-  onChange: (value: IImage | IImage[], ...args: any) => void;
+  value: IDocument[];
+  onChange: (value: IDocument[], ...args: any) => void;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'>) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -28,12 +25,8 @@ export default function ImageInput({
     setShowPicker(false);
   };
 
-  const handleSelectImage = (selectedImages: IImage[]) => {
-    if (multiple) {
-      onChange(selectedImages);
-    } else {
-      onChange(selectedImages[0]);
-    }
+  const handleSelectDocument = (selectedDocuments: IDocument[]) => {
+    onChange(selectedDocuments);
   };
 
   return (
@@ -44,33 +37,9 @@ export default function ImageInput({
         </p>
       )}
 
-      <div
-        className={`${
-          multiple ? 'grid' : 'flex'
-        } grid-cols-4 gap-4 items-center justify-center`}
-      >
-        {!Array.isArray(value) && !isEmptyObj(value) && (
-          <ImagePreview
-            src={value?.img_url}
-            handleOpenPicker={handleOpenPicker}
-          />
-        )}
-
-        {Array.isArray(value) &&
-          !!value.length &&
-          value.map((v, i) => (
-            <ImagePreview
-              key={i}
-              src={v.img_url}
-              handleOpenPicker={handleOpenPicker}
-            />
-          ))}
-
+      <div>
         <label
-          className='cursor-pointer flex-col w-full items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-6 text-center'
-          style={{
-            display: !isEmptyObj(value) && !multiple ? 'none' : 'flex',
-          }}
+          className='flex cursor-pointer flex-col w-full items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-6 text-center'
           onClick={handleOpenPicker}
         >
           <UploadCloud className='w-6 h-6 text-blue-400' />
@@ -80,26 +49,23 @@ export default function ImageInput({
           </h2>
 
           <p className='mt-2 text-gray-500 tracking-wide'>
-            Upload your file SVG, PNG, JPG or GIF.
+            Tải lên các tài liệu của bạn tại đây.
           </p>
         </label>
 
         <input
           type='hidden'
           name={name}
-          value={
-            Array.isArray(value) ? value.map((v) => v.id) : value?.id || ''
-          }
+          value={value.map((v) => v.id)}
           {...props}
         />
       </div>
 
       {showPicker && (
-        <ImagePicker
+        <DocumentPicker
           selected={Array.isArray(value) ? value : [value]}
-          multiple={multiple}
           onClose={handleClosePicker}
-          onSelect={handleSelectImage}
+          onSelect={handleSelectDocument}
         />
       )}
     </div>

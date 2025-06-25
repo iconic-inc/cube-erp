@@ -5,17 +5,17 @@ import { OK } from '../core/success.response';
 import {
   createCaseService,
   deleteCaseService,
-  getAllCaseServices,
   getCaseServiceById,
   updateCaseService,
-  exportCaseServicesToCSV,
   exportCaseServicesToXLSX,
   importCaseServices,
-} from '@services/caseService.service';
-import {
-  attachDocumentToCase,
+  getCaseServices,
+  bulkDeleteCaseServices,
+  getCaseServiceDocuments,
   detachDocumentFromCase,
-} from '@services/document.service';
+  attachDocumentToCase,
+  getCaseServiceTasks,
+} from '@services/caseService.service';
 
 export class CaseServiceController {
   /**
@@ -25,7 +25,7 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case services fetched successfully',
-      metadata: await getAllCaseServices(req.query),
+      metadata: await getCaseServices(req.query),
     });
   }
 
@@ -36,7 +36,7 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service fetched successfully',
-      metadata: getCaseServiceById(req.params.id),
+      metadata: await getCaseServiceById(req.params.id),
     });
   }
 
@@ -63,24 +63,13 @@ export class CaseServiceController {
   }
 
   /**
-   * Delete a case service
+   * Bulk delete case services
    */
-  static async deleteCaseService(req: Request, res: Response) {
+  static async bulkDeleteCaseServices(req: Request, res: Response) {
     return OK({
       res,
-      message: 'Case service deleted successfully',
-      metadata: await deleteCaseService(req.params.id),
-    });
-  }
-
-  /**
-   * Export case services to CSV
-   */
-  static async exportCaseServicesToCSV(req: Request, res: Response) {
-    return OK({
-      res,
-      message: 'Case services exported successfully',
-      metadata: await exportCaseServicesToCSV(req.query),
+      message: 'Case services deleted successfully',
+      metadata: await bulkDeleteCaseServices(req.body.caseServiceIds), // body is already validated using zod in routes
     });
   }
 
@@ -121,26 +110,28 @@ export class CaseServiceController {
   /**
    * Attach document to a case service
    */
-  static attachToCase = async (req: Request, res: Response) => {
+  static attachDocToCase = async (req: Request, res: Response) => {
     const userId = req.user.userId;
     if (!userId) {
       throw new BadRequestError('User ID is required');
     }
 
-    const documentId = req.params.id;
+    const documentIds = req.body.documentIds as string[];
     const caseId = req.params.caseId;
 
-    const result = await attachDocumentToCase(documentId, caseId, userId);
+    const result = await attachDocumentToCase(documentIds, caseId, userId);
 
     return OK({
       res,
       metadata: result,
       message: 'Document attached to case successfully',
       link: {
-        document: { href: `/documents/${documentId}`, method: 'GET' },
-        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        caseDocuments: {
+          href: `/case-services/${caseId}/documents`,
+          method: 'GET',
+        },
         detach: {
-          href: `/documents/${documentId}/case/${caseId}`,
+          href: `/case-services/${caseId}/documents`,
           method: 'DELETE',
         },
       },
@@ -149,29 +140,53 @@ export class CaseServiceController {
   /**
    * Detach document from a case service
    */
-  static detachFromCase = async (req: Request, res: Response) => {
+  static detachDocFromCase = async (req: Request, res: Response) => {
     const userId = req.user.userId;
     if (!userId) {
       throw new BadRequestError('User ID is required');
     }
 
-    const documentId = req.params.id;
+    const caseDocumentIds = req.body.caseDocumentIds as string[];
     const caseId = req.params.caseId;
 
-    const result = await detachDocumentFromCase(documentId, caseId, userId);
+    const result = await detachDocumentFromCase(caseDocumentIds, caseId);
 
     return OK({
       res,
       metadata: result,
       message: 'Document detached from case successfully',
       link: {
-        document: { href: `/documents/${documentId}`, method: 'GET' },
-        caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
+        caseDocuments: {
+          href: `/case-services/${caseId}/documents`,
+          method: 'GET',
+        },
         attach: {
-          href: `/documents/${documentId}/case/${caseId}`,
+          href: `/case-services/${caseId}/documents`,
           method: 'POST',
         },
       },
+    });
+  };
+
+  static getCaseServiceDocuments = async (req: Request, res: Response) => {
+    const documents = await getCaseServiceDocuments(
+      req.params.id,
+      req.user.userId,
+      req.query
+    );
+    return OK({
+      res,
+      message: 'Documents fetched successfully',
+      metadata: documents,
+    });
+  };
+
+  static getCaseServiceTasks = async (req: Request, res: Response) => {
+    const tasks = await getCaseServiceTasks(req.params.id);
+    return OK({
+      res,
+      message: 'Tasks fetched successfully',
+      metadata: tasks,
     });
   };
 }

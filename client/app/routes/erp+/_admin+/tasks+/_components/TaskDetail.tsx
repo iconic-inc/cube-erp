@@ -19,6 +19,7 @@ import {
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { ITask } from '~/interfaces/task.interface';
 import { formatDate } from '~/utils';
+import CaseServiceBrief from './CaseServiceBrief';
 
 export default function TaskDetail({
   taskPromise,
@@ -139,6 +140,8 @@ export default function TaskDetail({
                 />
               </div>
             </div>
+
+            <CaseServiceBrief caseService={task.tsk_caseService} />
           </CardContent>
         </Card>
       )}

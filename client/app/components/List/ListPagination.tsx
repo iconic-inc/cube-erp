@@ -2,6 +2,8 @@ import { useSearchParams } from '@remix-run/react';
 
 export default function ListPagination({
   pagination,
+  handleLimitChange,
+  handlePageChange,
 }: {
   pagination: {
     total: number;
@@ -9,16 +11,28 @@ export default function ListPagination({
     limit: number;
     totalPages: number;
   };
+  handleLimitChange?: (newLimit: number) => void;
+  handlePageChange?: (newPage: number) => void;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { page, limit } = pagination;
 
-  const handleLimitChange = (newLimit: number) => {
+  const limitChangeHandler = (newLimit: number) => {
+    if (handleLimitChange) {
+      handleLimitChange(newLimit);
+      return;
+    }
+    searchParams.set('page', '1'); // Reset to first page when limit changes
     searchParams.set('limit', newLimit.toString());
     setSearchParams(searchParams);
   };
 
-  const handlePageChange = (newPage: number) => {
+  const pageChangeHandler = (newPage: number) => {
+    if (handlePageChange) {
+      handlePageChange(newPage);
+      return;
+    }
+    if (newPage < 1 || newPage > pagination.totalPages) return; // Prevent invalid page numbers
     searchParams.set('page', newPage.toString());
     setSearchParams(searchParams);
   };
@@ -30,7 +44,7 @@ export default function ListPagination({
         <select
           className='border border-gray-300 rounded-md text-sm py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
           value={limit}
-          onChange={(e) => handleLimitChange(Number(e.target.value))}
+          onChange={(e) => limitChangeHandler(Number(e.target.value))}
         >
           <option value='10'>10</option>
           <option value='25'>25</option>
@@ -55,7 +69,7 @@ export default function ListPagination({
           aria-label='Pagination'
         >
           <button
-            onClick={() => handlePageChange(1)}
+            onClick={() => pageChangeHandler(1)}
             disabled={+page <= 1}
             className='relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
           >
@@ -66,7 +80,7 @@ export default function ListPagination({
           </button>
 
           <button
-            onClick={() => handlePageChange(page - 1)}
+            onClick={() => pageChangeHandler(page - 1)}
             disabled={+page <= 1}
             className='relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:cursor-not-allowed'
           >
@@ -84,7 +98,7 @@ export default function ListPagination({
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
+                    onClick={() => pageChangeHandler(pageNum)}
                     className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
                       pageNum === page
                         ? 'bg-blue-500 text-white'
@@ -108,7 +122,7 @@ export default function ListPagination({
 
           {page + 2 < pagination.totalPages && (
             <button
-              onClick={() => handlePageChange(pagination.totalPages)}
+              onClick={() => pageChangeHandler(pagination.totalPages)}
               className='relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
               disabled={+page >= +pagination.totalPages}
             >
@@ -117,7 +131,7 @@ export default function ListPagination({
           )}
 
           <button
-            onClick={() => handlePageChange(page + 1)}
+            onClick={() => pageChangeHandler(page + 1)}
             disabled={+page >= pagination.totalPages}
             className='relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:cursor-not-allowed'
           >
@@ -128,7 +142,7 @@ export default function ListPagination({
           </button>
 
           <button
-            onClick={() => handlePageChange(pagination.totalPages)}
+            onClick={() => pageChangeHandler(pagination.totalPages)}
             disabled={+page >= pagination.totalPages}
             className='relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:cursor-not-allowed'
           >

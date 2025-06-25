@@ -35,12 +35,12 @@ export function DatePicker({
 }: {
   id?: string;
   name?: string;
-  initialDate?: Date;
+  initialDate?: Date | null;
   onChange?: (date: Date) => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(
-    new Date(initialDate || Date.now()),
+    initialDate ? new Date(initialDate) : undefined,
   );
   const [month, setMonth] = React.useState<Date | undefined>(date);
   const [value, setValue] = React.useState(formatDate(date));
@@ -56,11 +56,18 @@ export function DatePicker({
 
   return (
     <div className='relative flex gap-2'>
+      <Input name={name} hidden value={value} className='hidden' readOnly />
       <Input
         id={id}
-        name={name}
-        value={value}
-        placeholder='June 01, 2025'
+        value={
+          date
+            ? new Date(date).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+              })
+            : ''
+        }
         className='bg-background pr-10'
         onChange={(e) => {
           const date = new Date(e.target.value);
@@ -79,6 +86,7 @@ export function DatePicker({
             setOpen(true);
           }
         }}
+        readOnly
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

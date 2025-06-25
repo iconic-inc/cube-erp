@@ -36,11 +36,7 @@ export default function ContentHeader({
       {/* Add Document button */}
 
       {actionContent && actionHandler && (
-        <Button
-          variant={actionVariant}
-          className='px-6 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out transform hover:scale-105'
-          onClick={actionHandler}
-        >
+        <Button variant={actionVariant} onClick={actionHandler}>
           {actionContent}
         </Button>
       )}

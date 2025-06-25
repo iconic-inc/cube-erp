@@ -13,6 +13,8 @@ import {
   TableRow,
 } from '../ui/table';
 import { Checkbox } from '../ui/checkbox';
+import ErrorCard from '../ErrorCard';
+import LoadingCard from '../LoadingCard';
 
 export default function ItemList<T>({
   name,
@@ -21,6 +23,7 @@ export default function ItemList<T>({
   setSelectedItems,
   visibleColumns,
   addNewHandler,
+  showPagination = true,
 }: {
   name: string;
   itemsPromise: ILoaderDataPromise<IListResponse<T>>;
@@ -28,6 +31,7 @@ export default function ItemList<T>({
   setSelectedItems: (items: T[]) => void;
   visibleColumns: IListColumn<T>[];
   addNewHandler: () => void;
+  showPagination?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get('sortBy') || 'createdAt';
@@ -66,51 +70,68 @@ export default function ItemList<T>({
   };
 
   return (
-    <div className='hidden md:block overflow-x-auto'>
+    <div className='overflow-x-auto'>
       <Table className='w-full'>
         <TableHeader className='bg-gray-50'>
           <TableRow>
-            <TableHead className='w-[50px] text-center py-4'>
-              <Defer resolve={itemsPromise}>
-                {({ data }) => (
-                  <Checkbox
-                    checked={
-                      selectedItems.length === data.length && data.length > 0
-                    }
-                    onCheckedChange={() => handleSelectAll(data)}
-                    className='rounded h-4 w-4'
-                  />
-                )}
-              </Defer>
-            </TableHead>
-            {visibleColumns
-              .filter((column) => column.visible)
-              .map((column) => (
-                <TableHead
-                  key={column.key as string}
-                  className={`min-w-fit text-left whitespace-nowrap text-gray-600 font-semibold py-4 ${column.sortField ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                  onClick={() => {
-                    if (!column.sortField) return;
-                    // Use the sortField defined in the column definition
-                    const sortKey = column.sortField;
-                    handleSortChange(sortKey as string);
-                  }}
-                >
-                  <div className='flex items-center justify-between'>
-                    <span>{column.title}</span>
-                    <span className='w-4 h-4 inline-flex justify-center'>
-                      {/* Check if this column is currently being sorted by */}
-                      {sortBy === (column.sortField || column.key) && (
-                        <span className='material-symbols-outlined text-xs'>
-                          {sortOrder === 'asc'
-                            ? 'arrow_upward'
-                            : 'arrow_downward'}
-                        </span>
-                      )}
-                    </span>
-                  </div>
+            <Defer
+              resolve={itemsPromise}
+              fallback={
+                <TableHead colSpan={visibleColumns.length + 1}>
+                  <LoadingCard />
                 </TableHead>
-              ))}
+              }
+              errorElement={(error) => (
+                <TableHead colSpan={visibleColumns.length + 1}>
+                  <ErrorCard message={error.message} />
+                </TableHead>
+              )}
+            >
+              {({ data }) => (
+                <>
+                  <TableHead className='w-[50px] text-center'>
+                    {!!data.length && (
+                      <Checkbox
+                        checked={
+                          selectedItems.length === data.length &&
+                          data.length > 0
+                        }
+                        onCheckedChange={() => handleSelectAll(data)}
+                        className='rounded h-4 w-4'
+                      />
+                    )}
+                  </TableHead>
+                  {visibleColumns
+                    .filter((column) => column.visible)
+                    .map((column) => (
+                      <TableHead
+                        key={column.key as string}
+                        className={`min-w-fit text-left whitespace-nowrap text-gray-600 font-semibold py-4 ${column.sortField ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                        onClick={() => {
+                          if (!column.sortField) return;
+                          // Use the sortField defined in the column definition
+                          const sortKey = column.sortField;
+                          handleSortChange(sortKey as string);
+                        }}
+                      >
+                        <div className='flex items-center justify-between'>
+                          <span>{column.title}</span>
+                          <span className='w-4 h-4 inline-flex justify-center'>
+                            {/* Check if this column is currently being sorted by */}
+                            {sortBy === (column.sortField || column.key) && (
+                              <span className='material-symbols-outlined text-xs'>
+                                {sortOrder === 'asc'
+                                  ? 'arrow_upward'
+                                  : 'arrow_downward'}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </TableHead>
+                    ))}
+                </>
+              )}
+            </Defer>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -122,12 +143,22 @@ export default function ItemList<T>({
                   colSpan={
                     visibleColumns.filter((col) => col.visible).length + 1
                   }
-                  className='text-center py-4'
                 >
-                  Loading...
+                  <LoadingCard />
                 </TableCell>
               </TableRow>
             }
+            errorElement={(error) => (
+              <TableRow>
+                <TableCell
+                  colSpan={
+                    visibleColumns.filter((col) => col.visible).length + 1
+                  }
+                >
+                  <ErrorCard message={error.message} />
+                </TableCell>
+              </TableRow>
+            )}
           >
             {(response) => {
               const { data: items } = response;
@@ -169,7 +200,10 @@ export default function ItemList<T>({
                       {visibleColumns
                         .filter((column) => column.visible)
                         .map((column) => (
-                          <TableCell key={column.key} className='max-w-[500px]'>
+                          <TableCell
+                            key={column.key}
+                            className='max-w-[500px] overflow-hidden truncate'
+                          >
                             {column.render(item)}
                           </TableCell>
                         ))}
@@ -182,9 +216,11 @@ export default function ItemList<T>({
         </TableBody>
       </Table>
 
-      <Defer resolve={itemsPromise}>
-        {({ pagination }) => <ItemPagination pagination={pagination} />}
-      </Defer>
+      {showPagination && (
+        <Defer resolve={itemsPromise}>
+          {({ pagination }) => <ItemPagination pagination={pagination} />}
+        </Defer>
+      )}
     </div>
   );
 }

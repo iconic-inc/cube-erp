@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 
 export default function Hydrated({
   children,
@@ -10,7 +10,7 @@ export default function Hydrated({
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
+    startTransition(() => setHydrated(true));
   }, []);
 
   return hydrated && children ? <>{children()}</> : <>{fallback}</>;

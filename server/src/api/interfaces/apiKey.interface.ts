@@ -1,6 +1,6 @@
 import { Model, HydratedDocument } from 'mongoose';
 
-interface IApiKey {
+export interface IApiKey {
   id: string;
   key: string;
   status: boolean;

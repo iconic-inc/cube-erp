@@ -85,7 +85,10 @@ const isExpired = (token: string) => {
 };
 
 // Format date using format string
-const formatDate = (dateString?: string, format: string = 'DD/MM/YYYY') => {
+const formatDate = (
+  dateString?: string | Date,
+  format: string = 'DD/MM/YYYY',
+) => {
   if (!dateString) return 'N/A';
 
   const date = new Date(dateString);

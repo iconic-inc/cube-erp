@@ -4,6 +4,8 @@ export interface ICustomerBrief {
   id: string;
   cus_firstName: string;
   cus_lastName: string;
+  cus_email: string;
+  cus_msisdn: string;
   cus_code: string;
 }
 

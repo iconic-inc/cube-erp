@@ -1,40 +1,44 @@
 import { IListResponse } from '~/interfaces/response.interface';
 import { Card } from '../ui/card';
 import ListBulkActionBar from './ListBulkActionBar';
-import { IListColumn } from '~/interfaces/app.interface';
+import { IListColumn, ILoaderDataPromise } from '~/interfaces/app.interface';
 import ListToolbar from './ListToolbar';
 import ListConfirmModal from './ListConfirmModal';
 import ItemList from './ItemList';
+import { useState } from 'react';
 
 export default function List<T>({
   itemsPromise,
-  selectedItems,
-  setSelectedItems,
   visibleColumns,
   setVisibleColumns,
-  setShowDeleteModal,
-  showDeleteModal,
   name,
   addNewHandler,
+  showToolbar = true,
+  showPagination = true,
+  deleteHandleRoute,
 }: {
-  itemsPromise: Promise<IListResponse<T>>;
-  selectedItems: Array<T>;
-  setSelectedItems: (items: T[]) => void;
+  itemsPromise: ILoaderDataPromise<IListResponse<T>>;
   visibleColumns: IListColumn<T>[];
   setVisibleColumns: (columns: IListColumn<T>[]) => void;
-  setShowDeleteModal: (show: boolean) => void;
-  showDeleteModal: boolean;
   name: string;
   addNewHandler: () => void;
+  showToolbar?: boolean;
+  showPagination?: boolean;
+  deleteHandleRoute?: string;
 }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<T[]>([]);
+
   return (
     <Card>
       {/* Item Toolbar */}
-      <ListToolbar
-        name={name}
-        visibleColumns={visibleColumns}
-        setVisibleColumns={setVisibleColumns}
-      />
+      {showToolbar && (
+        <ListToolbar
+          name={name}
+          visibleColumns={visibleColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
+      )}
 
       {/* Bulk Action Bar (Visible when rows selected) */}
       {selectedItems.length > 0 && (
@@ -52,6 +56,7 @@ export default function List<T>({
           setShowDeleteModal={setShowDeleteModal}
           selectedItems={selectedItems}
           setSelectedItems={setSelectedItems}
+          deleteHandleRoute={deleteHandleRoute}
         />
       )}
 
@@ -62,6 +67,7 @@ export default function List<T>({
         setSelectedItems={setSelectedItems}
         visibleColumns={visibleColumns}
         addNewHandler={addNewHandler}
+        showPagination={showPagination}
       />
     </Card>
   );
