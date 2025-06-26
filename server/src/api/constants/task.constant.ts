@@ -21,4 +21,9 @@ export const TASK = {
     QUARTERLY: 'quarterly',
     YEARLY: 'yearly',
   },
+  TEMPLATE: {
+    DOCUMENT_NAME: 'TaskTemplate',
+    COLLECTION_NAME: 'task_templates',
+    PREFIX: 'tpl_',
+  },
 };

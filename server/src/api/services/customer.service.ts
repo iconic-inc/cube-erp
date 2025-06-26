@@ -1,7 +1,6 @@
 import { NotFoundError, BadRequestError } from '../core/errors';
 import { CustomerModel } from '../models/customer.model';
 import { CaseServiceModel } from '../models/caseService.model';
-import { EmployeeModel } from '../models/employee.model';
 import {
   ICustomerCreate,
   ICustomerUpdate,
@@ -13,11 +12,10 @@ import {
 } from '@utils/index';
 import { CUSTOMER } from '../constants';
 import { formatAttributeName } from '../utils';
-import { FilterQuery, UpdateQuery } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 import mongoose from 'mongoose';
 import * as path from 'path';
 import * as fs from 'fs';
-import { createObjectCsvWriter } from 'csv-writer';
 import * as XLSX from 'xlsx';
 import { serverConfig } from '@configs/config.server';
 
@@ -275,7 +273,7 @@ const deleteCustomer = async (customerId: string) => {
 
     if (associatedCases) {
       throw new BadRequestError(
-        'Không thể xóa khách hàng có liên kết với các dịch vụ hồ sơ'
+        'Không thể xóa khách hàng có liên kết với các Hồ sơ vụ việc. Vui lòng xóa các Hồ sơ vụ việc trước.'
       );
     }
 
@@ -322,7 +320,7 @@ const deleteMultipleCustomers = async ({
 
     if (associatedCases) {
       throw new BadRequestError(
-        'Vui lòng xóa các hồ sơ dịch vụ của khách hàng trước khi xóa'
+        'Không thể xóa khách hàng có liên kết với các Hồ sơ vụ việc. Vui lòng xóa các Hồ sơ vụ việc trước.'
       );
     }
 

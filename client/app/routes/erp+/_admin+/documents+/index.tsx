@@ -1,6 +1,5 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
-import { Link, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
-import { Plus } from 'lucide-react';
+import { Link, useFetcher, useLoaderData } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -16,9 +15,7 @@ import { IListResponse } from '~/interfaces/response.interface';
 import { IListColumn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
-import { action as uploadAction } from '~/routes/api+/documents+/upload';
 import { toast } from 'react-toastify';
-import { IEmployee } from '~/interfaces/employee.interface';
 import { Badge } from '~/components/ui/badge';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -67,9 +64,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMDocuments() {
   const { documentsPromise } = useLoaderData<typeof loader>();
 
-  const [selectedDocuments, setSelectedDocuments] = useState<IDocument[]>([]);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IDocument>[]
   >([
@@ -142,10 +136,8 @@ export default function HRMDocuments() {
       },
     },
   ]);
-  const uploadFetcher = useFetcher<typeof uploadAction>();
+  const uploadFetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
-
-  const navigate = useNavigate();
 
   const addNewHandler = () => {
     const input = document.createElement('input');
@@ -217,12 +209,8 @@ export default function HRMDocuments() {
 
       <List<IDocument>
         itemsPromise={documentsPromise}
-        selectedItems={selectedDocuments}
-        setSelectedItems={setSelectedDocuments}
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
-        setShowDeleteModal={setShowDeleteModal}
-        showDeleteModal={showDeleteModal}
         addNewHandler={addNewHandler}
         name='Tài liệu'
       />
@@ -232,7 +220,6 @@ export default function HRMDocuments() {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
-  console.log('action called');
   if (!session) {
     return data(
       {

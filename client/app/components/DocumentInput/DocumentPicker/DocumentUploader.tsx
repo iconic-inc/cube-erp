@@ -1,7 +1,9 @@
+import { useFetcher } from '@remix-run/react';
 import { UploadCloud } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { IDocument } from '~/interfaces/document.interface';
-import { uploadDocuments } from '~/services/document.client';
+import { action } from '~/routes/api+/documents+/upload';
 
 export default function DocumentUploader({
   multiple = true,
@@ -11,6 +13,23 @@ export default function DocumentUploader({
   React.InputHTMLAttributes<HTMLInputElement>,
   'onChange' | 'value'
 >) {
+  const fetcher = useFetcher<typeof action>();
+  const toastIdRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (fetcher.data?.toast) {
+      toast.update(toastIdRef.current, {
+        type: fetcher.data.toast.type as 'success' | 'error',
+        render: fetcher.data.toast.message,
+        ...toastUpdateOptions,
+      });
+
+      if (fetcher.data.toast.type === 'success') {
+        handleDocumentUploaded(fetcher.data.documents);
+      }
+    }
+  }, [fetcher.data]);
+
   return (
     <div className={`flex gap-4 items-center justify-center h-full`}>
       <label className='cursor-pointer flex-col w-1/2 items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-6 text-center'>
@@ -30,36 +49,33 @@ export default function DocumentUploader({
           hidden
           multiple
           onChange={async (e) => {
-            const toastId = toast.loading('Uploading document...');
+            toastIdRef.current = toast.loading('Uploading document...');
 
             if (!e.target.files || e.target.files.length === 0) {
-              toast.update(toastId, {
+              toast.update(toastIdRef.current, {
                 type: 'error',
-                data: 'No document selected',
+                render: 'No document selected',
+                ...toastUpdateOptions,
               });
               return;
             }
 
             try {
-              const res = await uploadDocuments(e.target.files);
-
-              if (res.success !== 1) {
-                toast.update(toastId, {
-                  type: 'error',
-                  data: res.toast.message,
-                });
-                return;
+              const formData = new FormData();
+              for (let i = 0; i < e.target.files.length; i++) {
+                formData.append('documents', e.target.files[i]);
               }
 
-              toast.update(toastId, {
-                type: 'success',
-                data: res.toast.message,
-                autoClose: 3000,
-                isLoading: false,
+              fetcher.submit(formData, {
+                method: 'POST',
+                encType: 'multipart/form-data',
+                action: '/api/documents/upload',
               });
-              handleDocumentUploaded(res.documents);
             } catch (err: any) {
-              toast.update(toastId, { type: 'error', data: err.message });
+              toast.update(toastIdRef.current, {
+                type: 'error',
+                data: err.message,
+              });
             }
           }}
         />
@@ -67,3 +83,8 @@ export default function DocumentUploader({
     </div>
   );
 }
+
+const toastUpdateOptions = {
+  autoClose: 3000,
+  isLoading: false,
+};

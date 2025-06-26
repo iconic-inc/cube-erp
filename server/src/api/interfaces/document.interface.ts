@@ -36,3 +36,17 @@ export type IDocumentDocument = HydratedDocument<IDocument>;
 export interface IDocumentModel extends Model<IDocumentDocument> {
   build(attrs: IDocumentCreate): Promise<IDocumentDocument>;
 }
+
+/**
+ * Interface for document query parameters
+ */
+export interface IDocumentQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+}

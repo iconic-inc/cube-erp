@@ -1,5 +1,5 @@
 import { TASK } from '~/constants/task.constant';
-import { ICaseServiceBrief } from './caseService.interface';
+import { ICaseServiceBrief } from './case.interface';
 import { IEmployee } from './employee.interface';
 
 // Task interfaces

@@ -42,6 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return dataResponse(
             {
               customer: null,
+              redirectTo: null,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
                 type: 'error' as ToastType,
@@ -60,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: 'Thêm mới Khách hàng thành công!',
               type: 'success' as ToastType,
             },
-            redirectTo: '/erp/crm/customers',
+            redirectTo: `/erp/crm/customers/${res.id}`,
           },
           { headers },
         );
@@ -94,6 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return dataResponse(
           {
             customer: null,
+            redirectTo: null,
             toast: {
               message: errorMessage,
               type: 'error' as ToastType,
@@ -108,6 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return dataResponse(
         {
           customer: null,
+          redirectTo: null,
           toast: { message: 'Method not allowed', type: 'error' as ToastType },
         },
         { headers },

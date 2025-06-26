@@ -48,14 +48,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     tasksPromise: getTasks({ ...query }, options, user!).catch((e) => {
       console.error(e);
       return {
-        data: [],
-        pagination: {
-          totalPages: 0,
-          page: 1,
-          limit: 10,
-          total: 0,
-        },
-      } as IListResponse<ITask>;
+        success: false,
+        message: e.message || 'Có lỗi xảy ra khi lấy danh sách Task',
+      };
     }),
   };
 };
@@ -63,9 +58,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMTasks() {
   const { tasksPromise } = useLoaderData<typeof loader>();
 
-  const [selectedTasks, setSelectedTasks] = useState<ITask[]>([]);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<IListColumn<ITask>[]>([
     {
       key: 'tsk_name',
@@ -89,10 +81,27 @@ export default function HRMTasks() {
       render: (task) => (
         <span>
           {task.tsk_assignees
-            .map(({ emp_user: user }) => `${user.usr_firstName}`)
+            .map(({ emp_user: user }) => `${user?.usr_firstName}`)
             .join(', ')}
         </span>
       ),
+    },
+    {
+      key: 'tsk_caseService',
+      title: 'Mã Hồ sơ',
+      visible: true,
+      sortField: 'tsk_caseService.case_code',
+      render: (task) =>
+        task.tsk_caseService ? (
+          <Link
+            to={`/erp/crm/cases/${task.tsk_caseService?.id}`}
+            className='text-blue-600 hover:underline'
+          >
+            {task.tsk_caseService?.case_code}
+          </Link>
+        ) : (
+          '-'
+        ),
     },
     {
       key: 'tsk_startDate',
@@ -153,12 +162,8 @@ export default function HRMTasks() {
 
       <List<ITask>
         itemsPromise={tasksPromise}
-        selectedItems={selectedTasks}
-        setSelectedItems={setSelectedTasks}
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
-        setShowDeleteModal={setShowDeleteModal}
-        showDeleteModal={showDeleteModal}
         addNewHandler={() => navigate('/erp/tasks/new')}
         name='Task'
       />

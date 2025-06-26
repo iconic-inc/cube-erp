@@ -32,7 +32,7 @@ import Defer from '~/components/Defer';
 import { Plus, Save, XCircle } from 'lucide-react';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
-import { IEmployee } from '~/interfaces/employee.interface';
+import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { getEmployees } from '~/services/employee.server';
 import ItemList from '~/components/List/ItemList';
 import { toast } from 'react-toastify';
@@ -104,7 +104,7 @@ export default function DocumentDetailPage() {
   const fetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
 
-  const handleRemoveEmployee = (employee: IEmployee) => {
+  const handleRemoveEmployee = (employee: IEmployeeBrief) => {
     if (employee.id === document.doc_createdBy?.id) {
       alert('Bạn không thể xóa người tạo tài liệu khỏi danh sách truy cập.');
       return;

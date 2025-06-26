@@ -12,30 +12,30 @@ export default function DocumentMetadata({
   const [type, setType] = useState('document/jpeg');
   const [loading, setLoading] = useState(true);
 
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const img = new ();
-  //       const res = await fetch(document.doc_url);
-  //       if (!res.ok) {
-  //         throw new Error('Failed to fetch document');
-  //       }
+  useEffect(() => {
+    (async () => {
+      try {
+        const img = new Image();
+        const res = await fetch(document.doc_url);
+        if (!res.ok) {
+          throw new Error('Failed to fetch document');
+        }
 
-  //       const blob = await res.blob();
-  //       const url = URL.createObjectURL(blob);
-  //       img.onload = () => {
-  //         setSize(blob.size / 1024);
-  //         setType(blob.type);
-  //         setLoading(false);
-  //       };
-  //     } catch (error) {
-  //       console.error('Error loading document metadata:', error);
-  //       setSize(0);
-  //       setType('document/jpeg');
-  //       setLoading(false);
-  //     }
-  //   })();
-  // });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        img.onload = () => {
+          setSize(blob.size / 1024);
+          setType(blob.type);
+          setLoading(false);
+        };
+      } catch (error) {
+        console.error('Error loading document metadata:', error);
+        setSize(0);
+        setType('document/jpeg');
+        setLoading(false);
+      }
+    })();
+  });
 
   return loading ? (
     <div className='bg-white rounded-lg p-4 animate-pulse'>

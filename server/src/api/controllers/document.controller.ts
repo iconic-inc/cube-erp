@@ -198,88 +198,6 @@ export class DocumentController {
   };
 
   /**
-   * Attach document to a case service
-   */
-  static attachToCase = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const userId = req.user.userId;
-      if (!userId) {
-        throw new BadRequestError('User ID is required');
-      }
-
-      const documentId = req.params.id;
-      const caseId = req.params.caseId;
-
-      const result = await DocumentService.attachDocumentToCase(
-        documentId,
-        caseId,
-        userId
-      );
-
-      return OK({
-        res,
-        metadata: result,
-        message: 'Document attached to case successfully',
-        link: {
-          document: { href: `/documents/${documentId}`, method: 'GET' },
-          caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
-          detach: {
-            href: `/documents/${documentId}/case/${caseId}`,
-            method: 'DELETE',
-          },
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Detach document from a case service
-   */
-  static detachFromCase = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const userId = req.user.userId;
-      if (!userId) {
-        throw new BadRequestError('User ID is required');
-      }
-
-      const documentId = req.params.id;
-      const caseId = req.params.caseId;
-
-      const result = await DocumentService.detachDocumentFromCase(
-        documentId,
-        caseId,
-        userId
-      );
-
-      return OK({
-        res,
-        metadata: result,
-        message: 'Document detached from case successfully',
-        link: {
-          document: { href: `/documents/${documentId}`, method: 'GET' },
-          caseDocuments: { href: `/documents/case/${caseId}`, method: 'GET' },
-          attach: {
-            href: `/documents/${documentId}/case/${caseId}`,
-            method: 'POST',
-          },
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
    * Update document access permissions
    */
   static updateAccessRights = async (
@@ -310,39 +228,6 @@ export class DocumentController {
         link: {
           document: { href: `/documents/${documentId}`, method: 'GET' },
           update: { href: `/documents/${documentId}`, method: 'PUT' },
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Get all documents for a specific case
-   */
-  static getDocumentsByCase = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const userId = req.user.userId;
-      if (!userId) {
-        throw new BadRequestError('User ID is required');
-      }
-
-      const caseId = req.params.caseId;
-
-      const result = await DocumentService.getDocumentsByCase(caseId, userId);
-
-      return OK({
-        res,
-        metadata: result.data,
-        message: 'Case documents retrieved successfully',
-        link: {
-          self: { href: `/documents/case/${caseId}`, method: 'GET' },
-          allDocuments: { href: '/documents', method: 'GET' },
-          uploadDocument: { href: '/documents', method: 'POST' },
         },
       });
     } catch (error) {

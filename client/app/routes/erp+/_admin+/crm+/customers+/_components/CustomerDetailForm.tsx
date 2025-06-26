@@ -97,8 +97,10 @@ export default function CustomerDetailForm({
           setIsChanged(false);
           toastIdRef.current = null;
 
-          if (type === 'create' && toastData.type === 'success') {
-            navigate(`/erp/crm/customers/${fetcher.data.customer?.id}`);
+          if (fetcher.data?.redirectTo) {
+            navigate(fetcher.data.redirectTo, {
+              replace: true,
+            });
           }
 
           break;

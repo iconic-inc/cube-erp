@@ -13,6 +13,7 @@ import {
   ITaskUpdate,
 } from '../interfaces/task.interface';
 import { TASK } from '@constants/task.constant';
+import { CASE_SERVICE } from '@constants/caseService.constant';
 import { EmployeeModel } from '@models/employee.model';
 import { USER } from '@constants/user.constant';
 
@@ -133,6 +134,7 @@ const getTasks = async (query: any = {}) => {
       tsk_startDate: { $first: '$tsk_startDate' },
       tsk_endDate: { $first: '$tsk_endDate' },
       tsk_caseService: { $first: '$tsk_caseService' },
+      tsk_caseOrder: { $first: '$tsk_caseOrder' },
       createdAt: { $first: '$createdAt' },
       updatedAt: { $first: '$updatedAt' },
       tsk_assignees: {
@@ -145,6 +147,49 @@ const getTasks = async (query: any = {}) => {
         },
       },
     },
+  });
+
+  // Stage 5.1: Lookup case service information
+  pipeline.push({
+    $lookup: {
+      from: CASE_SERVICE.COLLECTION_NAME,
+      localField: 'tsk_caseService',
+      foreignField: '_id',
+      as: 'tsk_caseService',
+      pipeline: [
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'case_customer',
+            foreignField: '_id',
+            as: 'case_customer',
+          },
+        },
+        {
+          $unwind: { path: '$case_customer', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $project: {
+            _id: 1,
+            case_code: 1,
+            case_status: 1,
+            case_startDate: 1,
+            case_endDate: 1,
+            case_customer: {
+              _id: 1,
+              cus_firstName: 1,
+              cus_lastName: 1,
+              cus_code: 1,
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  // Stage 5.2: Unwind case service to get single document
+  pipeline.push({
+    $unwind: { path: '$tsk_caseService', preserveNullAndEmptyArrays: true },
   });
 
   // Filtering by assignee should be applied BEFORE the $lookup stages
@@ -221,7 +266,7 @@ const getTasks = async (query: any = {}) => {
   if (caseService) {
     pipeline.push({
       $match: {
-        tsk_caseService: new Types.ObjectId(caseService),
+        'tsk_caseService._id': new Types.ObjectId(caseService as string),
       },
     });
   }
@@ -333,6 +378,8 @@ const getTasks = async (query: any = {}) => {
       tsk_priority: 1,
       tsk_startDate: 1,
       tsk_endDate: 1,
+      tsk_caseOrder: 1,
+      tsk_caseService: 1, // This now includes the populated case service data
       createdAt: 1,
       updatedAt: 1,
       tsk_assignees: 1, // Use the already well-structured assignees array
@@ -418,7 +465,7 @@ const getTasks = async (query: any = {}) => {
   if (caseService) {
     countPipeline.push({
       $match: {
-        tsk_caseService: new Types.ObjectId(caseService),
+        tsk_caseService: new Types.ObjectId(caseService as string),
       },
     });
   }
@@ -545,14 +592,24 @@ const getTasks = async (query: any = {}) => {
 
 // Get Task by ID
 const getTaskById = async (id: string) => {
-  const task = await TaskModel.findById(id).populate({
-    path: 'tsk_assignees',
-    select: 'emp_code emp_position emp_department emp_user',
-    populate: {
-      path: 'emp_user',
-      select: 'usr_firstName usr_lastName usr_email usr_avatar usr_username',
-    },
-  });
+  const task = await TaskModel.findById(id)
+    .populate({
+      path: 'tsk_assignees',
+      select: 'emp_code emp_position emp_department emp_user',
+      populate: {
+        path: 'emp_user',
+        select: 'usr_firstName usr_lastName usr_email usr_avatar usr_username',
+      },
+    })
+    .populate({
+      path: 'tsk_caseService',
+      select:
+        'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
+      populate: {
+        path: 'case_customer',
+        select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+      },
+    });
 
   if (!task) {
     throw new NotFoundError('Task not found');
@@ -563,7 +620,6 @@ const getTaskById = async (id: string) => {
 
 // Update Task
 const updateTask = async (id: string, data: ITaskUpdate) => {
-  console.log('------------------------------update data: ', data);
   const task = await TaskModel.findByIdAndUpdate(
     id,
     {

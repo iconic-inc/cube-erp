@@ -30,11 +30,7 @@ export default function EmptyListRow({
             {description}
           </p>
 
-          <Button
-            type='button'
-            className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition shadow-sm flex items-center gap-2'
-            onClick={addNewHandler}
-          >
+          <Button type='button' variant={'primary'} onClick={addNewHandler}>
             <span className='material-symbols-outlined text-sm'>add</span>
             {linkText}
           </Button>

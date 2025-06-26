@@ -3,24 +3,29 @@ import Quill from 'quill';
 
 import 'quill/dist/quill.snow.css';
 import './index.css';
+import { cn } from '~/lib/utils';
 
 export default function TextEditor({
   value,
   onChange,
   name,
   placeholder,
+  isReady = true,
+  className = '',
 }: {
   value: string;
   name: string;
   onChange: (value: string) => any;
   placeholder?: string;
+  isReady?: boolean;
+  className?: string;
 }) {
   const quillRef = useRef<HTMLDivElement | null>(null);
   const [quill, setQuill] = useState<Quill | null>(null);
   const [length, setLength] = useState(0);
 
   useEffect(() => {
-    if (quillRef.current && !quill) {
+    if (quillRef.current && !quill && isReady) {
       const editor = document.createElement('div');
       quillRef.current.appendChild(editor);
 
@@ -97,7 +102,7 @@ export default function TextEditor({
         quillRef.current = document.createElement('div');
       };
     }
-  }, [quillRef, quill, onChange]);
+  }, [quillRef, quill, onChange, isReady]);
 
   // Custom image handler for Cloudinary
   const handleImageUpload = (quill: Quill) => {
@@ -145,11 +150,16 @@ export default function TextEditor({
   };
 
   return (
-    <div id='quill-container' className='quill-container flex flex-col h-full'>
-      <div className='overflow-y-auto flex-1 flex flex-col' ref={quillRef} />
+    <div id='quill-container' className={cn('flex flex-col h-full', className)}>
+      {isReady ? (
+        <div className='overflow-y-auto flex-1 flex flex-col' ref={quillRef} />
+      ) : (
+        <div className='flex-1 flex items-center justify-center border-x border-t border-zinc-300'>
+          <span className='text-gray-500'>Đang tải trình soạn thảo...</span>
+        </div>
+      )}
 
       <input type='hidden' name={name} value={value} />
-
       <div className='border border-zinc-300 text-sm py-2 flex justify-between items-center px-4'>
         <span className='controls-right'>{length} ký tự</span>
       </div>

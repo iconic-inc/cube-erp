@@ -1,3 +1,5 @@
+import { IResolveError } from '~/interfaces/app.interface';
+
 const MINUTES_AGO = 'phút trước';
 const HOURS_AGO = 'giờ trước';
 const YESTERDAY = 'Hôm qua';
@@ -61,10 +63,19 @@ const clientFetch = async (url: string, init?: RequestInit) => {
   return res.json();
 };
 
+const isResolveError = (data: any): data is IResolveError => {
+  return (
+    data &&
+    typeof data.success === 'boolean' &&
+    typeof data.message === 'string'
+  );
+};
+
 export {
   getPublicPeriod,
   getNumerator,
   getDemonator,
   getPageOffset,
   clientFetch,
+  isResolveError,
 };

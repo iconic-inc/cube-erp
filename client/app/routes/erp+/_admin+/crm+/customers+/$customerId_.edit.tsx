@@ -45,6 +45,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         if (!customerId) {
           return dataResponse(
             {
+              customer: null,
+              redirectTo: null,
               toast: {
                 message: 'Không tìm thấy Khách hàng.',
                 type: 'error',
@@ -77,6 +79,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           return dataResponse(
             {
               customer: null,
+              redirectTo: null,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
                 type: 'error',
@@ -94,6 +97,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         return dataResponse(
           {
             customer: updatedCustomer,
+            redirectTo: `/erp/crm/customers/${updatedCustomer.id}`,
             toast: {
               message: 'Cập nhật thông tin Khách hàng thành công!',
               type: 'success',
@@ -104,6 +108,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       } catch (error: any) {
         return dataResponse(
           {
+            customer: null,
+            redirectTo: null,
             toast: { message: error.message || 'Update failed', type: 'error' },
           },
           { headers },
@@ -113,6 +119,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
+          customer: null,
+          redirectTo: null,
           toast: { message: 'Method not allowed', type: 'error' },
         },
         {

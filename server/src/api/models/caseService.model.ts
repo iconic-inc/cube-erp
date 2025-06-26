@@ -24,12 +24,8 @@ const caseServiceSchema = new Schema<ICaseServiceDocument, ICaseServiceModel>(
       ref: USER.EMPLOYEE.DOCUMENT_NAME,
       required: true,
     },
-    case_associateAttorney: {
-      type: Schema.Types.ObjectId,
-      ref: USER.EMPLOYEE.DOCUMENT_NAME,
-    },
-    case_paralegal: {
-      type: Schema.Types.ObjectId,
+    case_assignees: {
+      type: [Schema.Types.ObjectId],
       ref: USER.EMPLOYEE.DOCUMENT_NAME,
     },
     case_notes: {

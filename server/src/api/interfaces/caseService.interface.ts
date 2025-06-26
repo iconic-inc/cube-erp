@@ -8,8 +8,10 @@ export interface ICaseServicePopulate {
   case_customer: ICustomerPopulate;
   case_code: string;
   case_leadAttorney: IEmployeePopulate;
-  case_associateAttorney?: IEmployeePopulate;
-  case_paralegal?: IEmployeePopulate;
+  case_assignees?: IEmployeePopulate[];
+  case_status: Values<typeof CASE_SERVICE.STATUS>;
+  case_startDate: Date;
+  case_endDate?: Date;
 }
 
 export interface ICaseService {
@@ -17,11 +19,10 @@ export interface ICaseService {
   case_customer: Types.ObjectId;
   case_code: string;
   case_leadAttorney: Types.ObjectId;
-  case_associateAttorney?: Types.ObjectId;
-  case_paralegal?: Types.ObjectId;
+  case_assignees?: Types.ObjectId[];
   case_notes?: string;
-  case_status?: Values<typeof CASE_SERVICE.STATUS>;
-  case_startDate?: Date;
+  case_status: Values<typeof CASE_SERVICE.STATUS>;
+  case_startDate: Date;
   case_endDate?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -30,14 +31,15 @@ export interface ICaseService {
 export interface ICaseServiceCreate {
   customer: string;
   leadAttorney: string;
-  associateAttorney?: string;
-  paralegal?: string;
+  assignees?: string[];
   code: ICaseService['case_code'];
   notes?: ICaseService['case_notes'];
   status?: ICaseService['case_status'];
   startDate?: string;
   endDate?: string;
 }
+
+export interface ICaseServiceUpdate extends Partial<ICaseServiceCreate> {}
 
 export type ICaseServiceDocument = HydratedDocument<ICaseService>;
 
@@ -49,8 +51,18 @@ export interface ICaseServiceResponse
   extends ICaseServicePopulate,
     Omit<
       ICaseService,
-      | 'case_customer'
-      | 'case_leadAttorney'
-      | 'case_associateAttorney'
-      | 'case_paralegal'
+      'case_customer' | 'case_leadAttorney' | 'case_assignees'
     > {}
+
+export interface ICaseServiceQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  customerId?: string;
+  leadAttorneyId?: string;
+}

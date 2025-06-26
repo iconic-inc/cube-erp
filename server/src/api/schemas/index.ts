@@ -1,5 +1,5 @@
 import { ZodEffects, ZodObject } from 'zod';
-import { BadRequestError } from '../core/errors';
+import { BadRequestError, NotFoundError } from '../core/errors';
 import { isValidObjectId } from 'mongoose';
 import { removeNestedNullish } from '@utils/index';
 
@@ -29,7 +29,7 @@ export const validateObjectId =
   (fieldName: string) => (req: any, res: any, next: any) => {
     const id = req.params[fieldName];
     if (!isValidObjectId(id)) {
-      throw new BadRequestError('Yêu cầu không hợp lệ.');
+      throw new NotFoundError();
     }
     next();
   };

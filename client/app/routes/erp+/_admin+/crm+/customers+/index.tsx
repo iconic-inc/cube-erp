@@ -16,6 +16,7 @@ import StatCard from '~/components/StatCard';
 import { isAuthenticated } from '~/services/auth.server';
 import { formatDate } from '~/utils';
 import List from '~/components/List';
+import { Button } from '~/components/ui/button';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -63,9 +64,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMCustomers() {
   const { customersPromise } = useLoaderData<typeof loader>();
 
-  const [selectedCustomers, setSelectedCustomers] = useState<ICustomer[]>([]);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<ICustomer>[]
   >([
@@ -83,19 +81,10 @@ export default function HRMCustomers() {
             {customer.cus_firstName} {customer.cus_lastName}
           </span>
           <span className='text-gray-500 text-sm truncate'>
-            {customer.cus_birthDate
-              ? formatDate(customer.cus_birthDate)
-              : 'Chưa có ngày sinh'}
+            {customer.cus_code || 'Chưa có mã'}
           </span>
         </Link>
       ),
-    },
-    {
-      key: 'code',
-      title: 'Mã Khách hàng',
-      sortField: 'cus_code',
-      visible: true,
-      render: (customer: ICustomer) => customer.cus_code || 'Chưa có mã',
     },
     {
       key: 'msisdn',
@@ -141,12 +130,24 @@ export default function HRMCustomers() {
       render: (customer: ICustomer) =>
         customer.cus_address || 'Chưa có địa chỉ',
     },
+    {
+      key: 'action',
+      title: 'Hành động',
+      visible: true,
+      render: (customer) => (
+        <Button variant='primary' asChild>
+          <Link to={`/erp/crm/cases/new?customerId=${customer?.id || ''}`}>
+            Thêm Hồ sơ vụ việc
+          </Link>
+        </Button>
+      ),
+    },
   ]);
 
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='w-full space-y-8'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Khách hàng'
@@ -160,7 +161,7 @@ export default function HRMCustomers() {
       />
 
       {/* Customer Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
         <Defer resolve={customersPromise}>
           {({ data }) => (
             <>
@@ -192,15 +193,11 @@ export default function HRMCustomers() {
       <List<ICustomer>
         itemsPromise={customersPromise}
         name='Khách hàng'
-        selectedItems={selectedCustomers}
-        setSelectedItems={setSelectedCustomers}
-        setShowDeleteModal={setShowDeleteModal}
         setVisibleColumns={setVisibleColumns}
         visibleColumns={visibleColumns}
-        showDeleteModal={showDeleteModal}
         addNewHandler={() => navigate('/erp/crm/customers/new')}
       />
-    </>
+    </div>
   );
 }
 

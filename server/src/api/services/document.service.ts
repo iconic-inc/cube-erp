@@ -2,7 +2,10 @@ import mongoose, { Types } from 'mongoose';
 import { BadRequestError, NotFoundError } from '../core/errors';
 import { DocumentModel } from '../models/document.model';
 import { DocumentCaseModel } from '../models/documentCase.model';
-import { IDocumentCreate } from '../interfaces/document.interface';
+import {
+  IDocumentCreate,
+  IDocumentQuery,
+} from '../interfaces/document.interface';
 import fs from 'fs';
 import {
   formatAttributeName,
@@ -12,20 +15,6 @@ import {
 } from '@utils/index';
 import { getEmployeeByUserId } from './employee.service';
 import { DOCUMENT } from '@constants/document.constant';
-
-/**
- * Interface for document query parameters
- */
-interface IDocumentQuery {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  type?: string;
-  startDate?: string;
-  endDate?: string;
-}
 
 /**
  * Create a new document
@@ -482,6 +471,7 @@ export const deleteMultipleDocuments = async (
   if (!documents.length) {
     throw new NotFoundError('Không tìm thấy tài liệu nào để xóa.');
   }
+
   // Delete files from disk
   for (const document of documents) {
     try {
@@ -495,99 +485,13 @@ export const deleteMultipleDocuments = async (
     // Delete document from database
     await document.deleteOne();
   }
+  await DocumentCaseModel.deleteMany({
+    document: { $in: validIds },
+  });
   return getReturnData({
     message: 'Documents deleted successfully',
     deletedCount: documents.length,
   });
-};
-
-/**
- * Attach document to a case
- * @param {string} documentId - Document ID
- * @param {string} caseId - Case service ID
- * @param {string} employeeId - ID of the employee making the request
- */
-export const attachDocumentToCase = async (
-  documentId: string,
-  caseId: string,
-  employeeId: string
-) => {
-  try {
-    if (
-      !Types.ObjectId.isValid(documentId) ||
-      !Types.ObjectId.isValid(caseId)
-    ) {
-      throw new BadRequestError('Invalid document or case ID');
-    }
-
-    const document = await DocumentModel.findById(documentId);
-
-    if (!document) {
-      throw new NotFoundError('Document not found');
-    }
-
-    // Check if document is already attached to this case
-    const existingRelation = await DocumentCaseModel.findOne({
-      document: documentId,
-      caseService: caseId,
-    });
-
-    if (existingRelation) {
-      return { message: 'Document is already attached to this case' };
-    }
-
-    // Create new document-case relationship
-    await DocumentCaseModel.build({
-      document: documentId,
-      caseService: caseId,
-      createdBy: employeeId,
-    });
-
-    return { message: 'Document attached to case successfully' };
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Detach document from a case
- * @param {string} documentId - Document ID
- * @param {string} caseId - Case service ID
- * @param {string} employeeId - ID of the employee making the request
- */
-export const detachDocumentFromCase = async (
-  documentId: string,
-  caseId: string,
-  employeeId: string
-) => {
-  try {
-    if (
-      !Types.ObjectId.isValid(documentId) ||
-      !Types.ObjectId.isValid(caseId)
-    ) {
-      throw new BadRequestError('Invalid document or case ID');
-    }
-
-    const document = await DocumentModel.findById(documentId);
-
-    if (!document) {
-      throw new NotFoundError('Document not found');
-    }
-
-    // Find and remove the document-case relationship
-    const relation = await DocumentCaseModel.findOneAndDelete({
-      document: documentId,
-      caseService: caseId,
-    });
-
-    if (!relation) {
-      throw new NotFoundError('Document is not attached to this case');
-    }
-
-    return { message: 'Document detached from case successfully' };
-  } catch (error) {
-    throw error;
-  }
 };
 
 /**
@@ -633,243 +537,6 @@ export const updateDocumentAccess = async (
     await document.save();
 
     return { message: 'Document access updated successfully' };
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Get documents by case
- * @param {string} caseId - Case service ID
- * @param {string} employeeId - ID of the employee making the request
- * @param {IDocumentQuery} query - Query parameters for filtering documents
- */
-export const getDocumentsByCase = async (
-  caseId: string,
-  employeeId: string,
-  query: IDocumentQuery = {}
-) => {
-  try {
-    const { page = 1, limit = 10, search, sortBy, sortOrder } = query;
-
-    if (!Types.ObjectId.isValid(caseId)) {
-      throw new BadRequestError('Invalid case ID');
-    }
-
-    // Find all document-case relationships for this case
-    const documentCases = await DocumentCaseModel.find({ caseService: caseId });
-
-    if (!documentCases.length) {
-      return {
-        data: [],
-        pagination: {
-          total: 0,
-          page,
-          limit,
-          totalPages: 0,
-        },
-      };
-    }
-
-    // Get all document IDs
-    const documentIds = documentCases.map((dc) => dc.document);
-
-    // Build the aggregation pipeline
-    const pipeline: any[] = [];
-
-    // Stage 1: Initial match for documents in this case with proper access
-    pipeline.push({
-      $match: {
-        _id: { $in: documentIds },
-        $or: [
-          { doc_isPublic: true },
-          { doc_createdBy: new mongoose.Types.ObjectId(employeeId) },
-          { doc_whiteList: { $in: [new mongoose.Types.ObjectId(employeeId)] } },
-        ],
-      },
-    });
-
-    // Stage 2: Lookup to populate creator information
-    pipeline.push({
-      $lookup: {
-        from: 'employees',
-        localField: 'doc_createdBy',
-        foreignField: '_id',
-        as: 'doc_createdBy',
-      },
-    });
-
-    // Stage 3: Unwind createdBy array
-    pipeline.push({
-      $unwind: {
-        path: '$doc_createdBy',
-        preserveNullAndEmptyArrays: true,
-      },
-    });
-
-    // Stage 3.1: Lookup to populate user information for creator
-    pipeline.push({
-      $lookup: {
-        from: 'users',
-        localField: 'doc_createdBy.emp_user',
-        foreignField: '_id',
-        as: 'doc_createdBy.emp_user',
-      },
-    });
-
-    // Stage 3.2: Unwind the user array
-    pipeline.push({
-      $unwind: {
-        path: '$doc_createdBy.emp_user',
-        preserveNullAndEmptyArrays: true,
-      },
-    });
-
-    // Stage 4: Lookup to populate whitelist information
-    pipeline.push({
-      $lookup: {
-        from: 'employees',
-        localField: 'doc_whiteList',
-        foreignField: '_id',
-        as: 'doc_whiteList',
-      },
-    });
-
-    // Stage 4.1: Lookup to populate user information for whitelist employees
-    pipeline.push({
-      $lookup: {
-        from: 'users',
-        localField: 'doc_whiteList.emp_user',
-        foreignField: '_id',
-        as: 'whitelistUsers',
-      },
-    });
-
-    // Stage 4.2: Add user information to each employee in whitelist
-    pipeline.push({
-      $addFields: {
-        doc_whiteList: {
-          $map: {
-            input: '$doc_whiteList',
-            as: 'employee',
-            in: {
-              $mergeObjects: [
-                '$$employee',
-                {
-                  emp_user: {
-                    $arrayElemAt: [
-                      {
-                        $filter: {
-                          input: '$whitelistUsers',
-                          as: 'user',
-                          cond: { $eq: ['$$user._id', '$$employee.emp_user'] },
-                        },
-                      },
-                      0,
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        },
-      },
-    });
-
-    // Stage 4.3: Remove the temporary whitelist users array
-    pipeline.push({
-      $project: {
-        whitelistUsers: 0,
-      },
-    });
-
-    // Stage 5: Apply search filter if provided
-    if (search) {
-      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
-      pipeline.push({
-        $match: {
-          $or: [
-            { doc_name: searchRegex },
-            { doc_description: searchRegex },
-            { doc_type: searchRegex },
-            { 'doc_createdBy.emp_code': searchRegex },
-          ],
-        },
-      });
-    }
-
-    // Stage 6: Project to include only necessary fields
-    pipeline.push({
-      $project: {
-        _id: 1,
-        doc_name: 1,
-        doc_type: 1,
-        doc_description: 1,
-        doc_url: 1,
-        doc_isPublic: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        doc_createdBy: {
-          _id: 1,
-          emp_code: 1,
-          emp_position: 1,
-          emp_user: {
-            _id: 1,
-            usr_firstName: 1,
-            usr_lastName: 1,
-            usr_email: 1,
-            usr_username: 1,
-            usr_msisdn: 1,
-            usr_avatar: 1,
-            usr_status: 1,
-            usr_role: 1,
-          },
-        },
-        doc_whiteList: {
-          _id: 1,
-          emp_code: 1,
-          emp_position: 1,
-          emp_user: {
-            _id: 1,
-            usr_firstName: 1,
-            usr_lastName: 1,
-            usr_email: 1,
-            usr_username: 1,
-          },
-        },
-      },
-    });
-
-    // Stage 7: Sort the results
-    const sortField = sortBy || 'createdAt';
-    const sortDirection = sortOrder === 'asc' ? 1 : -1;
-    pipeline.push({
-      $sort: { [sortField]: sortDirection },
-    });
-
-    // Get total count first (for pagination)
-    const countPipeline = [...pipeline]; // Clone the pipeline
-    countPipeline.push({ $count: 'total' });
-    const countResult = await DocumentModel.aggregate(countPipeline);
-    const total = countResult.length > 0 ? countResult[0].total : 0;
-
-    // Stage 8: Apply pagination
-    pipeline.push({ $skip: (page - 1) * limit });
-    pipeline.push({ $limit: +limit });
-
-    // Execute the aggregation
-    const documents = await DocumentModel.aggregate(pipeline);
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data: getReturnList(documents),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-      },
-    };
   } catch (error) {
     throw error;
   }
