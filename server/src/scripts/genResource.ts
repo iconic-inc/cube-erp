@@ -90,9 +90,9 @@ const RESOURCES = [
     description: 'Quản lý công việc',
   },
   {
-    name: 'Invoice Management',
-    slug: 'invoice',
-    description: 'Quản lý hóa đơn',
+    name: 'Transaction Management',
+    slug: 'transaction',
+    description: 'Quản lý giao dịch',
   },
   {
     name: 'Document Management',

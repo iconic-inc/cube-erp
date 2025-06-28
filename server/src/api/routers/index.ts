@@ -33,5 +33,6 @@ router.use('/attendance', require('./attendance'));
 router.use('/notifications', require('./notification'));
 router.use('/case-services', require('./caseService'));
 router.use('/documents', require('./document'));
+router.use('/transactions', require('./transaction'));
 
 module.exports = router;

@@ -56,7 +56,7 @@ const ROLES = [
       'caseService',
       'customer',
       'task',
-      'invoice',
+      'transaction',
       'document',
     ].map((resource) => ({
       resourceId: { slug: resource },
@@ -97,7 +97,7 @@ const ROLES = [
         actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
       },
       {
-        resourceId: { slug: 'invoice' },
+        resourceId: { slug: 'transaction' },
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
       {
@@ -137,7 +137,7 @@ const ROLES = [
         actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
       },
       {
-        resourceId: { slug: 'invoice' },
+        resourceId: { slug: 'transaction' },
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
       {
