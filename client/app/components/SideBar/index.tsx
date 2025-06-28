@@ -6,7 +6,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '~/components/ui/sidebar';
-import { Folder, User2, IdCard } from 'lucide-react';
+import { Folder, User2, IdCard, CreditCard } from 'lucide-react';
 import { loader } from '../../routes/erp+/_admin+/_layout';
 import SideNav from './SideNav';
 import { NavUser } from './NavUser';
@@ -83,6 +83,22 @@ const navMain = [
     ],
   },
   {
+    title: 'Tài chính',
+    url: '#',
+    icon: CreditCard,
+    isActive: true,
+    items: [
+      {
+        title: 'Giao dịch',
+        url: '/erp/transactions',
+      },
+      {
+        title: 'Báo cáo',
+        url: '/erp/reports',
+      },
+    ],
+  },
+  {
     title: 'Khác',
     url: '#',
     icon: Folder,
@@ -92,10 +108,6 @@ const navMain = [
         title: 'Tài liệu',
         url: '/erp/documents',
       },
-      // {
-      //   title: 'Thư viện mẫu',
-      //   url: '/erp/documents/templates',
-      // },
     ],
   },
 ];
