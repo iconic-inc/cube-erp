@@ -19,6 +19,12 @@ import { CASE_SERVICE } from '@constants/caseService.constant';
 import { CUSTOMER } from '@constants/customer.constant';
 import { USER } from '@constants/user.constant';
 
+// Import modules for export functionality
+import * as XLSX from 'xlsx';
+import * as fs from 'fs';
+import * as path from 'path';
+import { serverConfig } from '@configs/config.server';
+
 const getTransactions = async (
   query: ITransactionQuery = {}
 ): Promise<{
@@ -49,155 +55,239 @@ const getTransactions = async (
       amountMax,
     } = query;
 
-    // Build match filter
-    const match: any = {};
-    if (search) {
-      match.$or = [
-        { tx_code: { $regex: search, $options: 'i' } },
-        { tx_title: { $regex: search, $options: 'i' } },
-        { tx_description: { $regex: search, $options: 'i' } },
-      ];
-    }
-    if (type) {
-      match.tx_type = type;
-    }
-    if (paymentMethod) {
-      match.tx_paymentMethod = paymentMethod;
-    }
-    if (category) {
-      match.tx_category = category;
-    }
-    if (customerId) {
-      match.tx_customer = new Types.ObjectId(customerId);
-    }
-    if (caseServiceId) {
-      match.tx_caseService = new Types.ObjectId(caseServiceId);
-    }
-    if (createdById) {
-      match.tx_createdBy = new Types.ObjectId(createdById);
-    }
-    if (amountMin !== undefined || amountMax !== undefined) {
-      match.tx_amount = {};
-      if (amountMin !== undefined) match.tx_amount.$gte = amountMin;
-      if (amountMax !== undefined) match.tx_amount.$lte = amountMax;
-    }
-    if (startDate || endDate) {
-      match.createdAt = {};
-      if (startDate) match.createdAt.$gte = new Date(startDate);
-      if (endDate) match.createdAt.$lte = new Date(endDate);
-    }
-
-    // // Special handling for debt type
-    // const debtExpr =
-    //   type === 'debt' ? { $expr: { $gt: ['$tx_amount', '$tx_paid'] } } : null;
-
-    // Sorting
-    let sort: any = {};
-    if (sortBy && sortBy !== 'tx_remain') {
-      //   // Sort by remaining amount (tx_amount - tx_paid)
-      //   sort = {
-      //     $addFields: { tx_remain: { $subtract: ['$tx_amount', '$tx_paid'] } },
-      //   };
-      // } else if (sortBy) {
-      sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-    } else {
-      sort.createdAt = -1;
-    }
-
-    // Aggregation pipeline
+    // Build the aggregation pipeline
     const pipeline: any[] = [];
-    if (Object.keys(match).length > 0) pipeline.push({ $match: match });
-    // if (debtExpr) pipeline.push({ $match: debtExpr });
 
-    // Add tx_remain field if sorting by it
-    if (sortBy === 'tx_remain') {
-      pipeline.push({
-        $addFields: { tx_remain: { $subtract: ['$tx_amount', '$tx_paid'] } },
-      });
-      pipeline.push({ $sort: { tx_remain: sortOrder === 'asc' ? 1 : -1 } });
-    } else {
-      pipeline.push({ $sort: sort });
+    // Stage 1: Match by filters
+    const matchConditions: any = {};
+
+    // Add type filter if provided
+    if (type) {
+      matchConditions.tx_type =
+        type === 'all' ? { $in: ['income', 'outcome'] } : type;
     }
-    const countPipeline = [...pipeline, { $count: 'total' }];
-    const countResult = await TransactionModel.aggregate(countPipeline);
-    const total = countResult[0]?.total || 0;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
 
-    pipeline.push({ $skip: skip });
+    // Add payment method filter if provided
+    if (paymentMethod) {
+      matchConditions.tx_paymentMethod = paymentMethod;
+    }
+
+    // Add category filter if provided
+    if (category) {
+      matchConditions.tx_category = category;
+    }
+
+    // Add customer filter if provided
+    if (customerId) {
+      matchConditions.tx_customer = new Types.ObjectId(customerId);
+    }
+
+    // Add case service filter if provided
+    if (caseServiceId) {
+      matchConditions.tx_caseService = new Types.ObjectId(caseServiceId);
+    }
+
+    // Add created by filter if provided
+    if (createdById) {
+      matchConditions.tx_createdBy = new Types.ObjectId(createdById);
+    }
+
+    // Add amount range filters if provided
+    if (amountMin !== undefined || amountMax !== undefined) {
+      matchConditions.tx_amount = {};
+      if (amountMin !== undefined) {
+        matchConditions.tx_amount.$gte = amountMin;
+      }
+      if (amountMax !== undefined) {
+        matchConditions.tx_amount.$lte = amountMax;
+      }
+    }
+
+    // Add date range filters if provided
+    if (startDate || endDate) {
+      matchConditions.tx_date = {};
+      if (startDate) {
+        matchConditions.tx_date.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        matchConditions.tx_date.$lte = new Date(endDate);
+      }
+    }
+
+    // Add match stage if we have any conditions
+    if (Object.keys(matchConditions).length > 0) {
+      pipeline.push({ $match: matchConditions });
+    }
+
+    // Stage 2: Lookup createdBy employee information
+    pipeline.push({
+      $lookup: {
+        from: USER.EMPLOYEE.COLLECTION_NAME,
+        localField: 'tx_createdBy',
+        foreignField: '_id',
+        as: 'tx_createdBy',
+        pipeline: [
+          {
+            $lookup: {
+              from: USER.COLLECTION_NAME,
+              localField: 'emp_user',
+              foreignField: '_id',
+              as: 'emp_user',
+            },
+          },
+          {
+            $unwind: { path: '$emp_user', preserveNullAndEmptyArrays: true },
+          },
+        ],
+      },
+    });
+
+    // Stage 3: Lookup customer information
+    pipeline.push({
+      $lookup: {
+        from: CUSTOMER.COLLECTION_NAME,
+        localField: 'tx_customer',
+        foreignField: '_id',
+        as: 'tx_customer',
+      },
+    });
+
+    // Stage 4: Lookup case service information
+    pipeline.push({
+      $lookup: {
+        from: CASE_SERVICE.COLLECTION_NAME,
+        localField: 'tx_caseService',
+        foreignField: '_id',
+        as: 'tx_caseService',
+        pipeline: [
+          {
+            $lookup: {
+              from: CUSTOMER.COLLECTION_NAME,
+              localField: 'case_customer',
+              foreignField: '_id',
+              as: 'case_customer',
+            },
+          },
+          {
+            $unwind: {
+              path: '$case_customer',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ],
+      },
+    });
+
+    // Stage 5: Unwind the arrays to work with single documents
+    pipeline.push({
+      $unwind: { path: '$tx_createdBy', preserveNullAndEmptyArrays: true },
+    });
+    pipeline.push({
+      $unwind: { path: '$tx_customer', preserveNullAndEmptyArrays: true },
+    });
+    pipeline.push({
+      $unwind: { path: '$tx_caseService', preserveNullAndEmptyArrays: true },
+    });
+
+    // Stage 6: Add search filter if provided (after lookups for better search)
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+      pipeline.push({
+        $match: {
+          $or: [
+            { tx_code: searchRegex },
+            { tx_title: searchRegex },
+            { tx_description: searchRegex },
+            { 'tx_customer.cus_firstName': searchRegex },
+            { 'tx_customer.cus_lastName': searchRegex },
+            { 'tx_customer.cus_code': searchRegex },
+            { 'tx_createdBy.emp_user.usr_firstName': searchRegex },
+            { 'tx_createdBy.emp_user.usr_lastName': searchRegex },
+            { 'tx_createdBy.emp_user.usr_username': searchRegex },
+            { 'tx_caseService.case_code': searchRegex },
+          ],
+        },
+      });
+    }
+
+    // Stage 7: Add computed fields
+    pipeline.push({
+      $addFields: {
+        tx_remain: { $subtract: ['$tx_amount', '$tx_paid'] },
+      },
+    });
+
+    // Stage 8: Project to include only necessary fields and transform to match ITransactionResponse
+    pipeline.push({
+      $project: {
+        _id: 1,
+        tx_code: 1,
+        tx_type: 1,
+        tx_title: 1,
+        tx_amount: 1,
+        tx_paid: 1,
+        tx_remain: 1,
+        tx_paymentMethod: 1,
+        tx_category: 1,
+        tx_description: 1,
+        tx_date: 1,
+        tx_createdBy: {
+          _id: 1,
+          emp_code: 1,
+          emp_position: 1,
+          emp_department: 1,
+          emp_user: {
+            _id: 1,
+            usr_username: 1,
+            usr_email: 1,
+            usr_firstName: 1,
+            usr_lastName: 1,
+          },
+        },
+        tx_customer: {
+          _id: 1,
+          cus_firstName: 1,
+          cus_lastName: 1,
+          cus_code: 1,
+        },
+        tx_caseService: {
+          _id: 1,
+          case_code: 1,
+          case_status: 1,
+          case_customer: {
+            _id: 1,
+            cus_firstName: 1,
+            cus_lastName: 1,
+          },
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+
+    // Stage 9: Sort the results
+    const sortField = sortBy ? `${sortBy}` : 'tx_date';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({
+      $sort: { [sortField]: sortDirection },
+    });
+
+    // Get total count first (for pagination)
+    const countPipeline = [...pipeline]; // Clone the pipeline
+    countPipeline.push({ $count: 'total' });
+    const countResult = await TransactionModel.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Stage 10: Apply pagination
+    pipeline.push({ $skip: (page - 1) * limit });
     pipeline.push({ $limit: +limit });
 
-    // Populate references using $lookup
-    pipeline.push(
-      // Populate tx_createdBy
-      {
-        $lookup: {
-          from: USER.EMPLOYEE.COLLECTION_NAME,
-          localField: 'tx_createdBy',
-          foreignField: '_id',
-          as: 'tx_createdBy',
-        },
-      },
-      { $unwind: { path: '$tx_createdBy', preserveNullAndEmptyArrays: true } },
-      // Populate emp_user inside tx_createdBy
-      {
-        $lookup: {
-          from: USER.COLLECTION_NAME,
-          localField: 'tx_createdBy.emp_user',
-          foreignField: '_id',
-          as: 'tx_createdBy.emp_user',
-        },
-      },
-      {
-        $unwind: {
-          path: '$tx_createdBy.emp_user',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      // Populate tx_customer
-      {
-        $lookup: {
-          from: CUSTOMER.COLLECTION_NAME,
-          localField: 'tx_customer',
-          foreignField: '_id',
-          as: 'tx_customer',
-        },
-      },
-      { $unwind: { path: '$tx_customer', preserveNullAndEmptyArrays: true } },
-      // Populate tx_caseService
-      {
-        $lookup: {
-          from: CASE_SERVICE.COLLECTION_NAME,
-          localField: 'tx_caseService',
-          foreignField: '_id',
-          as: 'tx_caseService',
-        },
-      },
-      {
-        $unwind: { path: '$tx_caseService', preserveNullAndEmptyArrays: true },
-      },
-      // Populate case_customer inside tx_caseService
-      {
-        $lookup: {
-          from: CUSTOMER.COLLECTION_NAME,
-          localField: 'tx_caseService.case_customer',
-          foreignField: '_id',
-          as: 'tx_caseService.case_customer',
-        },
-      },
-      {
-        $unwind: {
-          path: '$tx_caseService.case_customer',
-          preserveNullAndEmptyArrays: true,
-        },
-      }
-    );
-
-    // Execute aggregation
+    // Execute the aggregation
     const transactions = await TransactionModel.aggregate(pipeline);
+    const totalPages = Math.ceil(total / limit);
 
     return {
-      data: getReturnList(transactions) as unknown as ITransactionResponse[],
+      data: getReturnList(transactions) as ITransactionResponse[],
       pagination: {
         total,
         page,
@@ -206,7 +296,17 @@ const getTransactions = async (
       },
     };
   } catch (error) {
-    throw new BadRequestError(`Error fetching transactions: ${error}`);
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi lấy danh sách giao dịch: ${error.message}`
+      );
+    }
+    throw error;
   }
 };
 
@@ -252,11 +352,12 @@ const getTransactionById = async (
 };
 
 const createTransaction = async (
+  userId: string,
   data: ITransactionCreate
 ): Promise<ITransactionResponse> => {
   try {
     // Validate that createdBy employee exists
-    await getEmployeeByUserId(data.createdBy);
+    const employee = await getEmployeeByUserId(userId);
 
     // Set default paid amount if not provided
     if (data.paid === undefined) {
@@ -271,7 +372,10 @@ const createTransaction = async (
     }
 
     // Create the transaction
-    const transaction = await TransactionModel.build(data);
+    const transaction = await TransactionModel.build({
+      ...data,
+      createdBy: employee.id,
+    });
     await transaction.save();
 
     // Return the created transaction with populated fields
@@ -393,46 +497,137 @@ const bulkDeleteTransactions = async (
 // Export transactions to XLSX
 const exportTransactionsToXLSX = async (query: ITransactionQuery = {}) => {
   try {
-    // Get all transactions without pagination for export
+    // Reuse the same query logic from getTransactions but get all data for export
     const { data: transactions } = await getTransactions({
       ...query,
       page: 1,
-      limit: Number.MAX_SAFE_INTEGER,
+      limit: Number.MAX_SAFE_INTEGER, // Get all records for export
     });
 
-    // Transform data for export
-    const exportData = transactions.map((transaction: any) => ({
-      'Mã giao dịch': transaction.tx_code,
-      Loại:
-        transaction.tx_type === 'income'
-          ? 'Thu'
-          : transaction.tx_type === 'outcome'
-          ? 'Chi'
-          : 'Công nợ',
-      'Tiêu đề': transaction.tx_title,
-      'Số tiền': transaction.tx_amount,
-      'Đã thanh toán': transaction.tx_paid,
-      'Còn nợ': transaction.tx_amount - transaction.tx_paid,
-      'Phương thức thanh toán': transaction.tx_paymentMethod,
-      'Danh mục': transaction.tx_category,
-      'Mô tả': transaction.tx_description || '',
-      'Người tạo':
-        transaction.tx_createdBy?.emp_user?.usr_firstName +
-        ' ' +
-        transaction.tx_createdBy?.emp_user?.usr_lastName,
-      'Khách hàng': transaction.tx_customer
-        ? `${transaction.tx_customer.cus_firstName} ${transaction.tx_customer.cus_lastName}`
-        : '',
-      'Hồ sơ vụ việc': transaction.tx_caseService?.case_code || '',
-      'Ngày tạo': new Date(transaction.createdAt).toLocaleDateString('vi-VN'),
-    }));
+    // Create directory if it doesn't exist
+    const exportDir = path.join(process.cwd(), 'public', 'exports');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    } else {
+      // Clean up old transaction export files
+      for (const file of fs.readdirSync(exportDir)) {
+        if (file.startsWith('giao_dich_') && file.endsWith('.xlsx')) {
+          fs.unlinkSync(path.join(exportDir, file));
+        }
+      }
+    }
+
+    // Create timestamp for unique filename
+    const timestamp = new Date().getTime();
+    const fileName = `giao_dich_${new Date()
+      .toLocaleDateString('vi-VN')
+      .split('/')
+      .join('-')}_${timestamp}.xlsx`;
+    const filePath = path.join(exportDir, fileName);
+
+    // Map transaction data for Excel
+    const excelData = transactions.map((transaction) => {
+      return {
+        'Mã giao dịch': transaction.tx_code || '',
+        Loại:
+          transaction.tx_type === 'income'
+            ? 'Thu'
+            : transaction.tx_type === 'outcome'
+            ? 'Chi'
+            : 'Công nợ',
+        'Tiêu đề': transaction.tx_title || '',
+        'Số tiền': transaction.tx_amount || 0,
+        'Đã thanh toán': transaction.tx_paid || 0,
+        'Còn nợ': (transaction.tx_amount || 0) - (transaction.tx_paid || 0),
+        'Phương thức thanh toán': transaction.tx_paymentMethod || '',
+        'Danh mục': transaction.tx_category || '',
+        'Mô tả': transaction.tx_description || '',
+        'Người tạo': transaction.tx_createdBy
+          ? `${transaction.tx_createdBy.emp_user?.usr_firstName || ''} ${
+              transaction.tx_createdBy.emp_user?.usr_lastName || ''
+            }`.trim()
+          : '',
+        'Mã nhân viên': transaction.tx_createdBy?.emp_code || '',
+        'Khách hàng': transaction.tx_customer
+          ? `${transaction.tx_customer.cus_firstName || ''} ${
+              transaction.tx_customer.cus_lastName || ''
+            }`.trim()
+          : '',
+        'Mã khách hàng': transaction.tx_customer?.cus_code || '',
+        'Hồ sơ vụ việc': transaction.tx_caseService?.case_code || '',
+        'Ngày giao dịch': transaction.tx_date
+          ? new Date(transaction.tx_date).toLocaleDateString('vi-VN')
+          : '',
+        'Thời gian tạo': transaction.createdAt
+          ? new Date(transaction.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '',
+        'Cập nhật lần cuối': transaction.updatedAt
+          ? new Date(transaction.updatedAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '',
+      };
+    });
+
+    // Create worksheet and workbook
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Giao dịch');
+
+    // Set column widths for better readability
+    const colWidths = [
+      { wch: 15 }, // Mã giao dịch
+      { wch: 10 }, // Loại
+      { wch: 25 }, // Tiêu đề
+      { wch: 15 }, // Số tiền
+      { wch: 15 }, // Đã thanh toán
+      { wch: 15 }, // Còn nợ
+      { wch: 20 }, // Phương thức thanh toán
+      { wch: 20 }, // Danh mục
+      { wch: 30 }, // Mô tả
+      { wch: 25 }, // Người tạo
+      { wch: 15 }, // Mã nhân viên
+      { wch: 25 }, // Khách hàng
+      { wch: 15 }, // Mã khách hàng
+      { wch: 20 }, // Hồ sơ vụ việc
+      { wch: 15 }, // Ngày giao dịch
+      { wch: 20 }, // Thời gian tạo
+      { wch: 20 }, // Cập nhật lần cuối
+    ];
+    worksheet['!cols'] = colWidths;
+
+    // Write to file
+    XLSX.writeFile(workbook, filePath);
 
     return {
-      data: exportData,
-      filename: `giao_dich_${new Date().toISOString().split('T')[0]}.xlsx`,
+      fileUrl: `${serverConfig.serverUrl}/exports/${fileName}`,
+      fileName: fileName,
+      count: excelData.length,
     };
   } catch (error) {
-    throw new BadRequestError(`Error exporting transactions: ${error}`);
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi xuất dữ liệu giao dịch: ${error.message}`
+      );
+    }
+    throw error;
   }
 };
 
@@ -455,7 +650,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
 
     // Filter by type (but not for statistics aggregation)
     if (type && type !== 'debt') {
-      filter.tx_type = type;
+      filter.tx_type = type === 'all' ? { $in: ['income', 'outcome'] } : type;
     }
 
     // Filter by payment method
@@ -485,17 +680,17 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
 
     // Filter by date range
     if (startDate || endDate) {
-      filter.createdAt = {};
+      filter.tx_date = {};
       if (startDate) {
-        filter.createdAt.$gte = new Date(startDate);
+        filter.tx_date.$gte = new Date(startDate);
       }
       if (endDate) {
-        filter.createdAt.$lte = new Date(endDate);
+        filter.tx_date.$lte = new Date(endDate);
       }
     }
 
-    // Aggregation pipeline for statistics
-    const pipeline: any[] = [
+    // Main statistics aggregation pipeline
+    const mainStatsPipeline: any[] = [
       { $match: filter },
       {
         $group: {
@@ -529,8 +724,71 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       },
     ];
 
-    const result = await TransactionModel.aggregate(pipeline);
-    const stats = result[0] || {
+    // Category breakdown pipeline
+    const categoryPipeline: any[] = [
+      { $match: filter },
+      {
+        $group: {
+          _id: '$tx_category',
+          income: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
+            },
+          },
+          outcome: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'outcome'] }, '$tx_amount', 0],
+            },
+          },
+          total: { $sum: '$tx_amount' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { total: -1 } },
+    ];
+
+    // Daily breakdown pipeline (last 30 days if no date filter)
+    const dailyFilter = { ...filter };
+    if (!startDate && !endDate) {
+      // Default to last 30 days if no date range specified
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      dailyFilter.tx_date = { $gte: thirtyDaysAgo };
+    }
+
+    const dailyPipeline: any[] = [
+      { $match: dailyFilter },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$tx_date' },
+            month: { $month: '$tx_date' },
+            day: { $dayOfMonth: '$tx_date' },
+          },
+          income: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
+            },
+          },
+          outcome: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'outcome'] }, '$tx_amount', 0],
+            },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
+    ];
+
+    // Execute all aggregations in parallel
+    const [mainStats, categoryStats, dailyStats] = await Promise.all([
+      TransactionModel.aggregate(mainStatsPipeline),
+      TransactionModel.aggregate(categoryPipeline),
+      TransactionModel.aggregate(dailyPipeline),
+    ]);
+
+    const stats = mainStats[0] || {
       totalIncome: 0,
       totalOutcome: 0,
       totalAmount: 0,
@@ -540,15 +798,55 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       debtCount: 0,
     };
 
+    // Format category data for charts
+    const byCategory = categoryStats.map((item) => ({
+      category: item._id || 'Không phân loại',
+      income: item.income,
+      outcome: item.outcome,
+      total: item.total,
+      count: item.count,
+    }));
+    // Format daily data for charts
+    const byDay = dailyStats.map((item) => ({
+      date: `${item._id.year}-${String(item._id.month).padStart(
+        2,
+        '0'
+      )}-${String(item._id.day).padStart(2, '0')}`,
+      year: item._id.year,
+      month: item._id.month,
+      day: item._id.day,
+      income: item.income,
+      outcome: item.outcome,
+      net: item.income - item.outcome,
+      count: item.count,
+    }));
+
+    // Calculate additional metrics for charts
+    const averageTransactionAmount =
+      stats.transactionCount > 0
+        ? (stats.totalIncome + stats.totalOutcome) / stats.transactionCount
+        : 0;
+
+    const paymentRatio =
+      stats.totalPaid + stats.totalOutcome > 0
+        ? (stats.totalPaid / (stats.totalPaid + stats.totalUnpaid)) * 100
+        : 0;
+
     return {
+      // Main statistics
       totalIncome: stats.totalIncome,
       totalOutcome: stats.totalOutcome,
-      totalDebt: stats.totalUnpaid,
       totalPaid: stats.totalPaid,
       totalUnpaid: stats.totalUnpaid,
       transactionCount: stats.transactionCount,
       debtCount: stats.debtCount,
       netAmount: stats.totalIncome - stats.totalOutcome,
+      averageTransactionAmount,
+      paymentRatio,
+
+      // Chart-friendly breakdowns
+      byCategory,
+      byDay,
     };
   } catch (error) {
     throw new BadRequestError(

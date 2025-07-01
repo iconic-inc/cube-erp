@@ -1,58 +1,75 @@
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Badge } from '~/components/ui/badge';
+import { QrCode, Clock, MapPin } from 'lucide-react';
+
 export default function ManageQRCode({
   qrcode,
 }: {
   qrcode?: { qrCode: string; attendanceUrl: string };
 }) {
   return (
-    <div className='bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition duration-300'>
-      <div className='flex justify-between items-center mb-4'>
-        <h3 className='font-semibold text-gray-800'>Mã QR chấm công</h3>
-        {/* <button className='bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 transition duration-200'>
-          Generate New
-        </button> */}
-      </div>
+    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+      <CardHeader className='bg-gradient-to-r from-purple-600 to-violet-700 text-white py-4'>
+        <CardTitle className='text-white text-xl font-bold flex items-center'>
+          <QrCode className='w-5 h-5 mr-2' />
+          Mã QR chấm công
+        </CardTitle>
+      </CardHeader>
 
-      <div className='flex items-center justify-center mb-4'>
-        <div className='bg-white border-2 border-gray-200 rounded-md shadow-sm hover:shadow-md transition duration-300'>
-          <img
-            src={qrcode?.qrCode || '/images/qr-placeholder.png'}
-            alt='QR Code'
-            className='w-56 h-56 object-cover rounded-md'
-          />
+      <CardContent className='p-6 space-y-6'>
+        {/* QR Code Display */}
+        <div className='flex flex-col items-center space-y-4'>
+          <div className='relative bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4'>
+            <img
+              src={qrcode?.qrCode || '/images/qr-placeholder.png'}
+              alt='QR Code chấm công'
+              className='w-48 h-48 object-cover rounded-lg'
+            />
+            {!qrcode?.qrCode && (
+              <div className='absolute inset-0 flex items-center justify-center bg-gray-50 rounded-xl'>
+                <div className='text-center text-gray-400'>
+                  <QrCode className='w-12 h-12 mx-auto mb-2' />
+                  <p className='text-sm'>Đang tải mã QR...</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* QR Code Info */}
+          {/* <div className='text-center space-y-2'>
+            <Badge variant='secondary' className='px-3 py-1'>
+              <Clock className='w-3 h-3 mr-1' />
+              Cập nhật hàng ngày
+            </Badge>
+            <p className='text-xs text-gray-500'>
+              Quét mã QR để chấm công nhanh chóng
+            </p>
+          </div> */}
         </div>
-      </div>
-      {/* <div className='space-y-3'>
-        <div className='flex justify-between items-center'>
-          <p className='text-sm text-gray-600'>Location:</p>
-          <select className='bg-gray-50 border border-gray-200 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-100 transition'>
-            <option>Main Office - Floor 1</option>
-            <option>Main Office - Floor 2</option>
-            <option>Remote Office</option>
-          </select>
-        </div>
-        <div className='flex justify-between items-center'>
-          <p className='text-sm text-gray-600'>Expiration:</p>
-          <select className='bg-gray-50 border border-gray-200 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-100 transition'>
-            <option>Daily</option>
-            <option>Weekly</option>
-            <option>Monthly</option>
-          </select>
-        </div>
-        <div className='flex space-x-2 mt-4'>
-          <button className='flex-1 bg-green-500 text-white px-3 py-2 rounded-md text-sm hover:bg-green-600 transition duration-200 flex items-center justify-center'>
-            <span className='material-symbols-outlined text-sm mr-1'>
-              download
-            </span>
-            Download
-          </button>
-          <button className='flex-1 bg-blue-500 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-600 transition duration-200 flex items-center justify-center'>
-            <span className='material-symbols-outlined text-sm mr-1'>
-              share
-            </span>
-            Share
-          </button>
-        </div>
-      </div> */}
-    </div>
+
+        {/* Instructions */}
+        {/* <div className='bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-4 border border-purple-200'>
+          <h4 className='font-medium text-purple-900 mb-2 flex items-center'>
+            <MapPin className='w-4 h-4 mr-2' />
+            Hướng dẫn sử dụng
+          </h4>
+          <ul className='text-sm text-purple-700 space-y-1'>
+            <li>• Mở ứng dụng camera hoặc quét QR</li>
+            <li>• Hướng camera vào mã QR phía trên</li>
+            <li>• Thực hiện chấm công vào/ra</li>
+            <li>• Đảm bảo kết nối mạng ổn định</li>
+          </ul>
+        </div> */}
+
+        {qrcode?.attendanceUrl && (
+          <div className='text-center'>
+            <p className='text-xs text-gray-500 mb-2'>Link chấm công:</p>
+            <Badge variant='outline' className='text-xs px-2 py-1'>
+              {qrcode.attendanceUrl}
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

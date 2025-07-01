@@ -170,17 +170,17 @@ export default function UserProfileForm({
           <h2 className='text-lg font-medium mb-4'>Thông tin đăng nhập</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <TextInput
-              label='Username'
+              label='Tên đăng nhập'
               value={username}
               name='username'
               onChange={(e) => setUsername(e)}
             />
 
             <PasswordInput
-              id='currentPassword'
+              id='password'
               label='Mật khẩu'
               value={password}
-              name='currentPassword'
+              name='password'
               onChange={(e) => setPassword(e.target.value)}
               placeholder='(Để trống nếu không thay đổi)'
             />
@@ -191,8 +191,8 @@ export default function UserProfileForm({
                   info
                 </span>
                 <p className='text-gray-600'>
-                  Password must be at least 8 characters and include uppercase,
-                  lowercase, number and special character.
+                  Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ
+                  thường, số và ký tự đặc biệt.
                 </p>
               </div>
             </div>

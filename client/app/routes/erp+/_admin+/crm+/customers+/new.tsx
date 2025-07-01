@@ -119,7 +119,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function NewCustomer() {
-  const [isChanged, setIsChanged] = useState(false);
   const location = useLocation();
   const actionData = location.state?.actionData;
 
@@ -164,7 +163,6 @@ export default function NewCustomer() {
             className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
             type='submit'
             form='customer-detail-form'
-            disabled={!isChanged}
           >
             <span className='material-symbols-outlined text-sm mr-1'>save</span>
             Lưu Khách hàng
@@ -173,11 +171,7 @@ export default function NewCustomer() {
       </div>
 
       {/* Form Container */}
-      <CustomerDetailForm
-        setIsChanged={setIsChanged}
-        formId='customer-detail-form'
-        type='create'
-      />
+      <CustomerDetailForm formId='customer-detail-form' type='create' />
 
       {/* Bottom Action Buttons */}
       <div className='flex justify-between items-center mt-6'>
@@ -200,7 +194,6 @@ export default function NewCustomer() {
             className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
             type='submit'
             form='customer-detail-form'
-            disabled={!isChanged}
           >
             <span className='material-symbols-outlined text-sm mr-1'>save</span>
             Lưu Khách hàng

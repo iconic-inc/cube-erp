@@ -12,25 +12,11 @@ router.get(
   AttendanceController.generateAttendanceQR
 );
 
-// Route để nhân viên check-in
-router.post(
-  '/check-in',
-  authenticationV2,
-  hasPermission('attendance', 'create'),
-  AttendanceController.checkIn
-);
-router.post(
-  '/check-out',
-  authenticationV2,
-  hasPermission('attendance', 'update'),
-  AttendanceController.checkOut
-);
-
 // Route để lấy thống kê chấm công của ngày hiện tại
 router.get(
   '/stats/today',
   authenticationV2,
-  hasPermission('attendance', 'read'),
+  hasPermission('attendance', 'readAny'),
   AttendanceController.getTodayAttendanceStats
 );
 
@@ -38,7 +24,7 @@ router.get(
 router.get(
   '/stats/:userId',
   authenticationV2,
-  hasPermission('attendance', 'read'),
+  hasPermission('attendance', 'readAny'),
   AttendanceController.getLast7DaysStats
 );
 
@@ -46,7 +32,7 @@ router.get(
 router.get(
   '/stats',
   authenticationV2,
-  hasPermission('attendance', 'read'),
+  hasPermission('attendance', 'readAny'),
   AttendanceController.getAttendanceStats
 );
 
@@ -54,21 +40,21 @@ router.get(
 router.get(
   '/today',
   authenticationV2,
-  hasPermission('attendance', 'read'),
+  hasPermission('attendance', 'readAny'),
   AttendanceController.getTodayAttendance
 );
 
 router.put(
   '/:attendanceId',
   authenticationV2,
-  hasPermission('attendance', 'update'),
+  hasPermission('attendance', 'updateAny'),
   AttendanceController.updateAttendance
 );
 
 router.delete(
   '/:attendanceId',
   authenticationV2,
-  hasPermission('attendance', 'delete'),
+  hasPermission('attendance', 'deleteAny'),
   AttendanceController.deleteAttendance
 );
 

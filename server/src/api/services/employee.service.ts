@@ -341,10 +341,13 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    const employeeUpdateData = removeNestedNullish<IEmployeeCreate>(
-      getReturnData(data, {
-        fields: ['code', 'position', 'department', 'joinDate'],
-      })
+    const employeeUpdateData = formatAttributeName(
+      removeNestedNullish<IEmployeeCreate>(
+        getReturnData(data, {
+          fields: ['code', 'position', 'department', 'joinDate'],
+        })
+      ),
+      USER.EMPLOYEE.PREFIX
     );
 
     // Cập nhật employee nếu có dữ liệu cần cập nhật

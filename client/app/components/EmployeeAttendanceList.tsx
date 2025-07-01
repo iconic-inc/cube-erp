@@ -1,137 +1,159 @@
 import { Link } from '@remix-run/react';
-import {
-  IAttendance,
-  IAttendanceBrief,
-} from '~/interfaces/attendance.interface';
+import { useState } from 'react';
+import { Badge } from '~/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import List from '~/components/List';
+import { IAttendance } from '~/interfaces/attendance.interface';
+import { IListColumn } from '~/interfaces/app.interface';
 import { calHourDiff } from '~/utils';
+import { Clock, Calendar, User, CheckCircle, XCircle } from 'lucide-react';
 
 export default function EmployeeAttendanceList({
   attendanceStats,
 }: {
   attendanceStats: IAttendance[];
 }) {
-  return (
-    <div className='col-span-2 bg-white rounded-lg shadow-sm overflow-hidden'>
-      <div className='overflow-x-auto'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-              >
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500'
-                  />
-                  Tên nhân sự
+  const [visibleColumns, setVisibleColumns] = useState<
+    IListColumn<IAttendance>[]
+  >([
+    {
+      title: 'Nhân viên',
+      key: 'employee',
+      visible: true,
+      sortField: 'employee.emp_user.usr_firstName',
+      render: (item) => (
+        <Link
+          to={`/erp/employees/${item.employee.id}`}
+          className='text-blue-600 hover:underline block w-full h-full'
+        >
+          <div className='flex items-center space-x-3'>
+            <div className='flex-shrink-0 h-8 w-8'>
+              {item.employee.emp_user.usr_avatar?.img_url ? (
+                <img
+                  className='h-8 w-8 rounded-full object-cover'
+                  src={item.employee.emp_user.usr_avatar.img_url}
+                  alt=''
+                />
+              ) : (
+                <div className='h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center'>
+                  <User className='h-4 w-4 text-gray-400' />
                 </div>
-              </th>
+              )}
+            </div>
+            <div>
+              <div className='text-sm font-medium'>
+                {item.employee.emp_user.usr_firstName}{' '}
+                {item.employee.emp_user.usr_lastName}
+              </div>
+              <div className='text-xs text-gray-500'>
+                {item.employee.emp_code || 'Chưa có mã'}
+              </div>
+            </div>
+          </div>
+        </Link>
+      ),
+    },
+    {
+      title: 'Ngày',
+      key: 'date',
+      visible: true,
+      sortField: 'date',
+      render: (item) => (
+        <div className='flex items-center space-x-2'>
+          <Calendar className='w-4 h-4 text-gray-400' />
+          <span className='text-sm text-gray-600'>
+            {new Date(item.date).toLocaleDateString('vi-VN')}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: 'Giờ vào',
+      key: 'checkIn',
+      visible: true,
+      sortField: 'checkInTime',
+      render: (item) => (
+        <div className='flex items-center space-x-2'>
+          <CheckCircle className='w-4 h-4 text-green-500' />
+          <span className='text-sm text-gray-900'>
+            {item.checkInTime
+              ? new Date(item.checkInTime).toLocaleTimeString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '-'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: 'Giờ ra',
+      key: 'checkOut',
+      visible: true,
+      sortField: 'checkOutTime',
+      render: (item) => (
+        <div className='flex items-center space-x-2'>
+          <XCircle className='w-4 h-4 text-red-500' />
+          <span className='text-sm text-gray-900'>
+            {item.checkOutTime
+              ? new Date(item.checkOutTime).toLocaleTimeString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '-'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: 'Tổng giờ làm',
+      key: 'totalHours',
+      visible: true,
+      sortField: 'totalHours',
+      render: (item) => (
+        <div className='flex items-center space-x-2'>
+          <Clock className='w-4 h-4 text-blue-500' />
+          <Badge
+            variant={
+              item.checkInTime && item.checkOutTime ? 'default' : 'secondary'
+            }
+            className='text-sm'
+          >
+            {item.checkInTime && item.checkOutTime
+              ? `${calHourDiff(item.checkInTime, item.checkOutTime)} giờ`
+              : 'Chưa ra'}
+          </Badge>
+        </div>
+      ),
+    },
+  ]);
 
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-              >
-                <div className='flex items-center'>Ngày</div>
-              </th>
-
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs f</tbody>ont-medium text-gray-500 uppercase tracking-wider'
-              >
-                <div className='flex items-center'>Giờ vào</div>
-              </th>
-
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-              >
-                Giờ ra
-              </th>
-
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-              >
-                Tổng giờ làm
-              </th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {attendanceStats.map((stat) => (
-              <tr key={stat.id} className='hover:bg-gray-50 transition-all'>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='flex items-center'>
-                    <input
-                      type='checkbox'
-                      className='mr-3 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500'
-                    />
-
-                    <Link
-                      to={`/erp/employees/${stat.employee.id}`}
-                      className='flex items-center flex-grow text-gray-900 hover:text-red-500'
-                    >
-                      <div className='flex-shrink-0 h-10 w-10'>
-                        <img
-                          className='h-10 w-10 rounded-full object-cover'
-                          src={
-                            stat.employee.emp_user.usr_avatar?.img_url ||
-                            '/assets/user-avatar-placeholder.jpg'
-                          }
-                          alt=''
-                        />
-                      </div>
-                      <div className='ml-4'>
-                        <div className='text-sm font-medium'>
-                          {stat.employee.emp_user.usr_firstName}{' '}
-                          {stat.employee.emp_user.usr_lastName}
-                        </div>
-                        <div className='text-sm text-gray-500'>
-                          {stat.employee.emp_code}
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                </td>
-
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                  {new Date(stat.date).toLocaleDateString()}
-                </td>
-
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {stat.checkInTime
-                    ? new Date(stat.checkInTime).toLocaleTimeString()
-                    : '-'}
-                </td>
-
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {stat.checkOutTime
-                    ? new Date(stat.checkOutTime).toLocaleTimeString()
-                    : '-'}
-                </td>
-
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {stat.checkInTime && stat.checkOutTime
-                    ? calHourDiff(stat.checkInTime, stat.checkOutTime)
-                    : '-'}{' '}
-                  giờ
-                </td>
-              </tr>
-            ))}
-            {attendanceStats.length === 0 && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className='px-6 py-4 text-center text-sm text-gray-500'
-                >
-                  Chưa có dữ liệu chấm công
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  return (
+    <Card className='col-span-2 rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+      <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4'>
+        <CardTitle className='text-white text-xl font-bold flex items-center'>
+          <Clock className='w-5 h-5 mr-2' />
+          Chấm công hôm nay
+        </CardTitle>
+      </CardHeader>
+      <CardContent className='p-0'>
+        <List<IAttendance>
+          itemsPromise={{
+            data: attendanceStats,
+            pagination: {
+              total: attendanceStats.length,
+              limit: attendanceStats.length,
+              page: 1,
+              totalPages: 1,
+            },
+          }}
+          visibleColumns={visibleColumns}
+          setVisibleColumns={setVisibleColumns}
+          name='Chấm công'
+          showToolbar={false}
+          showPagination={false}
+        />
+      </CardContent>
+    </Card>
   );
 }

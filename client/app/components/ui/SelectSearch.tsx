@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '~/components/ui/button';
 import {
@@ -55,6 +55,18 @@ export function SelectSearch({
     setOpen(false);
     onValueChange?.(finalValue); // Call the provided onValueChange handler
   };
+
+  useEffect(() => {
+    // If defaultValue is provided, set it as the selected value
+    if (defaultValue) {
+      const option = options.find((option) => option.value === defaultValue);
+      if (option) {
+        setSelectedValue(option.value);
+      } else {
+        setSelectedValue(''); // Reset if defaultValue is not found in options
+      }
+    }
+  }, [defaultValue]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

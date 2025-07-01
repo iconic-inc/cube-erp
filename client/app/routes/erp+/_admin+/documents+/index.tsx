@@ -191,7 +191,7 @@ export default function HRMDocuments() {
   }, [uploadFetcher.data]);
 
   return (
-    <>
+    <div className='w-full space-y-8'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách tài liệu'
@@ -204,9 +204,6 @@ export default function HRMDocuments() {
         actionHandler={() => addNewHandler()}
       />
 
-      {/* Document Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
-
       <List<IDocument>
         itemsPromise={documentsPromise}
         visibleColumns={visibleColumns}
@@ -214,7 +211,7 @@ export default function HRMDocuments() {
         addNewHandler={addNewHandler}
         name='Tài liệu'
       />
-    </>
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@ import { IEmployeePopulate } from './employee.interface';
 
 export interface IAttendance {
   id: string;
-  employeeId: Types.ObjectId;
+  employee: Types.ObjectId;
   fingerprint: string;
   ip: string;
   date: Date;
@@ -14,7 +14,7 @@ export interface IAttendance {
 }
 
 export interface IAttendanceCreate {
-  employeeId: Types.ObjectId;
+  employee: string | Types.ObjectId;
   fingerprint: string;
   ip: string;
   date: Date;
@@ -42,7 +42,7 @@ export interface IAttendanceModel extends Model<IAttendanceDocument> {
 
 export interface IAttendanceResponseData {
   id: string;
-  employeeId: IEmployeePopulate;
+  employee: IEmployeePopulate;
   fingerprint: string;
   ip: string;
   checkInTime: Date;

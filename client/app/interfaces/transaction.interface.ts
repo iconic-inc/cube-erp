@@ -15,6 +15,7 @@ export interface ITransactionBrief {
   tx_createdBy: IEmployeeBrief;
   tx_customer?: ICustomerBrief;
   tx_caseService?: ICaseServiceBrief;
+  tx_date: string; // ISO date string
   createdAt: string;
   updatedAt: string;
 }
@@ -32,9 +33,10 @@ export interface ITransactionCreate {
   paymentMethod: string;
   category: string;
   description?: string;
-  createdBy: string;
+  createdBy?: string;
   customer?: string;
   caseService?: string;
+  date?: string; // Optional, defaults to current date
 }
 
 export interface ITransactionUpdate extends Partial<ITransactionCreate> {}
@@ -55,4 +57,35 @@ export interface ITransactionQuery {
   createdById?: string;
   amountMin?: number;
   amountMax?: number;
+}
+
+export interface ITransactionStats {
+  totalIncome: number;
+  totalOutcome: number;
+  totalPaid: number;
+  totalUnpaid: number;
+  transactionCount: number;
+  netAmount: number;
+  debtCount: number;
+  averageTransactionAmount: number;
+  paymentRatio: number;
+
+  byCategory: Array<{
+    category: string;
+    income: number;
+    outcome: number;
+    total: number;
+    count: number;
+  }>;
+
+  byDay: Array<{
+    date: string;
+    year: number;
+    month: number;
+    day: number;
+    income: number;
+    outcome: number;
+    net: number;
+    count: number;
+  }>;
 }

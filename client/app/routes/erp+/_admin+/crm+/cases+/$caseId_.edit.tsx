@@ -18,6 +18,8 @@ import { getEmployees } from '~/services/employee.server';
 import { isAuthenticated } from '~/services/auth.server';
 import { ICaseServiceUpdate } from '~/interfaces/case.interface';
 import { CASE_SERVICE } from '~/constants/caseService.constant';
+import { useMemo } from 'react';
+import { generateFormId } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -47,7 +49,10 @@ export default function () {
   const { caseId, casePromise, employeesPromise } =
     useLoaderData<typeof loader>();
 
-  const formId = `case-detail-form-${caseId}`;
+  const formId = useMemo(
+    () => generateFormId(`case-detail-form-${caseId}`),
+    [caseId],
+  );
 
   return (
     <div className='w-full space-y-4 md:space-y-6'>
@@ -139,7 +144,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           {
             case: res,
             toast: {
-              message: 'Thêm mới Hồ sơ thành công!',
+              message: 'Cập nhật Hồ sơ thành công!',
               type: 'success' as ToastType,
             },
             redirectTo: `/erp/crm/cases/${res.id}`,

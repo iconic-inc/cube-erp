@@ -1,82 +1,99 @@
-import { deleteCustomer, getCustomerById } from '~/services/customer.server';
-import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { authenticator, isAuthenticated } from '~/services/auth.server';
-import { data, useLoaderData, useNavigate } from '@remix-run/react';
+import { getCustomerById } from '~/services/customer.server';
+import { getCaseServices } from '~/services/case.server';
+import { getTransactions } from '~/services/transaction.server';
+import { LoaderFunctionArgs } from '@remix-run/node';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
-import Defer from '~/components/Defer';
-import CustomerProfileHeader from './_components/CustomerProfileHeader';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from '~/components/ui/card';
-import TextRenderer from '~/components/TextRenderer';
+import CustomerDetail from './_components/CustomerDetail';
+import CustomerCaseServiceList from './_components/CustomerCaseServiceList';
+import CustomerTransactionList from './_components/CustomerTransactionList';
+import { Pen } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const user = await parseAuthCookie(request);
-  // Fetch customer details from the API
-  const customerId = params.customerId as string;
-  const customer = getCustomerById(customerId, user!).catch((err) => {
-    console.error('Error fetching customer:', err);
-    return { success: false, message: 'Không tìm thấy khách hàng' };
+  const session = await parseAuthCookie(request);
+  // Fetch customer data based on customer ID
+  const customerId = params.customerId;
+  if (!customerId) {
+    throw new Response('Customer ID is required', { status: 400 });
+  }
+  const customerPromise = getCustomerById(customerId, session!).catch(
+    (error) => {
+      console.error('Error fetching customer:', error);
+      return {
+        success: false,
+        message: error.message || 'Có lỗi khi lấy thông tin khách hàng',
+      };
+    },
+  );
+  const customerCaseServicesPromise = getCaseServices(
+    { customerId },
+    { page: 1, limit: 100 },
+    session!,
+  ).catch((error) => {
+    console.error('Error fetching customer case services:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi khi lấy danh sách hồ sơ dịch vụ',
+    };
+  });
+  const customerTransactionsPromise = getTransactions(
+    { customerId },
+    { page: 1, limit: 100 },
+    session!,
+  ).catch((error) => {
+    console.error('Error fetching customer transactions:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi khi lấy danh sách giao dịch',
+    };
   });
 
-  return { customerId, customer };
+  return {
+    customerId,
+    customerPromise,
+    customerCaseServicesPromise,
+    customerTransactionsPromise,
+  };
 };
 export default function CustomerDetails() {
-  const { customerId, customer } = useLoaderData<typeof loader>();
+  const {
+    customerId,
+    customerPromise,
+    customerCaseServicesPromise,
+    customerTransactionsPromise,
+  } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='w-full space-y-4 md:space-y-6'>
       <ContentHeader
-        title='Chi tiết khách hàng'
+        title='Chi tiết Khách hàng'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>edit</span>
-            Sửa thông tin
+            <Pen className='w-4 h-4 mr-1' />
+            Chỉnh sửa Khách hàng
           </>
         }
-        actionHandler={() => navigate(`/erp/crm/customers/${customerId}/edit`)}
+        actionHandler={() => {
+          navigate(`./edit`);
+        }}
       />
 
-      <Defer resolve={customer}>
-        {(customer) => {
-          return (
-            <div className='flex flex-col gap-6'>
-              <CustomerProfileHeader customer={customer} />
+      {/* Customer Details Card */}
+      <CustomerDetail customerPromise={customerPromise} />
 
-              <Card>
-                <CardContent className='p-6'>
-                  <CardTitle>Ghi chú</CardTitle>
-                  <CardDescription>
-                    <TextRenderer
-                      content={
-                        customer.cus_notes ||
-                        'Chưa có ghi chú nào cho khách hàng này'
-                      }
-                    />
-                  </CardDescription>
-                </CardContent>
-              </Card>
+      {/* Associated Case Services Card */}
+      <CustomerCaseServiceList
+        customerId={customerId}
+        customerCaseServicesPromise={customerCaseServicesPromise}
+      />
 
-              <Card className=''>
-                <CardContent className='p-6'>
-                  {/* Recent Attendance Log */}
-                  {/* <Defer resolve={last7DaysStats}>
-            {(data) =>
-              data ? <AdminAttendanceLog attendanceStats={data} /> : null
-            }
-          </Defer> */}
-                  customer case services list
-                </CardContent>
-              </Card>
-            </div>
-          );
-        }}
-      </Defer>
+      {/* Associated Transactions Card */}
+      <CustomerTransactionList
+        customerId={customerId}
+        customerTransactionsPromise={customerTransactionsPromise}
+      />
     </div>
   );
 }

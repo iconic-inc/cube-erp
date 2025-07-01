@@ -25,6 +25,7 @@ import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
+import { DatePicker } from '~/components/ui/date-picker';
 
 export default function TransactionDetailForm({
   formId,
@@ -64,6 +65,7 @@ export default function TransactionDetailForm({
   const [selectedCaseService, setSelectedCaseService] = useState<string>(
     initialCaseId || '',
   );
+  const [date, setDate] = useState<Date>(new Date());
 
   // Control states
   const [customersList, setCustomersList] = useState<ICustomer[]>([]);
@@ -171,6 +173,7 @@ export default function TransactionDetailForm({
       category ||
       description ||
       selectedCustomer ||
+      transactionType ||
       selectedCaseService;
 
     setIsChanged(!!hasChanged);
@@ -255,6 +258,7 @@ export default function TransactionDetailForm({
             setDescription(transactionData.tx_description || '');
             setSelectedCustomer(transactionData.tx_customer?.id || '');
             setSelectedCaseService(transactionData.tx_caseService?.id || '');
+            setDate(new Date(transactionData.tx_date || Date.now()));
           } else {
             console.error(
               'Transaction data is not in the expected format:',
@@ -278,7 +282,6 @@ export default function TransactionDetailForm({
 
   // Reset category when transaction type changes
   useEffect(() => {
-    setCategory('');
     generateTransactionCode();
   }, [transactionType]);
 
@@ -333,6 +336,22 @@ export default function TransactionDetailForm({
                 <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
               )}
             </div>
+
+            <div>
+              <Label
+                htmlFor='date'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Ngày giao dịch <span className='text-red-500'>*</span>
+              </Label>
+
+              <DatePicker
+                id='date'
+                initialDate={date}
+                name='date'
+                onChange={(date) => setDate(date)}
+              />
+            </div>
           </div>
 
           {/* Title */}
@@ -371,9 +390,11 @@ export default function TransactionDetailForm({
                   { value: 'outcome', label: 'Chi' },
                 ]}
                 defaultValue={transactionType}
-                onValueChange={(value) =>
-                  setTransactionType(value as 'income' | 'outcome')
-                }
+                onValueChange={(value) => {
+                  setTransactionType(
+                    (prev) => (value as 'income' | 'outcome') || prev,
+                  );
+                }}
                 placeholder='Chọn loại giao dịch'
                 name='type'
                 id='type'

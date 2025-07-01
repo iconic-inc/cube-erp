@@ -15,6 +15,7 @@ import {
 } from '@utils/index';
 import { getEmployeeByUserId } from './employee.service';
 import { DOCUMENT } from '@constants/document.constant';
+import { USER } from '@constants/user.constant';
 
 /**
  * Create a new document
@@ -61,7 +62,7 @@ export const createDocument = async (
 
 /**
  * Get all documents
- * @param {string} employeeId - ID of the employee making the request
+ * @param {string} userId - ID of the employee making the request
  * @param {IDocumentQuery} query - Query parameters for filtering documents
  */
 export const getDocuments = async (
@@ -100,7 +101,7 @@ export const getDocuments = async (
     // Stage 2: Lookup to populate creator information
     pipeline.push({
       $lookup: {
-        from: 'employees',
+        from: USER.EMPLOYEE.COLLECTION_NAME,
         localField: 'doc_createdBy',
         foreignField: '_id',
         as: 'doc_createdBy',
@@ -118,7 +119,7 @@ export const getDocuments = async (
     // Stage 3.1: Lookup to populate user information for creator
     pipeline.push({
       $lookup: {
-        from: 'users',
+        from: USER.COLLECTION_NAME,
         localField: 'doc_createdBy.emp_user',
         foreignField: '_id',
         as: 'doc_createdBy.emp_user',
@@ -136,7 +137,7 @@ export const getDocuments = async (
     // Stage 4: Lookup to populate whitelist information
     pipeline.push({
       $lookup: {
-        from: 'employees',
+        from: USER.EMPLOYEE.COLLECTION_NAME,
         localField: 'doc_whiteList',
         foreignField: '_id',
         as: 'doc_whiteList',
@@ -200,7 +201,15 @@ export const getDocuments = async (
             { doc_name: searchRegex },
             { doc_description: searchRegex },
             { doc_type: searchRegex },
-            { 'doc_createdBy.emp_code': searchRegex },
+            {
+              doc_createdBy: {
+                emp_code: searchRegex,
+                emp_user: {
+                  usr_firstName: searchRegex,
+                  usr_lastName: searchRegex,
+                },
+              },
+            },
           ],
         },
       });
@@ -293,6 +302,7 @@ export const getDocuments = async (
     const documents = await DocumentModel.aggregate(pipeline);
     const totalPages = Math.ceil(total / limit);
 
+    console.log(pipeline);
     return {
       data: getReturnList(documents),
       pagination: {

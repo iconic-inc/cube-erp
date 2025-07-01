@@ -18,10 +18,18 @@ import {
 import { getEmployeeByUserId } from './employee.service';
 import { CaseServiceModel } from '@models/caseService.model';
 import { CASE_SERVICE, TASK } from '../constants';
+import { CUSTOMER } from '../constants/customer.constant';
+import { USER } from '../constants/user.constant';
 import { TaskTemplateModel } from '@models/taskTemplate.model';
 import { TaskModel } from '@models/task.model';
 import '@utils/date.util'; // Ensure date utilities are loaded
 import { getTasks } from './task.service';
+
+// Import modules for export functionality
+import * as XLSX from 'xlsx';
+import * as fs from 'fs';
+import * as path from 'path';
+import { serverConfig } from '@configs/config.server';
 
 const getCaseServices = async (
   query: ICaseServiceQuery = {}
@@ -35,7 +43,6 @@ const getCaseServices = async (
   };
 }> => {
   try {
-    // Apply pagination options
     const {
       page = 1,
       limit = 10,
@@ -52,17 +59,8 @@ const getCaseServices = async (
     // Build the aggregation pipeline
     const pipeline: any[] = [];
 
-    // Stage 1: Match by filters
+    // Stage 1: Match by filters (early filtering)
     const matchConditions: any = {};
-
-    // Add search filter if provided
-    if (search) {
-      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
-      matchConditions.$or = [
-        { case_code: searchRegex },
-        { case_notes: searchRegex },
-      ];
-    }
 
     // Add status filter if provided
     if (status) {
@@ -72,15 +70,10 @@ const getCaseServices = async (
     // Add date range filters if provided
     if (startDate || endDate) {
       matchConditions.case_startDate = {};
-
       if (startDate) {
         matchConditions.case_startDate.$gte = new Date(startDate);
       }
-
       if (endDate) {
-        if (!matchConditions.case_startDate) {
-          matchConditions.case_startDate = {};
-        }
         matchConditions.case_startDate.$lte = new Date(endDate);
       }
     }
@@ -103,24 +96,24 @@ const getCaseServices = async (
     // Stage 2: Lookup customer information
     pipeline.push({
       $lookup: {
-        from: 'customers',
+        from: CUSTOMER.COLLECTION_NAME,
         localField: 'case_customer',
         foreignField: '_id',
         as: 'case_customer',
       },
     });
 
-    // Stage 3: Lookup lead attorney information
+    // Stage 3: Lookup lead attorney information with nested user lookup
     pipeline.push({
       $lookup: {
-        from: 'employees',
+        from: USER.EMPLOYEE.COLLECTION_NAME,
         localField: 'case_leadAttorney',
         foreignField: '_id',
         as: 'case_leadAttorney',
         pipeline: [
           {
             $lookup: {
-              from: 'users',
+              from: USER.COLLECTION_NAME,
               localField: 'emp_user',
               foreignField: '_id',
               as: 'emp_user',
@@ -133,17 +126,17 @@ const getCaseServices = async (
       },
     });
 
-    // Stage 4: Lookup assignees information if available
+    // Stage 4: Lookup assignees information with nested user lookup
     pipeline.push({
       $lookup: {
-        from: 'employees',
+        from: USER.EMPLOYEE.COLLECTION_NAME,
         localField: 'case_assignees',
         foreignField: '_id',
         as: 'case_assignees',
         pipeline: [
           {
             $lookup: {
-              from: 'users',
+              from: USER.COLLECTION_NAME,
               localField: 'emp_user',
               foreignField: '_id',
               as: 'emp_user',
@@ -164,38 +157,62 @@ const getCaseServices = async (
       $unwind: { path: '$case_leadAttorney', preserveNullAndEmptyArrays: true },
     });
 
-    // Stage 6: Project to include only necessary fields and transform to match ICaseServiceResponse
+    // Stage 6: Add search filter if provided (after lookups for richer search)
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+      pipeline.push({
+        $match: {
+          $or: [
+            { case_code: searchRegex },
+            { case_notes: searchRegex },
+            { 'case_customer.cus_firstName': searchRegex },
+            { 'case_customer.cus_lastName': searchRegex },
+            { 'case_customer.cus_code': searchRegex },
+            { 'case_leadAttorney.emp_user.usr_firstName': searchRegex },
+            { 'case_leadAttorney.emp_user.usr_lastName': searchRegex },
+            { 'case_leadAttorney.emp_user.usr_username': searchRegex },
+            { 'case_leadAttorney.emp_code': searchRegex },
+            { 'case_assignees.emp_user.usr_firstName': searchRegex },
+            { 'case_assignees.emp_user.usr_lastName': searchRegex },
+            { 'case_assignees.emp_user.usr_username': searchRegex },
+            { 'case_assignees.emp_code': searchRegex },
+          ],
+        },
+      });
+    }
+
+    // Stage 8: Project to include only necessary fields and transform to match ICaseServiceResponse
     pipeline.push({
       $project: {
         _id: 1,
         case_customer: {
           _id: 1,
-          cus_firstName: '$case_customer.cus_firstName',
-          cus_lastName: '$case_customer.cus_lastName',
-          cus_code: '$case_customer.cus_code',
+          cus_firstName: 1,
+          cus_lastName: 1,
+          cus_code: 1,
         },
         case_code: 1,
         case_leadAttorney: {
           _id: 1,
           emp_user: {
             _id: 1,
-            usr_username: '$case_leadAttorney.emp_user.usr_username',
-            usr_email: '$case_leadAttorney.emp_user.usr_email',
-            usr_firstName: '$case_leadAttorney.emp_user.usr_firstName',
-            usr_lastName: '$case_leadAttorney.emp_user.usr_lastName',
+            usr_username: 1,
+            usr_email: 1,
+            usr_firstName: 1,
+            usr_lastName: 1,
           },
-          emp_code: '$case_leadAttorney.emp_code',
-          emp_position: '$case_leadAttorney.emp_position',
-          emp_department: '$case_leadAttorney.emp_department',
+          emp_code: 1,
+          emp_position: 1,
+          emp_department: 1,
         },
         case_assignees: {
           $map: {
             input: '$case_assignees',
             as: 'assignee',
             in: {
-              _id: 1,
+              _id: '$$assignee._id',
               emp_user: {
-                _id: 1,
+                _id: '$$assignee.emp_user._id',
                 usr_username: '$$assignee.emp_user.usr_username',
                 usr_email: '$$assignee.emp_user.usr_email',
                 usr_firstName: '$$assignee.emp_user.usr_firstName',
@@ -216,7 +233,7 @@ const getCaseServices = async (
       },
     });
 
-    // Stage 7: Sort the results
+    // Stage 9: Sort the results
     const sortField = sortBy ? `${sortBy}` : 'createdAt';
     const sortDirection = sortOrder === 'asc' ? 1 : -1;
     pipeline.push({
@@ -229,7 +246,7 @@ const getCaseServices = async (
     const countResult = await CaseServiceModel.aggregate(countPipeline);
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
-    // Stage 8: Apply pagination
+    // Stage 10: Apply pagination
     pipeline.push({ $skip: (page - 1) * limit });
     pipeline.push({ $limit: +limit });
 
@@ -381,6 +398,14 @@ const updateCaseService = async (id: string, data: ICaseServiceUpdate) => {
   }
 
   try {
+    if (
+      !data.endDate &&
+      ['closed', 'completed'].includes(data.status as string)
+    ) {
+      // If status is closed or completed, set endDate to now
+      data.endDate = new Date().toISOString();
+    }
+
     const updatedCaseService = await CaseServiceModel.findByIdAndUpdate(
       id,
       {
@@ -393,8 +418,9 @@ const updateCaseService = async (id: string, data: ICaseServiceUpdate) => {
             code: data.code,
             notes: data.notes,
             status: data.status,
-            startDate: data.startDate ? new Date(data.startDate) : undefined,
-            endDate: data.endDate ? new Date(data.endDate) : undefined,
+            startDate: data.startDate
+              ? new Date(data.startDate).toISOString()
+              : undefined,
           }),
           CASE_SERVICE.PREFIX
         ),
@@ -474,7 +500,116 @@ const bulkDeleteCaseServices = async (ids: string[]) => {
 
 const importCaseServices = async (filePath: string) => {};
 
-const exportCaseServicesToXLSX = async (query: any) => {};
+const exportCaseServicesToXLSX = async (query: ICaseServiceQuery = {}) => {
+  try {
+    // Reuse the same query logic from getCaseServices but get all data for export
+    const { data: caseServicesList } = await getCaseServices({
+      ...query,
+      page: 1,
+      limit: Number.MAX_SAFE_INTEGER, // Get all records for export
+    });
+
+    // Create directory if it doesn't exist
+    const exportDir = path.join(process.cwd(), 'public', 'exports');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    } else {
+      // Clean up old case service export files
+      for (const file of fs.readdirSync(exportDir)) {
+        if (file.startsWith('ho_so_vu_viec_') && file.endsWith('.xlsx')) {
+          fs.unlinkSync(path.join(exportDir, file));
+        }
+      }
+    }
+
+    // Create timestamp for unique filename
+    const timestamp = new Date().getTime();
+    const fileName = `ho_so_vu_viec_${new Date()
+      .toLocaleDateString('vi-VN')
+      .split('/')
+      .join('-')}_${timestamp}.xlsx`;
+    const filePath = path.join(exportDir, fileName);
+
+    // Map case service data for Excel
+    const excelData = caseServicesList.map((caseService) => {
+      return {
+        'Mã hồ sơ': caseService.case_code || '',
+        'Khách hàng': caseService.case_customer
+          ? `${caseService.case_customer.cus_firstName} ${caseService.case_customer.cus_lastName}`
+          : '',
+        'Mã khách hàng': caseService.case_customer?.cus_code || '',
+        'Luật sư chính': caseService.case_leadAttorney
+          ? `${caseService.case_leadAttorney.emp_user.usr_firstName} ${caseService.case_leadAttorney.emp_user.usr_lastName}`
+          : '',
+        'Mã luật sư': caseService.case_leadAttorney?.emp_code || '',
+        'Phòng ban': caseService.case_leadAttorney?.emp_department || '',
+        'Chức vụ': caseService.case_leadAttorney?.emp_position || '',
+        'Người được phân công': caseService.case_assignees
+          ? caseService.case_assignees
+              .map(
+                (assignee) =>
+                  `${assignee.emp_user.usr_firstName} ${assignee.emp_user.usr_lastName}`
+              )
+              .join(', ')
+          : '',
+        'Trạng thái': caseService.case_status || '',
+        'Ghi chú': caseService.case_notes || '',
+        'Ngày bắt đầu': caseService.case_startDate
+          ? new Date(caseService.case_startDate).toLocaleDateString('vi-VN')
+          : '',
+        'Ngày kết thúc': caseService.case_endDate
+          ? new Date(caseService.case_endDate).toLocaleDateString('vi-VN')
+          : '',
+        'Thời gian tạo': caseService.createdAt
+          ? new Date(caseService.createdAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '',
+        'Cập nhật lần cuối': caseService.updatedAt
+          ? new Date(caseService.updatedAt).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '',
+      };
+    });
+
+    // Create worksheet and workbook
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Hồ sơ vụ việc');
+
+    // Write to file
+    XLSX.writeFile(workbook, filePath);
+
+    return {
+      fileUrl: `${serverConfig.serverUrl}/exports/${fileName}`,
+      fileName: fileName,
+      count: excelData.length,
+    };
+  } catch (error) {
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi xuất dữ liệu Hồ sơ vụ việc: ${error.message}`
+      );
+    }
+    throw error;
+  }
+};
 
 /**
  * Attach document to a case

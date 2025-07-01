@@ -4,6 +4,7 @@ import {
   data as dataResponse,
   useLoaderData,
 } from '@remix-run/react';
+import { useMemo } from 'react';
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
@@ -15,6 +16,7 @@ import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { getCustomers } from '~/services/customer.server';
 import { getCaseServices } from '~/services/case.server';
+import { generateFormId } from '~/utils';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -88,7 +90,7 @@ export default function NewTransaction() {
     toast[toastType](actionData.toast.message);
   }
 
-  const formId = 'transaction-detail-form';
+  const formId = useMemo(() => generateFormId('transaction-detail-form'), []);
 
   return (
     <div className='w-full space-y-6'>
@@ -140,12 +142,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           paymentMethod: formData.get('paymentMethod') as string,
           category: formData.get('category') as string,
           description: formData.get('description') as string,
-          createdBy: session!.user.id,
           customer: (formData.get('customer') as string) || undefined,
           caseService: (formData.get('caseService') as string) || undefined,
+          date: formData.get('date') as string,
         };
-        console.log(data);
-        console.log('amount: ', formData.get('amount'));
 
         // Kiểm tra dữ liệu bắt buộc
         if (

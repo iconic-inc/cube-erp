@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { IOfficeIP } from '~/interfaces/officeIP.interface';
-import { action } from '~/routes/erp+/_admin+/attendance+';
+import { action } from '~/routes/api+/office-ip+/$id';
 
 export default function IPEditorForm({
   officeIp,
@@ -16,63 +16,65 @@ export default function IPEditorForm({
   setShowIPEditorForm: React.Dispatch<React.SetStateAction<boolean>>;
   setEditIp?: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  console.log(officeIp);
   const fetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
   const [officeName, setOfficeName] = useState(officeIp?.officeName || '');
   const [ipAddress, setIpAddress] = useState(officeIp?.ipAddress || '');
   const [isLoading, setIsLoading] = useState(false);
+  console.log(fetcher.data);
 
   useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Loading...', {
-          autoClose: false,
-        });
-        setIsLoading(true);
-        break;
-
-      case 'idle':
-        setIsLoading(false);
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data as any;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success', // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-
-          if (fetcher.data?.toast.type === 'success') {
-            setOfficeName('');
-            setIpAddress('');
-            setShowIPEditorForm(false);
-
-            setEditIp?.(null);
-          }
-
-          toastIdRef.current = null;
-          break;
-        }
-
+    if (fetcher.data) {
+      setIsLoading(false);
+      if (fetcher.data?.toast && toastIdRef.current) {
+        const { toast: toastData } = fetcher.data as any;
         toast.update(toastIdRef.current, {
-          render: fetcher.data?.toast.message,
+          render: toastData.message,
+          type: toastData.type || 'success', // Default to 'success' if type is not provided
           autoClose: 3000,
           isLoading: false,
-          type: 'error',
         });
+
+        if (fetcher.data?.toast.type === 'success') {
+          setOfficeName('');
+          setIpAddress('');
+          setShowIPEditorForm(false);
+
+          setEditIp?.(null);
+        }
+
         toastIdRef.current = null;
-        break;
+      }
+
+      toast.update(toastIdRef.current, {
+        render: fetcher.data?.toast.message,
+        autoClose: 3000,
+        isLoading: false,
+        type: 'error',
+      });
+      toastIdRef.current = null;
     }
-  }, [fetcher.state]);
+  }, [fetcher.data]);
 
   return (
     <fetcher.Form
-      method={type === 'update' ? 'put' : 'post'}
+      method={type === 'update' ? 'PUT' : 'POST'}
       action={
         type === 'update' ? `/api/office-ip/${officeIp?.id}` : '/api/office-ip'
       }
       className='flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition duration-200'
+      onSubmit={(e) => {
+        if (toastIdRef.current) {
+          toast.dismiss(toastIdRef.current);
+        }
+        toastIdRef.current = toast.loading(
+          type === 'update'
+            ? 'Đang cập nhật địa chỉ IP...'
+            : 'Đang lưu địa chỉ IP...',
+        );
+
+        setIsLoading(true);
+      }}
     >
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-1 border-b border-gray-300'>
@@ -114,6 +116,9 @@ export default function IPEditorForm({
               setEditIp?.(null);
             }
 
+            toast.dismiss(toastIdRef.current);
+            toastIdRef.current = null;
+            setIsLoading(false);
             setShowIPEditorForm(false);
             setOfficeName('');
             setIpAddress('');
@@ -126,6 +131,7 @@ export default function IPEditorForm({
           className='h-8 w-8 text-red-500 hover:bg-red-50 p-1 rounded-full transition-all'
           type='button'
           onClick={() => {
+            toastIdRef.current = toast.loading('Đang xóa địa chỉ IP...');
             fetcher.submit(
               {},
               {
@@ -133,10 +139,8 @@ export default function IPEditorForm({
                 action: `/api/office-ip/${officeIp?.id}`,
               },
             );
-            setEditIp?.(null);
-            setShowIPEditorForm(false);
-            setOfficeName('');
-            setIpAddress('');
+
+            setIsLoading(true);
           }}
         >
           <span className='material-symbols-outlined'>delete</span>

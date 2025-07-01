@@ -50,9 +50,12 @@ const transactionBaseSchema = {
     }
   ),
   description: z.string().trim().optional(),
-  createdBy: z.string().trim().refine(isValidObjectId, {
-    message: 'ID người tạo không hợp lệ',
-  }),
+  date: z
+    .string()
+    .datetime({ message: 'Ngày giao dịch phải có định dạng ISO hợp lệ' })
+    .optional()
+    .default(() => new Date().toISOString())
+    .or(z.date().transform((date) => date.toISOString())),
   customer: z
     .string()
     .trim()
@@ -128,82 +131,118 @@ export const transactionBulkDeleteSchema = z.object({
 });
 
 // Schema for query parameters
-export const transactionQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
-    .refine((val) => val > 0, 'Trang phải lớn hơn 0'),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
-    .refine((val) => val > 0 && val <= 100, 'Giới hạn phải từ 1 đến 100'),
-  search: z.string().optional(),
-  sortBy: z
-    .enum(
-      [
-        'createdAt',
-        'tx_amount',
-        'tx_title',
-        'tx_code',
-        'tx_type',
-        'tx_remain',
-        'tx_paymentMethod',
-        'tx_category',
-        'tx_paid',
-      ],
-      { message: 'Trường sắp xếp không hợp lệ' }
-    )
-    .optional()
-    .default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-  type: z
-    .enum(Object.values(TRANSACTION.TYPE) as [string, ...string[]])
-    .optional(),
-  paymentMethod: z
-    .enum(Object.values(TRANSACTION.PAYMENT_METHOD) as [string, ...string[]])
-    .optional(),
-  category: z
-    .enum([
-      ...Object.values(TRANSACTION.CATEGORY.INCOME),
-      ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
-    ] as [string, ...string[]])
-    .optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  customerId: z
-    .string()
-    .refine(isValidObjectId, {
-      message: 'ID khách hàng không hợp lệ',
-    })
-    .optional(),
-  caseServiceId: z
-    .string()
-    .refine(isValidObjectId, {
-      message: 'ID hồ sơ vụ việc không hợp lệ',
-    })
-    .optional(),
-  createdById: z
-    .string()
-    .refine(isValidObjectId, {
-      message: 'ID người tạo không hợp lệ',
-    })
-    .optional(),
-  amountMin: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseFloat(val) : undefined))
-    .refine(
-      (val) => val === undefined || val >= 0,
-      'Số tiền tối thiểu phải lớn hơn hoặc bằng 0'
-    ),
-  amountMax: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseFloat(val) : undefined))
-    .refine(
-      (val) => val === undefined || val >= 0,
-      'Số tiền tối đa phải lớn hơn hoặc bằng 0'
-    ),
-});
+export const transactionQuerySchema = z
+  .object({
+    page: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 1))
+      .refine((val) => val > 0, 'Trang phải lớn hơn 0'),
+    limit: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 10))
+      .refine((val) => val > 0 && val <= 100, 'Giới hạn phải từ 1 đến 100'),
+    search: z.string().optional(),
+    sortBy: z
+      .enum(
+        [
+          'createdAt',
+          'tx_date',
+          'tx_amount',
+          'tx_title',
+          'tx_code',
+          'tx_type',
+          'tx_remain',
+          'tx_paymentMethod',
+          'tx_category',
+          'tx_paid',
+        ],
+        { message: 'Trường sắp xếp không hợp lệ' }
+      )
+      .optional()
+      .default('tx_date'),
+    sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+    type: z
+      .enum(Object.values(TRANSACTION.TYPE) as [string, ...string[]])
+      .optional(),
+    paymentMethod: z
+      .enum(Object.values(TRANSACTION.PAYMENT_METHOD) as [string, ...string[]])
+      .optional(),
+    category: z
+      .enum([
+        ...Object.values(TRANSACTION.CATEGORY.INCOME),
+        ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
+      ] as [string, ...string[]])
+      .optional(),
+    startDate: z
+      .string()
+      .datetime({ message: 'Ngày bắt đầu phải có định dạng ISO hợp lệ' })
+      .optional(),
+    endDate: z
+      .string()
+      .datetime({ message: 'Ngày kết thúc phải có định dạng ISO hợp lệ' })
+      .optional(),
+    customerId: z
+      .string()
+      .refine(isValidObjectId, {
+        message: 'ID khách hàng không hợp lệ',
+      })
+      .optional(),
+    caseServiceId: z
+      .string()
+      .refine(isValidObjectId, {
+        message: 'ID hồ sơ vụ việc không hợp lệ',
+      })
+      .optional(),
+    createdById: z
+      .string()
+      .refine(isValidObjectId, {
+        message: 'ID người tạo không hợp lệ',
+      })
+      .optional(),
+    amountMin: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseFloat(val) : undefined))
+      .refine(
+        (val) => val === undefined || val >= 0,
+        'Số tiền tối thiểu phải lớn hơn hoặc bằng 0'
+      ),
+    amountMax: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseFloat(val) : undefined))
+      .refine(
+        (val) => val === undefined || val >= 0,
+        'Số tiền tối đa phải lớn hơn hoặc bằng 0'
+      ),
+  })
+  .refine(
+    (data) => {
+      // Validate that endDate is after startDate when both are provided
+      if (data.startDate && data.endDate) {
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        return end >= start;
+      }
+      return true;
+    },
+    {
+      message: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu',
+      path: ['endDate'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validate that amountMax is greater than or equal to amountMin when both are provided
+      if (data.amountMin !== undefined && data.amountMax !== undefined) {
+        return data.amountMax >= data.amountMin;
+      }
+      return true;
+    },
+    {
+      message: 'Số tiền tối đa phải lớn hơn hoặc bằng số tiền tối thiểu',
+      path: ['amountMax'],
+    }
+  );

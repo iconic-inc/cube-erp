@@ -2,12 +2,20 @@ import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
 
-import { bulkDeleteCaseService, getCaseServices } from '~/services/case.server';
+import {
+  bulkDeleteCaseService,
+  exportCaseServicesToXLSX,
+  getCaseServices,
+} from '~/services/case.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ICaseService } from '~/interfaces/case.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { IListColumn } from '~/interfaces/app.interface';
+import {
+  IListColumn,
+  IActionFunctionReturn,
+  IExportResponse,
+} from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import {
@@ -161,13 +169,16 @@ export default function CRMCaseService() {
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
         addNewHandler={() => navigate('/erp/crm/cases/new')}
+        exportable
         name='Hồ sơ vụ việc'
       />
     </>
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<IExportResponse> => {
   const { session, headers } = await isAuthenticated(request);
   if (!session) {
     return data(
@@ -192,7 +203,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             {
               success: false,
               toast: {
-                message: 'Không có Hồ sơ vụ việc nào được chọn để xóa',
+                message: 'Không có hồ sơ vụ việc nào được chọn để xóa',
                 type: 'error',
               },
             },
@@ -206,7 +217,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             {
               success: false,
               toast: {
-                message: 'Không có Hồ sơ vụ việc nào được chọn để xóa',
+                message: 'Không có hồ sơ vụ việc nào được chọn để xóa',
                 type: 'error',
               },
             },
@@ -220,8 +231,51 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           {
             success: true,
             toast: {
-              message: `Đã xóa ${caseIds.length} Hồ sơ vụ việc thành công`,
               type: 'success',
+              message: `Đã xóa ${caseIds.length} hồ sơ vụ việc thành công`,
+            },
+          },
+          { headers },
+        );
+
+      case 'POST':
+        // Handle export action (placeholder for future implementation)
+        const fileType = formData.get('fileType') as string;
+        if (!fileType || !['xlsx'].includes(fileType)) {
+          return data(
+            {
+              success: false,
+              toast: { type: 'error', message: 'Định dạng file không hợp lệ.' },
+            },
+            { headers },
+          );
+        }
+
+        // TODO: Implement export functionality when exportCaseServices is available
+        const url = new URL(request.url);
+        const fileData = await exportCaseServicesToXLSX(
+          {
+            search: url.searchParams.get('search') || '',
+          },
+          {
+            sortBy: url.searchParams.get('sortBy') || 'createdAt',
+            sortOrder:
+              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+          },
+          session,
+        );
+
+        return data(
+          {
+            success: true,
+            toast: {
+              type: 'success',
+              message: 'Đã xuất dữ liệu Nhân sự thành công!',
+            },
+            data: {
+              fileUrl: fileData.fileUrl,
+              fileName: fileData.fileName,
+              count: fileData.count,
             },
           },
           { headers },
@@ -233,7 +287,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             success: false,
             toast: { message: 'Phương thức không hợp lệ', type: 'error' },
           },
-
           { headers },
         );
     }

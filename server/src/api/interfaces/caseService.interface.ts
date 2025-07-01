@@ -35,8 +35,8 @@ export interface ICaseServiceCreate {
   code: ICaseService['case_code'];
   notes?: ICaseService['case_notes'];
   status?: ICaseService['case_status'];
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
 }
 
 export interface ICaseServiceUpdate extends Partial<ICaseServiceCreate> {}

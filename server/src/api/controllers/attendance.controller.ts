@@ -32,7 +32,9 @@ export class AttendanceController {
   }
 
   static async getLast7DaysStats(req: Request, res: Response) {
-    const result = await attendanceService.getLast7DaysStats(req.params.userId);
+    // Use userId from params if available (admin route), otherwise use authenticated user's ID
+    const userId = req.params.userId || req.user.userId;
+    const result = await attendanceService.getLast7DaysStats(userId);
 
     return OK({
       res,

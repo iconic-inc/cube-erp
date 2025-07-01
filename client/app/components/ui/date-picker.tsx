@@ -56,7 +56,13 @@ export function DatePicker({
 
   return (
     <div className='relative flex gap-2'>
-      <Input name={name} hidden value={value} className='hidden' readOnly />
+      <Input
+        name={name}
+        hidden
+        value={value && new Date(value).toISOString()}
+        className='hidden'
+        readOnly
+      />
       <Input
         id={id}
         value={

@@ -39,7 +39,10 @@ const PasswordInput = ({
 
   return (
     <div className='field-wrapper'>
-      <label className='field-label text-gray-700 font-medium' htmlFor={id}>
+      <label
+        className='field-label text-gray-700 font-bold text-sm'
+        htmlFor={id}
+      >
         {label}
       </label>
       <div className='relative'>

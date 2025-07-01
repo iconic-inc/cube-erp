@@ -1,11 +1,16 @@
-import { useLoaderData, useNavigate, data, Link } from '@remix-run/react';
+import { useLoaderData, data as dataResponse, Link } from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { getEmployeeById, updateEmployee } from '~/services/employee.server';
 import { getRoles } from '~/services/role.server';
-import EmployeeDetailForm from '~/components/EmployeeDetailForm';
-import { useState } from 'react';
+import EmployeeDetailForm from './_components/EmployeeDetailForm';
 import { parseAuthCookie } from '~/services/cookie.server';
+import { IEmployeeUpdate } from '~/interfaces/employee.interface';
+import ContentHeader from '~/components/ContentHeader';
+import { ArrowLeft, Save } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { generateFormId } from '~/utils';
+import { useMemo } from 'react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -17,21 +22,27 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     });
   }
 
-  try {
-    const [employee, roles] = await Promise.all([
-      getEmployeeById(employeeId, auth!),
-      getRoles(auth!),
-    ]);
+  const employeePromise = getEmployeeById(employeeId, auth!).catch((error) => {
+    console.error('Error fetching employee:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi khi lấy thông tin nhân viên',
+    };
+  });
 
-    return data({
-      employee,
-      roles,
-    });
-  } catch (error: any) {
-    throw new Response(error.message || error.statusText, {
-      status: error.status || 500,
-    });
-  }
+  const rolesPromise = getRoles(auth!).catch((error) => {
+    console.error('Error fetching roles:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi khi lấy danh sách vai trò',
+    };
+  });
+
+  return dataResponse({
+    employeePromise,
+    rolesPromise,
+    employeeId,
+  });
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -42,8 +53,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       try {
         const { employeeId } = params;
         if (!employeeId) {
-          return data(
+          return dataResponse(
             {
+              employee: null,
+              redirectTo: null,
               toast: {
                 message: 'Không tìm thấy nhân sự.',
                 type: 'error',
@@ -53,16 +66,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           );
         }
         const formData = await request.formData();
-        const updateData = Object.fromEntries(formData.entries());
+        const updateData = Object.fromEntries(formData.entries()) as any;
 
         const updatedEmployee = await updateEmployee(
           employeeId,
           updateData,
           session!,
         );
-        return data(
+        return dataResponse(
           {
             employee: updatedEmployee,
+            redirectTo: `/erp/employees/${updatedEmployee.id}`,
             toast: {
               message: 'Cập nhật thông tin nhân sự thành công!',
               type: 'success',
@@ -71,21 +85,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { headers },
         );
       } catch (error: any) {
-        return data(
+        return dataResponse(
           {
+            employee: null,
+            redirectTo: null,
             toast: { message: error.message || 'Update failed', type: 'error' },
           },
-          {
-            headers,
-            status: error.status || 500,
-            statusText: error.statusText || 'Internal Server Error',
-          },
+          { headers },
         );
       }
 
     default:
-      return data(
+      return dataResponse(
         {
+          employee: null,
+          redirectTo: null,
           toast: { message: 'Method not allowed', type: 'error' },
         },
         {
@@ -97,95 +111,49 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 };
 
-export default function HRMProfile() {
-  const { employee, roles } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
+export default function EmployeeEditPage() {
+  const { employeePromise, rolesPromise, employeeId } =
+    useLoaderData<typeof loader>();
 
-  const [isChanged, setIsChanged] = useState(false);
+  const formId = useMemo(() => generateFormId('employee-edit-form'), []);
 
-  const formId = 'employee-profile-form';
   return (
-    <>
+    <div className=''>
       {/* Content Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-        <div className='flex items-center'>
-          <h1 className='text-xl font-semibold'>Employee Profile</h1>
-          <div className='ml-3 text-gray-500 text-sm flex items-center'>
-            <a href='/erp' className='hover:text-blue-500 transition'>
-              Dashboard
-            </a>
-            <span className='mx-2'>/</span>
-            <span>Profile</span>
+      <ContentHeader
+        title='Chỉnh sửa nhân viên'
+        backHandler={() => window.history.back()}
+        actionContent={
+          <div className='flex space-x-3'>
+            <Link
+              to={`/erp/employees/${employeeId}`}
+              className='inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+            >
+              <ArrowLeft className='h-4 w-4 mr-2' />
+              Quay lại
+            </Link>
+            <Button
+              type='submit'
+              form={formId}
+              className='inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+            >
+              <Save className='h-4 w-4 mr-2' />
+              Lưu thay đổi
+            </Button>
           </div>
-        </div>
-        <div className='flex space-x-2'>
-          <button
-            type='reset'
-            disabled={!isChanged}
-            onClick={() => {
-              if (
-                confirm(
-                  'Bạn có chắc chắn muốn huỷ thay đổi không? Thay đổi sẽ không được lưu.',
-                )
-              ) {
-                navigate(-1);
-              }
-            }}
-            className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed'
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>
-              cancel
-            </span>
-            Huỷ
-          </button>
-          <button
-            type='submit'
-            disabled={!isChanged}
-            form={formId}
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed'
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu thay đổi
-          </button>
-        </div>
-      </div>
-
-      {/* Profile Form */}
-      <EmployeeDetailForm
-        formId={formId}
-        employee={employee}
-        setIsChanged={setIsChanged}
-        roles={roles}
-        type='update'
+        }
       />
 
-      <div className='flex justify-between items-center'>
-        <Link
-          to='/erp/employees'
-          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
-        >
-          <span className='material-symbols-outlined text-sm mr-1'>
-            keyboard_return
-          </span>
-          Trở về Danh sách
-        </Link>
-
-        <div className='flex space-x-2'>
-          {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Bản nháp
-          </button> */}
-          <button
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
-            type='submit'
-            form={formId}
-            disabled={!isChanged}
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Nhân sự
-          </button>
-        </div>
+      {/* Employee Edit Form */}
+      <div className='mt-8'>
+        <EmployeeDetailForm
+          formId={formId}
+          type='update'
+          employeePromise={employeePromise}
+          rolesPromise={rolesPromise}
+          action={`/erp/employees/${employeeId}/edit`}
+        />
       </div>
-    </>
+    </div>
   );
 }

@@ -2,15 +2,21 @@ import { Form, useFetcher, useSearchParams } from '@remix-run/react';
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { IListColumn } from '~/interfaces/app.interface';
+import {
+  IActionFunctionResponse,
+  IExportResponse,
+  IListColumn,
+} from '~/interfaces/app.interface';
 // import { action } from '..';
 
 export default function ListToolbar<T>({
   name,
+  exportable = false,
   visibleColumns,
   setVisibleColumns,
 }: {
   name: string;
+  exportable?: boolean;
   visibleColumns: IListColumn<T>[];
   setVisibleColumns: (value: IListColumn<T>[]) => void;
 }) {
@@ -40,21 +46,13 @@ export default function ListToolbar<T>({
     ]);
   };
 
-  const exportFetcher = useFetcher<any>();
+  const exportFetcher = useFetcher<IActionFunctionResponse<IExportResponse>>();
   const toastIdRef = useRef<any>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (exportFetcher.data) {
-      const response = exportFetcher.data as {
-        success: boolean;
-        fileUrl?: string;
-        fileName?: string;
-        toast: {
-          type: 'success' | 'error';
-          message: string;
-        };
-      };
+      const response = exportFetcher.data;
       if (response.success) {
         toast.update(toastIdRef.current, {
           render: `Đã xuất dữ liệu ${name} thành công!`,
@@ -62,10 +60,11 @@ export default function ListToolbar<T>({
           autoClose: 3000,
           isLoading: false,
         });
-        if (response.fileUrl) {
+
+        if (response.data?.fileUrl) {
           const link = document.createElement('a');
-          link.href = response.fileUrl;
-          link.download = response.fileName || 'customers';
+          link.href = response.data.fileUrl;
+          link.download = response.data.fileName || 'customers';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -104,34 +103,38 @@ export default function ListToolbar<T>({
       <div></div>
 
       <div className='flex items-center gap-3 w-full md:w-auto mt-3 md:mt-0'>
-        <exportFetcher.Form
-          method='POST'
-          className='flex gap-3'
-          onSubmitCapture={(e) => {
-            setIsExporting(true);
-            toastIdRef.current = toast.loading(`Đang xuất dữ liệu ${name}...`);
-          }}
-        >
-          <button
-            className='px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm flex items-center gap-1'
-            name='fileType'
-            value='xlsx'
+        {exportable && (
+          <exportFetcher.Form
+            method='POST'
+            className='flex gap-3'
+            onSubmitCapture={(e) => {
+              setIsExporting(true);
+              toastIdRef.current = toast.loading(
+                `Đang xuất dữ liệu ${name}...`,
+              );
+            }}
           >
-            {isExporting ? (
-              <>
-                <LoaderCircle className='animate-spin text-blue-500' />
-                Đang xuất dữ liệu...
-              </>
-            ) : (
-              <>
-                <span className='material-symbols-outlined text-sm'>
-                  download
-                </span>
-                Xuất Excel
-              </>
-            )}
-          </button>
-        </exportFetcher.Form>
+            <button
+              className='px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm flex items-center gap-1'
+              name='fileType'
+              value='xlsx'
+            >
+              {isExporting ? (
+                <>
+                  <LoaderCircle className='animate-spin text-blue-500' />
+                  Đang xuất dữ liệu...
+                </>
+              ) : (
+                <>
+                  <span className='material-symbols-outlined text-sm'>
+                    download
+                  </span>
+                  Xuất Excel
+                </>
+              )}
+            </button>
+          </exportFetcher.Form>
+        )}
 
         {/* Select attributes to display */}
         <details className='relative'>

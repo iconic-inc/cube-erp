@@ -1,281 +1,509 @@
 import { toast } from 'react-toastify';
 import { useEffect, useRef, useState } from 'react';
-import { useFetcher, useNavigate } from '@remix-run/react';
+import { Link, useFetcher, useNavigate } from '@remix-run/react';
 
 import { action } from '~/routes/erp+/_admin+/crm+/customers+/new';
-import TextInput from '~/components/TextInput';
+import { ILoaderDataPromise } from '~/interfaces/app.interface';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Button } from '~/components/ui/button';
+import { RotateCcw } from 'lucide-react';
 import { ICustomer } from '~/interfaces/customer.interface';
-import { format } from 'date-fns';
-import { Card, CardContent } from '~/components/ui/card';
-import Select from '~/widgets/Select';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
+import LoadingCard from '~/components/LoadingCard';
+import { SelectSearch } from '~/components/ui/SelectSearch';
 import { CUSTOMER } from '~/constants/customer.constant';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
 
 export default function CustomerDetailForm({
   formId,
-  customer,
-  setIsChanged,
   type,
+  customerPromise,
+  action: actionPath,
 }: {
   formId: string;
-  customer?: ICustomer;
-  setIsChanged: (value: boolean) => void;
   type: 'create' | 'update';
+  customerPromise?: ILoaderDataPromise<ICustomer>;
+  action?: string;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
+  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState(customer?.cus_firstName || '');
-  const [lastName, setLastName] = useState(customer?.cus_lastName || '');
-  const [email, setEmail] = useState(customer?.cus_email || '');
-  const [msisdn, setMsisdn] = useState(customer?.cus_msisdn || '');
-  const [address, setAddress] = useState(customer?.cus_address || '');
-  const [sex, setSex] = useState(customer?.cus_sex || '');
-  const [birhtdate, setBirthdate] = useState(
-    format(new Date(customer?.cus_birthDate || Date.now()), 'yyyy-MM-dd'),
-  );
-  const [customerCode, setCustomerCode] = useState(customer?.cus_code || '');
-  const [contactChannel, setContactChannel] = useState(
-    customer?.cus_contactChannel || '',
-  );
-  const [source, setSource] = useState(customer?.cus_source || '');
-  const [notes, setNotes] = useState(customer?.cus_notes || '');
+  // Form state
+  const [code, setCode] = useState<string>('');
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [msisdn, setMsisdn] = useState<string>('');
+  const [address, setAddress] = useState<string>('');
+  const [birthDate, setBirthDate] = useState<string>('');
+  const [sex, setSex] = useState<string>('');
+  const [contactChannel, setContactChannel] = useState<string>('');
+  const [source, setSource] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
 
-  // Thêm state để theo dõi lỗi
+  // Control states
+  const [customer, setCustomer] = useState<ICustomer | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isChanged, setIsChanged] = useState(false);
+  const [isContentReady, setIsContentReady] = useState(type !== 'update');
 
+  // Generate customer code
+  const generateCustomerCode = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const codeGenerated = `KH${timestamp}`;
+    setCode(codeGenerated);
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validation
+    const validationErrors: Record<string, string> = {};
+
+    if (!code.trim()) {
+      validationErrors.code = 'Vui lòng nhập mã khách hàng';
+    }
+
+    if (!firstName.trim()) {
+      validationErrors.firstName = 'Vui lòng nhập tên khách hàng';
+    }
+
+    if (!lastName.trim()) {
+      validationErrors.lastName = 'Vui lòng nhập họ khách hàng';
+    }
+
+    if (!email.trim()) {
+      validationErrors.email = 'Vui lòng nhập email';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      validationErrors.email = 'Email không hợp lệ';
+    }
+
+    if (!msisdn.trim()) {
+      validationErrors.msisdn = 'Vui lòng nhập số điện thoại';
+    }
+
+    // If there are validation errors, show them and prevent form submission
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    // Clear errors
+    setErrors({});
+
+    // Create FormData
+    const formData = new FormData(e.currentTarget);
+
+    formData.append('code', code);
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('email', email);
+    formData.append('msisdn', msisdn);
+    formData.append('address', address);
+    formData.append('birthDate', birthDate);
+    formData.append('sex', sex);
+    formData.append('contactChannel', contactChannel);
+    formData.append('source', source);
+    formData.append('notes', notes);
+
+    toastIdRef.current = toast.loading('Đang xử lý...');
+
+    // Submit the form
+    if (type === 'create') {
+      fetcher.submit(formData, { method: 'POST' });
+    } else if (type === 'update') {
+      fetcher.submit(formData, { method: 'PUT' });
+    }
+  };
+
+  // Monitor form changes
   useEffect(() => {
-    setIsChanged(
-      firstName !== customer?.cus_firstName ||
-        lastName !== customer?.cus_lastName ||
-        email !== customer?.cus_email ||
-        msisdn !== customer?.cus_msisdn ||
-        address !== customer?.cus_address ||
-        birhtdate !== customer?.cus_birthDate ||
-        customerCode !== customer?.cus_code ||
-        sex !== customer.cus_sex ||
-        contactChannel !== customer?.cus_contactChannel ||
-        source !== customer?.cus_source ||
-        notes !== customer?.cus_notes,
-    );
+    const hasChanged =
+      code ||
+      firstName ||
+      lastName ||
+      email ||
+      msisdn ||
+      address ||
+      birthDate ||
+      sex ||
+      contactChannel ||
+      source ||
+      notes;
+
+    setIsChanged(!!hasChanged);
   }, [
+    code,
     firstName,
     lastName,
     email,
     msisdn,
     address,
-    birhtdate,
-    customerCode,
+    birthDate,
     sex,
     contactChannel,
     source,
     notes,
   ]);
 
-  const toastIdRef = useRef<any>(null);
-
+  // Handle fetcher response
   useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Đang xử lý...', {
-          autoClose: false,
-        });
-        // Xóa lỗi khi bắt đầu submit
-        setErrors({});
-        break;
+    if (fetcher.data?.toast) {
+      const { toast: toastData } = fetcher.data;
+      toast.update(toastIdRef.current, {
+        type: toastData.type,
+        render: toastData.message,
+        isLoading: false,
+        autoClose: 3000,
+        closeOnClick: true,
+        pauseOnHover: true,
+        pauseOnFocusLoss: true,
+      });
 
-      case 'idle':
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success', // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-          setIsChanged(false);
-          toastIdRef.current = null;
-
-          if (fetcher.data?.redirectTo) {
-            navigate(fetcher.data.redirectTo, {
-              replace: true,
-            });
-          }
-
-          break;
-        }
-
-        // Xử lý lỗi
-        if (fetcher.data?.toast?.type === 'error') {
-          toast.update(toastIdRef.current, {
-            render: fetcher.data?.toast.message,
-            autoClose: 3000,
-            isLoading: false,
-            type: 'error',
-          });
-
-          // Nếu có lỗi validation, hiển thị trong form
-          if (fetcher.data?.toast.message.includes('thông tin bắt buộc')) {
-            const newErrors: Record<string, string> = {};
-            if (!customerCode)
-              newErrors.customerCode = 'Mã nhân viên là bắt buộc';
-            if (!firstName) newErrors.firstName = 'Tên là bắt buộc';
-            if (!lastName) newErrors.lastName = 'Họ là bắt buộc';
-            if (!email) newErrors.email = 'Email là bắt buộc';
-            newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
-
-            setErrors(newErrors);
-          }
-        }
-        break;
+      // Redirect if success
+      if (fetcher.data?.redirectTo) {
+        navigate(fetcher.data.redirectTo, { replace: true });
+      }
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.data, navigate]);
+
+  // Load customer data when in edit mode
+  useEffect(() => {
+    if (type === 'update' && customerPromise) {
+      const loadCustomer = async () => {
+        try {
+          const customerData = await customerPromise;
+
+          if (customerData && 'cus_code' in customerData) {
+            setCustomer(customerData);
+            setCode(customerData.cus_code || '');
+            setFirstName(customerData.cus_firstName || '');
+            setLastName(customerData.cus_lastName || '');
+            setEmail(customerData.cus_email || '');
+            setMsisdn(customerData.cus_msisdn || '');
+            setAddress(customerData.cus_address || '');
+            setBirthDate(customerData.cus_birthDate || '');
+            setSex(customerData.cus_sex || '');
+            setContactChannel(customerData.cus_contactChannel || '');
+            setSource(customerData.cus_source || '');
+            setNotes(customerData.cus_notes || '');
+          } else {
+            console.error(
+              'Customer data is not in the expected format:',
+              customerData,
+            );
+            toast.error(
+              'Không thể tải dữ liệu khách hàng. Vui lòng thử lại sau.',
+            );
+          }
+        } catch (error) {
+          console.error('Error loading customer data:', error);
+          toast.error(
+            'Không thể tải dữ liệu khách hàng. Vui lòng thử lại sau.',
+          );
+        }
+      };
+
+      loadCustomer().then(() => {
+        setIsContentReady(true);
+      });
+    }
+  }, [type, customerPromise]);
+
+  if (!isContentReady) {
+    return <LoadingCard />;
+  }
 
   return (
-    <Card className='w-full'>
-      <CardContent className='p-6'>
-        <fetcher.Form
-          id={formId}
-          method={type === 'create' ? 'POST' : 'PUT'}
-          className='grid grid-cols-1 lg:grid-cols-3 gap-6'
-        >
-          <TextInput
-            label={
-              <span>
-                Mã Khách hàng <span className='text-red-500'>*</span>
-              </span>
-            }
-            name='code'
-            value={customerCode}
-            onChange={(value) => setCustomerCode(value)}
-            required
-            error={errors.customerCode}
-            placeholder='Nhập mã khách hàng'
-          />
+    <fetcher.Form
+      id={formId}
+      method={type === 'create' ? 'POST' : 'PUT'}
+      action={actionPath}
+      onSubmit={handleSubmit}
+    >
+      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+        <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6 rounded-t-xl'>
+          <CardTitle className='text-white text-3xl font-bold'>
+            {code || 'Mã khách hàng'}
+          </CardTitle>
+        </CardHeader>
 
-          <TextInput
-            label='Họ'
-            name='lastName'
-            value={lastName}
-            onChange={(value) => setLastName(value)}
-            required
-            error={errors.lastName}
-            placeholder='Nhập họ Khách hàng'
-          />
-
-          <TextInput
-            label={
-              <span>
-                Tên <span className='text-red-500'>*</span>
-              </span>
-            }
-            name='firstName'
-            value={firstName}
-            onChange={(value) => setFirstName(value)}
-            required
-            error={errors.firstName}
-            placeholder='Nhập tên Khách hàng'
-          />
-
-          <TextInput
-            label={
-              <span>
-                Email <span className='text-red-500'>*</span>
-              </span>
-            }
-            name='email'
-            type='email'
-            value={email}
-            onChange={(value) => setEmail(value)}
-            required
-            error={errors.email}
-            placeholder='Nhập email Khách hàng'
-          />
-          <TextInput
-            label={
-              <span>
-                Số điện thoại <span className='text-red-500'>*</span>
-              </span>
-            }
-            name='msisdn'
-            value={msisdn}
-            onChange={(value) => setMsisdn(value)}
-            required
-            error={errors.msisdn}
-            placeholder='Nhập số điện thoại Khách hàng'
-          />
-
-          <Select
-            label='Giới tính'
-            className='w-full'
-            name='sex'
-            value={sex}
-            onChange={(e) => setSex(e.target.value)}
-          >
-            <option value=''>Chọn giới tính</option>
-            <option value={CUSTOMER.SEX.MALE}>Nam</option>
-            <option value={CUSTOMER.SEX.FEMALE}>Nữ</option>
-          </Select>
-
-          <div className='col-span-2'>
-            <TextInput
-              label='Địa chỉ'
-              name='address'
-              value={address}
-              onChange={(value) => setAddress(value)}
-              placeholder='Nhập địa chỉ Khách hàng'
-            />
-          </div>
-
-          <TextInput
-            label='Ngày sinh'
-            name='birthDate'
-            type='date'
-            value={birhtdate}
-            onChange={(value) => setBirthdate(value)}
-            placeholder='Nhập ngày sinh Khách hàng'
-          />
-
-          <TextInput
-            label='Kênh liên hệ'
-            name='contactChannel'
-            value={contactChannel}
-            onChange={(value) => setContactChannel(value)}
-            placeholder='Nhập kênh liên hệ Khách hàng'
-          />
-
-          <TextInput
-            label='Nguồn khách hàng'
-            name='source'
-            value={source}
-            onChange={(value) => setSource(value)}
-            placeholder='Nhập nguồn khách hàng'
-          />
-
-          <div className='col-span-3'>
-            <div className={`w-full items-center gap-4`}>
-              <label
-                htmlFor='notes'
-                className='block text-sm font-semibold leading-6 text-gray-700'
+        <CardContent className='p-6 space-y-6'>
+          {/* Customer Code */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div>
+              <Label
+                htmlFor='code'
+                className='text-gray-700 font-semibold mb-2 block'
               >
-                Ghi chú
-              </label>
-              <div className='mt-1 flex-grow h-[300px]'>
-                <Hydrated>
-                  {() => (
-                    <TextEditor
-                      value={notes}
-                      name='notes'
-                      onChange={(value) => setNotes(value)}
-                    />
-                  )}
-                </Hydrated>
+                Mã khách hàng <span className='text-red-500'>*</span>
+              </Label>
+              <div className='flex gap-2'>
+                <Input
+                  id='code'
+                  name='code'
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder='Ví dụ: KH123456'
+                  className='bg-white border-gray-300'
+                />
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={generateCustomerCode}
+                  className='whitespace-nowrap'
+                >
+                  <RotateCcw className='h-4 w-4 mr-1' />
+                  Tự động tạo
+                </Button>
               </div>
+              {errors.code && (
+                <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
+              )}
             </div>
           </div>
-        </fetcher.Form>
-      </CardContent>
-    </Card>
+
+          {/* Name Fields */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div>
+              <Label
+                htmlFor='firstName'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Tên <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='firstName'
+                name='firstName'
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder='Nhập tên khách hàng'
+                className='bg-white border-gray-300'
+              />
+              {errors.firstName && (
+                <p className='text-red-500 text-sm mt-1'>{errors.firstName}</p>
+              )}
+            </div>
+
+            <div>
+              <Label
+                htmlFor='lastName'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Họ <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='lastName'
+                name='lastName'
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder='Nhập họ khách hàng'
+                className='bg-white border-gray-300'
+              />
+              {errors.lastName && (
+                <p className='text-red-500 text-sm mt-1'>{errors.lastName}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div>
+              <Label
+                htmlFor='email'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Email <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='email'
+                name='email'
+                type='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder='Nhập email khách hàng'
+                className='bg-white border-gray-300'
+              />
+              {errors.email && (
+                <p className='text-red-500 text-sm mt-1'>{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <Label
+                htmlFor='msisdn'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Số điện thoại <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='msisdn'
+                name='msisdn'
+                value={msisdn}
+                onChange={(e) => setMsisdn(e.target.value)}
+                placeholder='Nhập số điện thoại khách hàng'
+                className='bg-white border-gray-300'
+              />
+              {errors.msisdn && (
+                <p className='text-red-500 text-sm mt-1'>{errors.msisdn}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Personal Information */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+            <div>
+              <Label
+                htmlFor='birthDate'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Ngày sinh
+              </Label>
+              <Input
+                id='birthDate'
+                name='birthDate'
+                type='date'
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className='bg-white border-gray-300'
+              />
+            </div>
+
+            <div>
+              <Label
+                htmlFor='sex'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Giới tính
+              </Label>
+              <SelectSearch
+                options={[
+                  { value: CUSTOMER.SEX.MALE, label: 'Nam' },
+                  { value: CUSTOMER.SEX.FEMALE, label: 'Nữ' },
+                ]}
+                defaultValue={sex}
+                onValueChange={(value) => setSex(value)}
+                placeholder='Chọn giới tính'
+                name='sex'
+                id='sex'
+              />
+            </div>
+
+            <div>
+              <Label
+                htmlFor='contactChannel'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Kênh liên hệ
+              </Label>
+              <Input
+                id='contactChannel'
+                name='contactChannel'
+                value={contactChannel}
+                onChange={(e) => setContactChannel(e.target.value)}
+                placeholder='Nhập kênh liên hệ'
+                className='bg-white border-gray-300'
+              />
+            </div>
+          </div>
+
+          {/* Address and Source */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div>
+              <Label
+                htmlFor='address'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Địa chỉ
+              </Label>
+              <Input
+                id='address'
+                name='address'
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder='Nhập địa chỉ khách hàng'
+                className='bg-white border-gray-300'
+              />
+            </div>
+
+            <div>
+              <Label
+                htmlFor='source'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Nguồn khách hàng
+              </Label>
+              <Input
+                id='source'
+                name='source'
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                placeholder='Nhập nguồn khách hàng'
+                className='bg-white border-gray-300'
+              />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <Label className='text-gray-700 font-semibold mb-2 block'>
+              Ghi chú
+            </Label>
+
+            <Hydrated>
+              {() => (
+                <TextEditor
+                  isReady={isContentReady}
+                  name='notes'
+                  value={notes}
+                  onChange={setNotes}
+                  placeholder='Nhập ghi chú về khách hàng...'
+                  className='min-h-[200px]'
+                />
+              )}
+            </Hydrated>
+          </div>
+        </CardContent>
+
+        <CardFooter>
+          <div className='w-full flex justify-between items-center'>
+            <Link
+              to='/erp/crm/customers'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+            >
+              <span className='material-symbols-outlined text-sm mr-1'>
+                keyboard_return
+              </span>
+              Trở về Danh sách
+            </Link>
+
+            <div className='flex space-x-2'>
+              <Button
+                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                type='submit'
+                form={formId}
+                disabled={!isChanged}
+              >
+                <span className='material-symbols-outlined text-sm mr-1'>
+                  save
+                </span>
+                {type === 'create' ? 'Tạo khách hàng' : 'Cập nhật khách hàng'}
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
+      </Card>
+    </fetcher.Form>
   );
 }

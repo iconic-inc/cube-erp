@@ -30,7 +30,7 @@ export default function ItemList<T>({
   selectedItems: T[];
   setSelectedItems: (items: T[]) => void;
   visibleColumns: IListColumn<T>[];
-  addNewHandler: () => void;
+  addNewHandler?: () => void;
   showPagination?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -202,7 +202,7 @@ export default function ItemList<T>({
                         .map((column) => (
                           <TableCell
                             key={column.key}
-                            className='max-w-[500px] overflow-hidden truncate'
+                            className='max-w-[400px] overflow-hidden truncate'
                           >
                             {column.render(item)}
                           </TableCell>

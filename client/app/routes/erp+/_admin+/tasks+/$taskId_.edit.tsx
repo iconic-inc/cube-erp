@@ -4,6 +4,7 @@ import {
   data as dataResponse,
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { useMemo } from 'react';
 
 import TaskDetailForm from './_components/TaskDetailForm';
 import ContentHeader from '~/components/ContentHeader';
@@ -13,6 +14,7 @@ import { getTaskById, updateTask } from '~/services/task.server';
 import { isAuthenticated } from '~/services/auth.server';
 import { ITaskUpdate } from '~/interfaces/task.interface';
 import { TASK } from '~/constants/task.constant';
+import { generateFormId } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -58,7 +60,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function TaskEdit() {
   const { employeesPromise, taskPromise } = useLoaderData<typeof loader>();
-  const formId = 'task-update-form';
+  const formId = useMemo(() => generateFormId('task-update-form'), []);
 
   return (
     <div className='w-full space-y-6'>

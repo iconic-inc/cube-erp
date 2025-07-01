@@ -168,7 +168,6 @@ const Login = () => {
       .then((result) => {
         // This is the visitor identifier:
         const visitorId = result.visitorId;
-        console.log(visitorId);
         setFingerprint(visitorId);
       });
   }, []);
