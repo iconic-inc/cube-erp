@@ -1,3 +1,4 @@
+import { Link } from '@remix-run/react';
 import { ChevronRight, LucideIcon } from 'lucide-react';
 import {
   Collapsible,
@@ -53,9 +54,9 @@ export default function SideNav({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
+                        <Link to={subItem.url}>
                           <span>{subItem.title}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}

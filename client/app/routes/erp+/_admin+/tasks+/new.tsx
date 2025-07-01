@@ -4,6 +4,7 @@ import {
   data as dataResponse,
   useLoaderData,
 } from '@remix-run/react';
+import { useMemo } from 'react';
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
@@ -16,6 +17,7 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import { getEmployees } from '~/services/employee.server';
 import { TASK } from '~/constants/task.constant';
 import { getCaseServiceById } from '~/services/case.server';
+import { generateFormId } from '~/utils';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -71,7 +73,7 @@ export default function NewTask() {
     toast[toastType](actionData.toast.message);
   }
 
-  const formId = 'task-detail-form';
+  const formId = useMemo(() => generateFormId('task-detail-form'), []);
 
   return (
     <div className='w-full space-y-6'>

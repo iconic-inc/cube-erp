@@ -7,46 +7,13 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '~/components/ui/sidebar';
-import { Bot, Folder, User2 } from 'lucide-react';
+import { Bot, CreditCard, Folder, IdCard, User2 } from 'lucide-react';
 import { loader } from '~/routes/erp+/nhan-vien+/_layout';
 import SideNav from './SideNav';
 import { NavUser } from './NavUser';
 
 export default function ERPSidebar() {
-  const location = useLocation();
   const { user } = useLoaderData<typeof loader>();
-
-  const isActive = (link: string) =>
-    link.replace('/erp', '')
-      ? location.pathname.includes(link)
-      : location.pathname === link;
-
-  const AccountItems = [
-    { label: 'Tài khoản', icon: 'person', link: '/erp/profile' },
-    { label: 'Thông báo', icon: 'notifications', link: '/erp/notifications' },
-  ];
-
-  const NavItem = ({
-    item,
-  }: {
-    item: {
-      link: string;
-      label: string;
-      icon: React.ReactNode;
-      onClick?: (...args: any) => any;
-    };
-  }) => (
-    <NavLink
-      to={item.link}
-      className={`w-full flex items-center text-sm p-2 rounded-md transition-colors duration-200 hover:bg-red-100 hover:text-red-500 ${
-        isActive(item.link) ? 'bg-red-500 text-white' : 'text-gray-500'
-      }`}
-      onClick={item.onClick}
-    >
-      <span className='material-symbols-outlined text-lg'>{item.icon}</span>
-      <span className='ml-3'>{item.label}</span>
-    </NavLink>
-  );
 
   return (
     <Sidebar className='lg:h-screen'>
@@ -83,48 +50,60 @@ const navMain = [
   {
     title: 'Quản lý nhân sự',
     url: '#',
-    icon: User2,
+    icon: IdCard,
     isActive: true,
     items: [
       {
-        title: 'Nhân sự',
-        url: '/erp/nhan-vien/employees',
+        title: 'Chấm công',
+        url: '/erp/nhan-vien/cham-cong',
       },
       {
-        title: 'Chấm công',
-        url: '#',
+        title: 'Task',
+        url: '/erp/nhan-vien/tasks',
       },
     ],
   },
   {
     title: 'Quản lý khách hàng',
     url: '#',
-    icon: Bot,
+    icon: User2,
     isActive: true,
     items: [
       {
         title: 'Khách hàng',
-        url: '/erp/nhan-vien/crm/customers',
+        url: '/erp/nhan-vien/crm/khach-hang',
       },
       {
         title: 'Hồ sơ vụ việc',
-        url: '/erp/nhan-vien/crm/cases',
+        url: '/erp/nhan-vien/crm/ho-so-vu-viec',
       },
     ],
   },
   {
-    title: 'Quản lý tài liệu',
+    title: 'Tài chính',
+    url: '#',
+    icon: CreditCard,
+    isActive: true,
+    items: [
+      {
+        title: 'Giao dịch',
+        url: '/erp/nhan-vien/giao-dich',
+      },
+      {
+        title: 'Báo cáo',
+        url: '/erp/nhan-vien/giao-dich/bao-cao',
+      },
+    ],
+  },
+  {
+    title: 'Khác',
     url: '#',
     icon: Folder,
     isActive: true,
     items: [
       {
         title: 'Tài liệu',
-        url: '/erp/nhan-vien/documents',
-      },
-      {
-        title: 'Thư viện mẫu',
-        url: '/erp/nhan-vien/documents/templates',
+        url: '/erp/nhan-vien/tai-lieu',
       },
     ],
   },

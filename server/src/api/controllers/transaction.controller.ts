@@ -43,7 +43,7 @@ export class TransactionController {
     return OK({
       res,
       message: 'Giao dịch được tạo thành công',
-      metadata: await createTransaction(req.body),
+      metadata: await createTransaction(req.user.userId, req.body),
     });
   }
 

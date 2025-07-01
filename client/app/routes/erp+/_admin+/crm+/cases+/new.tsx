@@ -28,6 +28,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog';
+import { generateFormId } from '~/utils';
+import { useMemo } from 'react';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -169,7 +171,7 @@ export default function NewCase() {
     toast[toastType](actionData.toast.message);
   }
 
-  const formId = 'case-detail-form';
+  const formId = useMemo(() => generateFormId('case-detail-form'), []);
   const navigate = useNavigate();
 
   return (

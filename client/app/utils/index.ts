@@ -160,6 +160,10 @@ function getValueByPath<T>(obj: T, path: string) {
   return path.split('.').reduce((o, k) => (o || {})[k], obj);
 }
 
+const generateFormId = (prefix: string) => {
+  return `${prefix}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
 export {
   toAgeString,
   toCurrencyString,
@@ -178,4 +182,5 @@ export {
   formatCurrency,
   calculateAge,
   getValueByPath,
+  generateFormId,
 };

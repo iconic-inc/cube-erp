@@ -1,24 +1,24 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
-import Defer from '~/components/Defer';
+import { useState } from 'react';
+
 import {
   bulkDeleteEmployees,
   exportEmployees,
   getEmployees,
 } from '~/services/employee.server';
-import EmployeeList from './_components/EmployeeList';
-import ContentHeader from '../../../../components/ContentHeader';
+import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { useState } from 'react';
-import EmployeeToolbar from './_components/EmployeeToolbar';
-import { IListColumn } from '~/interfaces/app.interface';
-import { Card, CardContent } from '~/components/ui/card';
-import StatCard from '~/components/StatCard';
-import EmployeeBulkActionBar from './_components/EmployeeBulkActionBar';
-import EmployeeConfirmModal from './_components/EmployeeConfirmModal';
+import {
+  IActionFunctionReturn,
+  IExportResponse,
+  IListColumn,
+} from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
+import List from '~/components/List';
+import { Badge } from '~/components/ui/badge';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -66,67 +66,75 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMEmployees() {
   const { employeesPromise } = useLoaderData<typeof loader>();
 
-  const [selectedEmployees, setSelectedEmployees] = useState<IEmployee[]>([]);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IEmployee>[]
   >([
     {
-      key: 'employeeName',
-      title: 'Tên nhân sự',
-      sortField: 'emp_user.usr_firstName',
+      title: 'Tên nhân viên',
+      key: 'name',
       visible: true,
-      render: (employee: IEmployee) => (
+      sortField: 'emp_user.usr_firstName',
+      render: (item) => (
         <Link
-          to={`/erp/employees/${employee.id}`}
-          className='text-blue-600 hover:underline'
+          to={`/erp/employees/${item.id}`}
+          className='text-blue-600 hover:underline block w-full h-full'
         >
-          {employee.emp_user.usr_firstName} {employee.emp_user.usr_lastName}
+          {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
         </Link>
       ),
     },
     {
-      key: 'employeeCode',
-      title: 'Mã nhân sự',
+      title: 'Mã nhân viên',
+      key: 'code',
+      visible: true,
       sortField: 'emp_code',
-      visible: true,
-      render: (employee: IEmployee) => (
-        <span className='text-gray-600'>
-          {employee.emp_code || 'Chưa có mã'}
+      render: (item) => (
+        <span className='text-gray-600 text-sm'>
+          {item.emp_code || 'Chưa có mã'}
         </span>
       ),
     },
     {
-      key: 'department',
       title: 'Phòng ban',
+      key: 'department',
+      visible: true,
       sortField: 'emp_department',
-      visible: true,
-      render: (employee: IEmployee) => (
-        <span className='text-gray-600'>
-          {employee.emp_department || 'Chưa có phòng ban'}
-        </span>
+      render: (item) => (
+        <Badge variant='secondary' className='text-sm'>
+          {item.emp_department || 'Chưa có phòng ban'}
+        </Badge>
       ),
     },
     {
-      key: 'position',
       title: 'Chức vụ',
-      sortField: 'emp_position',
+      key: 'position',
       visible: true,
-      render: (employee: IEmployee) => (
-        <span className='text-gray-600'>
-          {employee.emp_position || 'Chưa có chức vụ'}
+      sortField: 'emp_position',
+      render: (item) => (
+        <Badge variant='outline' className='text-sm'>
+          {item.emp_position || 'Chưa có chức vụ'}
+        </Badge>
+      ),
+    },
+    {
+      title: 'Số điện thoại',
+      key: 'phone',
+      visible: true,
+      sortField: 'emp_user.usr_msisdn',
+      render: (item) => (
+        <span className='text-gray-600 text-sm'>
+          {item.emp_user.usr_msisdn || 'Chưa có số điện thoại'}
         </span>
       ),
     },
     {
-      key: 'msisdn',
-      title: 'Số điện thoại',
-      sortField: 'emp_user.usr_msisdn',
+      title: 'Email',
+      key: 'email',
       visible: true,
-      render: (employee: IEmployee) => (
-        <span className='text-gray-600'>
-          {employee.emp_user.usr_msisdn || 'Chưa có số điện thoại'}
+      sortField: 'emp_user.usr_email',
+      render: (item) => (
+        <span className='text-gray-600 text-sm'>
+          {item.emp_user.usr_email || 'Chưa có email'}
         </span>
       ),
     },
@@ -138,109 +146,62 @@ export default function HRMEmployees() {
     <>
       {/* Content Header */}
       <ContentHeader
-        title='Trang chủ'
+        title='Danh sách Nhân viên'
         actionContent={
           <>
             <span className='material-symbols-outlined text-sm mr-1'>add</span>
-            Thêm nhân sự
+            Thêm Nhân viên
           </>
         }
         actionHandler={() => navigate('/erp/employees/new')}
       />
 
       {/* Employee Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
-        <Defer resolve={employeesPromise}>
-          {({ data }) => (
-            <>
-              <StatCard
-                title='Tổng nhân sự'
-                value={data.length}
-                icon='people'
-                color='green'
-              />
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
 
-              <StatCard
-                title='Phòng ban'
-                value={
-                  data.reduce((prev, curr) => {
-                    if (prev.includes(curr.emp_department)) return prev;
-                    return [...prev, curr.emp_department];
-                  }, [] as string[]).length
-                }
-                icon='category'
-                color='purple'
-              />
-
-              <StatCard
-                title='Sinh nhật tháng này'
-                value={
-                  data.filter(
-                    (emp) =>
-                      emp.emp_user.usr_birthdate &&
-                      new Date(emp.emp_user.usr_birthdate).getMonth() ===
-                        new Date().getMonth(),
-                  ).length
-                }
-                icon='cake'
-                color='blue'
-              />
-            </>
-          )}
-        </Defer>
-      </div>
-
-      <Card>
-        {/* Employee Toolbar */}
-        <EmployeeToolbar
-          visibleColumns={visibleColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
-
-        {/* Bulk Action Bar (Visible when rows selected) */}
-        {selectedEmployees.length > 0 && (
-          <EmployeeBulkActionBar
-            selectedEmployees={selectedEmployees}
-            handleConfirmBulkDelete={() => setShowDeleteModal(true)}
-          />
-        )}
-
-        {showDeleteModal && selectedEmployees.length && (
-          <EmployeeConfirmModal
-            setShowDeleteModal={setShowDeleteModal}
-            selectedEmployees={selectedEmployees}
-            setSelectedEmployees={setSelectedEmployees}
-          />
-        )}
-
-        {/* Employee List */}
-        <EmployeeList
-          employeesPromise={employeesPromise}
-          selectedEmployees={selectedEmployees}
-          setSelectedEmployees={setSelectedEmployees}
-          visibleColumns={visibleColumns}
-        />
-      </Card>
+      <List<IEmployee>
+        itemsPromise={employeesPromise}
+        visibleColumns={visibleColumns}
+        setVisibleColumns={setVisibleColumns}
+        addNewHandler={() => navigate('/erp/employees/new')}
+        exportable
+        name='Nhân viên'
+      />
     </>
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<IExportResponse> => {
   const { session, headers } = await isAuthenticated(request);
-
   if (!session) {
-    return data({ success: false, message: 'Unauthorized' }, { headers });
+    return data(
+      {
+        success: false,
+        toast: {
+          type: 'error',
+          message: 'Bạn cần đăng nhập để thực hiện hành động này',
+        },
+      },
+      { headers },
+    );
   }
 
-  const formData = await request.formData();
-
   try {
+    const formData = await request.formData();
     switch (request.method) {
       case 'DELETE':
-        const employeeIdsString = formData.get('employeeIds') as string;
+        const employeeIdsString = formData.get('itemIds') as string;
         if (!employeeIdsString) {
           return data(
-            { success: false, message: 'Dữ liệu không hợp lệ.' },
+            {
+              success: false,
+              toast: {
+                message: 'Không có nhân viên nào được chọn để xóa',
+                type: 'error',
+              },
+            },
             { headers },
           );
         }
@@ -248,7 +209,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const employeeIds = JSON.parse(employeeIdsString);
         if (!Array.isArray(employeeIds) || employeeIds.length === 0) {
           return data(
-            { success: false, message: 'Dữ liệu không hợp lệ.' },
+            {
+              success: false,
+              toast: {
+                message: 'Không có nhân viên nào được chọn để xóa',
+                type: 'error',
+              },
+            },
             { headers },
           );
         }
@@ -258,7 +225,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return data(
           {
             success: true,
-            message: `Đã xóa ${employeeIds.length} thành công`,
+            toast: {
+              type: 'success',
+              message: `Đã xóa ${employeeIds.length} thành công`,
+            },
           },
           { headers },
         );
@@ -268,7 +238,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const fileType = formData.get('fileType') as string;
         if (!fileType || !['xlsx'].includes(fileType)) {
           return data(
-            { success: false, message: 'Định dạng file không hợp lệ.' },
+            {
+              success: false,
+              toast: { type: 'error', message: 'Định dạng file không hợp lệ.' },
+            },
             { headers },
           );
         }
@@ -289,17 +262,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return data(
           {
             success: true,
-            message: `Đã xuất dữ liệu Nhân sự thành công!`,
-            fileUrl: fileData.fileUrl,
-            fileName: fileData.fileName,
-            count: fileData.count,
+            toast: {
+              type: 'success',
+              message: `Đã xuất dữ liệu Nhân sự thành công!`,
+            },
+            data: {
+              fileUrl: fileData.fileUrl,
+              fileName: fileData.fileName,
+              count: fileData.count,
+            },
           },
           { headers },
         );
 
       default:
         return data(
-          { success: false, message: 'Method not allowed' },
+          {
+            success: false,
+            toast: { message: 'Phương thức không hợp lệ', type: 'error' },
+          },
+
           { headers },
         );
     }
@@ -308,7 +290,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data(
       {
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi thực hiện hành động',
+        toast: {
+          message: error.message || 'Có lỗi xảy ra khi thực hiện hành động',
+          type: 'error',
+        },
       },
       { headers },
     );

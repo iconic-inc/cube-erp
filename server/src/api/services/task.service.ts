@@ -363,7 +363,18 @@ const getTasks = async (query: any = {}) => {
     const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
     pipeline.push({
       $match: {
-        $or: [{ tsk_name: searchRegex }, { tsk_description: searchRegex }],
+        $or: [
+          { tsk_name: searchRegex },
+          { tsk_description: searchRegex },
+          {
+            tsk_assignees: {
+              $elemMatch: { 'emp_user.usr_firstName': { $regex: searchRegex } },
+            },
+          },
+          {
+            'tsk_caseService.case_code': { $regex: searchRegex },
+          },
+        ],
       },
     });
   }

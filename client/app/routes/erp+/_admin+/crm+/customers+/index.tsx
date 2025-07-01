@@ -1,6 +1,5 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
-import Defer from '~/components/Defer';
 import {
   deleteMultipleCustomers,
   exportCustomers,
@@ -11,10 +10,12 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import { ICustomer } from '~/interfaces/customer.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import { useState } from 'react';
-import { IListColumn } from '~/interfaces/app.interface';
-import StatCard from '~/components/StatCard';
+import {
+  IListColumn,
+  IActionFunctionReturn,
+  IExportResponse,
+} from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
-import { formatDate } from '~/utils';
 import List from '~/components/List';
 import { Button } from '~/components/ui/button';
 
@@ -160,39 +161,10 @@ export default function HRMCustomers() {
         actionHandler={() => navigate('/erp/crm/customers/new')}
       />
 
-      {/* Customer Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-        <Defer resolve={customersPromise}>
-          {({ data }) => (
-            <>
-              <StatCard
-                title='Tổng Khách hàng'
-                value={data.length}
-                icon='people'
-                color='green'
-              />
-
-              <StatCard
-                title='Sinh nhật tháng này'
-                value={
-                  data.filter(
-                    (cus) =>
-                      cus.cus_birthDate &&
-                      new Date(cus.cus_birthDate).getMonth() ===
-                        new Date().getMonth(),
-                  ).length
-                }
-                icon='cake'
-                color='blue'
-              />
-            </>
-          )}
-        </Defer>
-      </div>
-
       <List<ICustomer>
         itemsPromise={customersPromise}
         name='Khách hàng'
+        exportable
         setVisibleColumns={setVisibleColumns}
         visibleColumns={visibleColumns}
         addNewHandler={() => navigate('/erp/crm/customers/new')}
@@ -201,25 +173,25 @@ export default function HRMCustomers() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<IExportResponse> => {
   const { session, headers } = await isAuthenticated(request);
-
   if (!session) {
     return data(
       {
         success: false,
         toast: {
           type: 'error',
-          message: 'Bạn cần đăng nhập để thực hiện hành động này.',
+          message: 'Bạn cần đăng nhập để thực hiện hành động này',
         },
       },
       { headers },
     );
   }
 
-  const formData = await request.formData();
-
   try {
+    const formData = await request.formData();
     switch (request.method) {
       case 'DELETE':
         const customerIdsString = formData.get('itemIds') as string;
@@ -228,8 +200,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             {
               success: false,
               toast: {
+                message: 'Không có khách hàng nào được chọn để xóa',
                 type: 'error',
-                message: 'Dữ liệu không hợp lệ.',
               },
             },
             { headers },
@@ -241,10 +213,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return data(
             {
               success: false,
-
               toast: {
+                message: 'Không có khách hàng nào được chọn để xóa',
                 type: 'error',
-                message: 'Dữ liệu không hợp lệ.',
               },
             },
             { headers },
@@ -258,7 +229,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             success: true,
             toast: {
               type: 'success',
-              message: `Đã xóa ${customerIds.length} Khách hàng thành công!`,
+              message: `Đã xóa ${customerIds.length} khách hàng thành công`,
             },
           },
           { headers },
@@ -271,10 +242,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return data(
             {
               success: false,
-              toast: {
-                type: 'error',
-                message: 'Định dạng file không hợp lệ.',
-              },
+              toast: { type: 'error', message: 'Định dạng file không hợp lệ.' },
             },
             { headers },
           );
@@ -300,9 +268,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               type: 'success',
               message: `Đã xuất dữ liệu Khách hàng thành công!`,
             },
-            fileUrl: fileData.fileUrl,
-            fileName: fileData.fileName,
-            count: fileData.count,
+            data: {
+              fileUrl: fileData.fileUrl,
+              fileName: fileData.fileName,
+              count: fileData.count,
+            },
           },
           { headers },
         );
@@ -311,10 +281,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return data(
           {
             success: false,
-            toast: {
-              type: 'error',
-              message: 'Phương thức không hợp lệ.',
-            },
+            toast: { message: 'Phương thức không hợp lệ', type: 'error' },
           },
           { headers },
         );
@@ -325,8 +292,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       {
         success: false,
         toast: {
-          type: 'error',
           message: error.message || 'Có lỗi xảy ra khi thực hiện hành động',
+          type: 'error',
         },
       },
       { headers },

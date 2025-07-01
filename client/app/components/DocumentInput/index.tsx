@@ -2,6 +2,7 @@ import { UploadCloud } from 'lucide-react';
 import DocumentPicker from './DocumentPicker';
 import { useState } from 'react';
 import { IDocument } from '~/interfaces/document.interface';
+import { IListResponse } from '~/interfaces/response.interface';
 
 export default function DocumentInput({
   label,
@@ -63,6 +64,14 @@ export default function DocumentInput({
 
       {showPicker && (
         <DocumentPicker
+          documentGetter={async () => {
+            const res = await fetch('/api/documents');
+            if (!res.ok) {
+              throw new Error('Failed to fetch documents');
+            }
+            const documents = await res.json();
+            return documents as IListResponse<IDocument>;
+          }}
           selected={Array.isArray(value) ? value : [value]}
           onClose={handleClosePicker}
           onSelect={handleSelectDocument}

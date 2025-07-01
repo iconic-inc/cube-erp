@@ -4,7 +4,7 @@ import {
   LoaderFunctionArgs,
   data as dataResponse,
 } from '@remix-run/node';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { isAuthenticated } from '~/services/auth.server';
 import HandsomeError from '~/components/HandsomeError';
@@ -12,6 +12,7 @@ import UserProfileForm from '../../../../components/UserProfileForm';
 import { getCurrentUser, updateUser } from '~/services/user.server';
 import CustomButton from '~/widgets/CustomButton';
 import { parseAuthCookie } from '~/services/cookie.server';
+import { generateFormId } from '~/utils';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -71,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function HRMProfile() {
   const { user } = useLoaderData<typeof loader>();
-  const formId = 'admin-profile-form';
+  const formId = useMemo(() => generateFormId('admin-profile-form'), []);
 
   const [isChanged, setIsChanged] = useState(false);
 

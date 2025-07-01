@@ -7,6 +7,7 @@ import {
   ITransactionCreate,
   ITransactionUpdate,
   ITransactionQuery,
+  ITransactionStats,
 } from '~/interfaces/transaction.interface';
 
 // Get list of transactions with pagination and query
@@ -145,16 +146,6 @@ const exportTransactionsToXLSX = async (
   );
 };
 
-// Get debt transactions (transactions with unpaid amounts)
-const getDebtTransactions = async (
-  query: ITransactionQuery = {},
-  options: IPaginationOptions = {},
-  request: ISessionUser,
-) => {
-  const debtQuery = { ...query, type: 'debt' as const };
-  return await getTransactions(debtQuery, options, request);
-};
-
 // Get transaction statistics
 const getTransactionStatistics = async (
   query: ITransactionQuery = {},
@@ -169,17 +160,13 @@ const getTransactionStatistics = async (
     }
   });
 
-  return await fetcher<{
-    totalIncome: number;
-    totalOutcome: number;
-    totalDebt: number;
-    totalPaid: number;
-    totalUnpaid: number;
-    transactionCount: number;
-  }>(`/transactions/statistics?${searchParams.toString()}`, {
-    method: 'GET',
-    request,
-  });
+  return await fetcher<ITransactionStats>(
+    `/transactions/statistics?${searchParams.toString()}`,
+    {
+      method: 'GET',
+      request,
+    },
+  );
 };
 
 export {
@@ -190,6 +177,5 @@ export {
   deleteTransaction,
   bulkDeleteTransactions,
   exportTransactionsToXLSX,
-  getDebtTransactions,
   getTransactionStatistics,
 };

@@ -9,21 +9,75 @@ import {
 
 // Check-in
 const checkIn = async (data: IAttendanceCreate, request: ISessionUser) => {
-  const response = await fetcher<IAttendance>('/attendance/check-in', {
-    method: 'POST',
-    body: JSON.stringify(data),
-    request,
-  });
+  const response = await fetcher<IAttendance>(
+    '/employees/me/attendance/check-in',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+      request,
+    },
+  );
   return response;
 };
 
 // Check-in
 const checkOut = async (data: IAttendanceCreate, request: ISessionUser) => {
-  const response = await fetcher<IAttendance>('/attendance/check-out', {
-    method: 'POST',
-    body: JSON.stringify(data),
-    request,
-  });
+  const response = await fetcher<IAttendance>(
+    '/employees/me/attendance/check-out',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+      request,
+    },
+  );
+  return response;
+};
+
+// attendance list for employee
+const getAttendancesForEmployee = async (
+  userId: string,
+  request: ISessionUser,
+) => {
+  const response = await fetcher<IAttendanceBrief[]>(
+    `/employees/me/attendance/stats`,
+    {
+      request,
+    },
+  );
+  return response;
+};
+
+const getLast7DaysStatsForEmployee = async (request: ISessionUser) => {
+  const response = await fetcher<IAttendanceBrief[]>(
+    `/employees/me/attendance/stats/week`,
+    {
+      request,
+    },
+  );
+  return response;
+};
+
+const getTodayAttendanceForEmployee = async (request: ISessionUser) => {
+  const response = await fetcher<IAttendanceBrief>(
+    '/employees/me/attendance/today',
+    {
+      request,
+    },
+  );
+  return response;
+};
+
+const getMonthAttendanceForEmployee = async (
+  month: number,
+  year: number,
+  request: ISessionUser,
+) => {
+  const response = await fetcher<IAttendanceBrief[]>(
+    `/employees/me/attendance/stats?month=${month}&year=${year}`,
+    {
+      request,
+    },
+  );
   return response;
 };
 
@@ -120,4 +174,8 @@ export {
   getTodayAttendanceStats,
   updateAttendance,
   deleteAttendance,
+  getAttendancesForEmployee,
+  getLast7DaysStatsForEmployee,
+  getTodayAttendanceForEmployee,
+  getMonthAttendanceForEmployee,
 };

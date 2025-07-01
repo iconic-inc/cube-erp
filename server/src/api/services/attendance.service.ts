@@ -47,7 +47,7 @@ const checkIn = async (data: ICheckInData) => {
 
   const employee = await getEmployeeByUserId(data.userId);
   // const foundAttendance = await AttendanceModel.findOne({
-  //   employeeId: employee.id,
+  // employee: employee.id,
   // });
   // if (foundAttendance && foundAttendance.fingerprint !== data.fingerprint) {
   //   throw new BadRequestError(
@@ -56,18 +56,15 @@ const checkIn = async (data: ICheckInData) => {
   // }
 
   const now = new Date();
-  console.log(now);
-  console.log('Creating attendance record...');
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
 
   const attendance = await AttendanceModel.build({
-    employeeId: employee.id,
+    employee: employee.id,
     fingerprint: data.fingerprint,
     ip: data.ip,
     checkInTime: now,
-    date: new Date(new Date().setHours(0, 0, 0, 0)),
+    date: today,
   });
-
-  console.log('Attendance record created');
 
   // Kiểm tra thời gian check-in và gửi thông báo phù hợp
   const hour = now.getHours();
@@ -104,13 +101,14 @@ const checkOut = async (data: ICheckInData) => {
   const employee = await getEmployeeByUserId(data.userId);
 
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
   console.log('Updating attendance record...');
 
   const attendance = await AttendanceModel.findOneAndUpdate(
     {
-      employeeId: employee.id,
+      employee: employee.id,
       fingerprint: data.fingerprint,
-      date: new Date(new Date().setHours(0, 0, 0, 0)),
+      date: today,
     },
     {
       checkOutTime: now,
@@ -151,7 +149,7 @@ const getAttendanceStats = async (month: number, year: number) => {
     },
     {
       $group: {
-        _id: '$employeeId',
+        _id: '$ employee',
         totalDays: { $sum: 1 },
         lateCount: {
           $sum: {
@@ -166,12 +164,12 @@ const getAttendanceStats = async (month: number, year: number) => {
 
 const getLast7DaysStats = async (userId: string) => {
   const now = new Date();
-  const last7Days = new Date(now.setDate(now.getDate() - 7));
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago without mutating original date
 
   const employee = await getEmployeeByUserId(userId);
 
   const attendance = await AttendanceModel.find({
-    employeeId: employee.id,
+    employee: employee.id,
     date: { $gte: last7Days },
   });
   return getReturnList(attendance);
@@ -180,24 +178,27 @@ const getLast7DaysStats = async (userId: string) => {
 // get today's attendance record
 const getTodayAttendance = async (userId: string) => {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today without mutating original date
   const employee = await getEmployeeByUserId(userId);
 
   const attendance = await AttendanceModel.findOne({
-    employeeId: employee.id,
-    date: new Date(now.setHours(0, 0, 0, 0)),
+    employee: employee.id,
+    date: today,
   });
   return getReturnData(attendance) || {};
 };
 
 const getTodayAttendanceStats = async () => {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today without mutating original date
+
   const attendance = await AttendanceModel.find({
-    date: new Date(now.setHours(0, 0, 0, 0)),
+    date: today,
   }).populate({
-    path: 'employeeId',
-    select: 'employeeCode userId',
+    path: 'employee',
+    select: 'emp_user emp_code',
     populate: {
-      path: 'userId',
+      path: 'emp_user',
       select: 'usr_firstName usr_lastName usr_avatar',
       populate: {
         path: 'usr_avatar',

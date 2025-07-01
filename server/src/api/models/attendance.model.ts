@@ -9,7 +9,7 @@ import {
 
 const attendanceSchema = new Schema<IAttendanceDocument, IAttendanceModel>(
   {
-    employeeId: {
+    employee: {
       type: Schema.Types.ObjectId,
       ref: USER.EMPLOYEE.DOCUMENT_NAME,
       required: true,

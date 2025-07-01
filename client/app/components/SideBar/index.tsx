@@ -94,7 +94,7 @@ const navMain = [
       },
       {
         title: 'Báo cáo',
-        url: '/erp/reports',
+        url: '/erp/transactions/reports',
       },
     ],
   },

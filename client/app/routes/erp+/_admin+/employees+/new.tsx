@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Link,
   useLoaderData,
@@ -15,6 +15,7 @@ import { createEmployee } from '~/services/employee.server';
 import { toast } from 'react-toastify';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { IEmployeeCreate } from '~/interfaces/employee.interface';
+import { generateFormId } from '~/utils';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -195,7 +196,7 @@ export default function NewEmployee() {
     const toastType = actionData.toast.type as ToastType;
     toast[toastType](actionData.toast.message);
   }
-  const formId = 'employee-create-form';
+  const formId = useMemo(() => generateFormId('employee-create-form'), []);
 
   return (
     <>

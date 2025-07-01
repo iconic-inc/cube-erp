@@ -4,6 +4,7 @@ import {
   data as dataResponse,
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { useMemo } from 'react';
 
 import TransactionDetailForm from './_components/TransactionDetailForm';
 import ContentHeader from '~/components/ContentHeader';
@@ -17,6 +18,7 @@ import {
 import { isAuthenticated } from '~/services/auth.server';
 import { ITransactionUpdate } from '~/interfaces/transaction.interface';
 import { TRANSACTION } from '~/constants/transaction.constant';
+import { generateFormId } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -34,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     {
       page,
       limit,
-      sortBy: 'createdAt',
+      sortBy: 'date',
       sortOrder: 'desc',
     },
     auth!,
@@ -50,7 +52,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     {
       page,
       limit,
-      sortBy: 'createdAt',
+      sortBy: 'date',
       sortOrder: 'desc',
     },
     auth!,
@@ -82,7 +84,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function TransactionEdit() {
   const { customers, caseServices, transactionPromise } =
     useLoaderData<typeof loader>();
-  const formId = 'transaction-update-form';
+  const formId = useMemo(() => generateFormId('transaction-update-form'), []);
 
   return (
     <div className='w-full space-y-6'>
@@ -150,6 +152,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           description: formData.get('description') as string,
           customer: formData.get('customer') as string,
           caseService: formData.get('caseService') as string,
+          date: formData.get('date') as string,
         };
 
         // Kiểm tra dữ liệu bắt buộc

@@ -19,7 +19,7 @@ export default function CaseServiceBrief({
   const { case_customer: customer } = caseService;
 
   return (
-    <div className='p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm'>
+    <div className='w-full p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm'>
       <div className='flex justify-between items-center'>
         <h4 className='text-xl font-bold text-green-800 mb-3 flex items-center'>
           <BookUser className='mr-2' />

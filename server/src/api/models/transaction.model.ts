@@ -66,6 +66,10 @@ const transactionSchema = new Schema<ITransactionDocument, ITransactionModel>(
       type: Schema.Types.ObjectId,
       ref: CASE_SERVICE.DOCUMENT_NAME,
     },
+    tx_date: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

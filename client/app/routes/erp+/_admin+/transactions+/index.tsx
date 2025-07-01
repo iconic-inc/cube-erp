@@ -4,13 +4,18 @@ import { useState } from 'react';
 
 import {
   bulkDeleteTransactions,
+  exportTransactionsToXLSX,
   getTransactions,
 } from '~/services/transaction.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ITransaction } from '~/interfaces/transaction.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { IListColumn } from '~/interfaces/app.interface';
+import {
+  IActionFunctionReturn,
+  IExportResponse,
+  IListColumn,
+} from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { formatDate, formatCurrency } from '~/utils';
@@ -25,7 +30,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const limit = Number(url.searchParams.get('limit')) || 10;
   const searchQuery = url.searchParams.get('search') || '';
 
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
+  const sortBy = url.searchParams.get('sortBy') || 'tx_date';
   const sortOrder =
     (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
 
@@ -116,71 +121,54 @@ export default function () {
         formatCurrency(transaction.tx_amount - transaction.tx_paid),
     },
     {
-      key: 'tx_paymentMethod',
-      title: 'Phương thức',
-      visible: true,
-      sortField: 'tx_paymentMethod',
-      render: (transaction) => {
-        const methodMap: Record<string, string> = {
-          cash: 'Tiền mặt',
-          bank_transfer: 'Chuyển khoản',
-          credit_card: 'Thẻ tín dụng',
-          mobile_payment: 'Thanh toán di động',
-          other: 'Khác',
-        };
-        return (
-          methodMap[transaction.tx_paymentMethod] ||
-          transaction.tx_paymentMethod
-        );
-      },
-    },
-    {
       key: 'tx_customer',
       title: 'Khách hàng',
       visible: true,
       sortField: 'tx_customer.cus_firstName',
-      render: (transaction) =>
-        transaction.tx_customer ? (
+      render: (transaction) => {
+        if (!transaction.tx_customer) return 'N/A';
+        return (
           <Link
-            to={`/erp/crm/customers/${transaction.tx_customer?.id}`}
+            to={`/erp/crm/customers/${transaction.tx_customer.id}`}
             className='text-blue-600 hover:underline'
           >
-            {`${transaction.tx_customer?.cus_firstName} ${transaction.tx_customer?.cus_lastName}`}
+            {transaction.tx_customer.cus_firstName}{' '}
+            {transaction.tx_customer.cus_lastName}
+          </Link>
+        );
+      },
+    },
+    {
+      key: 'tx_createdBy',
+      title: 'Người tạo',
+      visible: true,
+      sortField: 'tx_createdBy.emp_user.usr_firstName',
+      render: (transaction) =>
+        transaction.tx_createdBy?.emp_user ? (
+          <Link
+            to={`/erp/hr/employees/${transaction.tx_createdBy.id}`}
+            className='text-blue-600 hover:underline'
+          >
+            {transaction.tx_createdBy.emp_user.usr_firstName}{' '}
+            {transaction.tx_createdBy.emp_user.usr_lastName}
           </Link>
         ) : (
-          '-'
+          'N/A'
         ),
     },
     {
-      key: 'tx_caseService',
-      title: 'Mã Hồ sơ',
+      key: 'date',
+      title: 'Ngày giao dịch',
       visible: true,
-      sortField: 'tx_caseService.case_code',
-      render: (transaction) =>
-        transaction.tx_caseService ? (
-          <Link
-            to={`/erp/crm/cases/${transaction.tx_caseService?.id}`}
-            className='text-blue-600 hover:underline'
-          >
-            {transaction.tx_caseService?.case_code}
-          </Link>
-        ) : (
-          '-'
-        ),
-    },
-    {
-      key: 'createdAt',
-      title: 'Ngày tạo',
-      visible: true,
-      sortField: 'createdAt',
-      render: (transaction) => formatDate(transaction.createdAt),
+      sortField: 'tx_date',
+      render: (transaction) => formatDate(transaction.tx_date),
     },
   ]);
 
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='w-full space-y-8'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách giao dịch'
@@ -193,21 +181,21 @@ export default function () {
         actionHandler={() => navigate('/erp/transactions/new')}
       />
 
-      {/* Transaction Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
-
       <List<ITransaction>
         itemsPromise={transactionsPromise}
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
+        exportable
         addNewHandler={() => navigate('/erp/transactions/new')}
         name='Giao dịch'
       />
-    </>
+    </div>
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<IExportResponse> => {
   const { session, headers } = await isAuthenticated(request);
   if (!session) {
     return data(
@@ -262,6 +250,49 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             toast: {
               message: `Đã xóa ${transactionIds.length} giao dịch thành công`,
               type: 'success',
+            },
+          },
+          { headers },
+        );
+
+      case 'POST':
+        // Handle export action (placeholder for future implementation)
+        const fileType = formData.get('fileType') as string;
+        if (!fileType || !['xlsx'].includes(fileType)) {
+          return data(
+            {
+              success: false,
+              toast: { type: 'error', message: 'Định dạng file không hợp lệ.' },
+            },
+            { headers },
+          );
+        }
+
+        // TODO: Implement export functionality when exportCaseServices is available
+        const url = new URL(request.url);
+        const fileData = await exportTransactionsToXLSX(
+          {
+            search: url.searchParams.get('search') || '',
+          },
+          {
+            sortBy: url.searchParams.get('sortBy') || 'createdAt',
+            sortOrder:
+              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+          },
+          session,
+        );
+
+        return data(
+          {
+            success: true,
+            toast: {
+              type: 'success',
+              message: 'Đã xuất dữ liệu Nhân sự thành công!',
+            },
+            data: {
+              fileUrl: fileData.fileUrl,
+              fileName: fileData.fileName,
+              count: fileData.count,
             },
           },
           { headers },

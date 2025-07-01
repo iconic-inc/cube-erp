@@ -12,7 +12,7 @@ export default function EmptyListRow({
   icon?: string;
   title: string;
   description: string;
-  addNewHandler: () => void;
+  addNewHandler?: () => void;
   linkText?: string;
   colSpan?: number;
 }) {
@@ -30,10 +30,12 @@ export default function EmptyListRow({
             {description}
           </p>
 
-          <Button type='button' variant={'primary'} onClick={addNewHandler}>
-            <span className='material-symbols-outlined text-sm'>add</span>
-            {linkText}
-          </Button>
+          {addNewHandler && (
+            <Button type='button' variant={'primary'} onClick={addNewHandler}>
+              <span className='material-symbols-outlined text-sm'>add</span>
+              {linkText}
+            </Button>
+          )}
         </div>
       </td>
     </tr>
