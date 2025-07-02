@@ -93,6 +93,10 @@ const navMain = [
         url: '/erp/transactions',
       },
       {
+        title: 'Quỹ thưởng',
+        url: '/erp/rewards',
+      },
+      {
         title: 'Báo cáo',
         url: '/erp/transactions/reports',
       },

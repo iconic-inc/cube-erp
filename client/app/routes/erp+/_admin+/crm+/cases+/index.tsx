@@ -54,14 +54,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     casesPromise: getCaseServices({ ...query }, options, user!).catch((e) => {
       console.error(e);
       return {
-        data: [],
-        pagination: {
-          totalPages: 0,
-          page: 1,
-          limit: 10,
-          total: 0,
-        },
-      } as IListResponse<ICaseService>;
+        success: false,
+        message: 'Không thể tải danh sách Hồ sơ vụ việc',
+      };
     }),
   };
 };

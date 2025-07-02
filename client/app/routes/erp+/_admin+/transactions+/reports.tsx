@@ -40,14 +40,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
   const firstWeekDate = getFirstWeekDate(
-    TODAY.getDay(),
+    TODAY.getDate(),
     TODAY.getMonth(),
     TODAY.getFullYear(),
   );
 
   const startDate =
     url.searchParams.get('startDate') || firstWeekDate.toISOString();
-  const endDate = url.searchParams.get('endDate') || TODAY.toISOString();
+  const endDate =
+    url.searchParams.get('endDate') || TODAY.addDays(1).toISOString();
   const type = url.searchParams.get('type') || 'all';
   const paymentMethod = url.searchParams.get('paymentMethod') || '';
 
@@ -79,7 +80,7 @@ export default function TransactionReport() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   return (
-    <div className='w-full space-y-6'>
+    <div className='w-full space-y-4 md:space-y-6'>
       {/* Content Header */}
       <ContentHeader title='Báo cáo giao dịch' />
 

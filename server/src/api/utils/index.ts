@@ -195,6 +195,22 @@ function checkIPSameNetwork(
   });
 }
 
+const abbCurrency = ['Đ', 'K', 'Tr', 'T'];
+const shortenMoney = (money: number, stack = 0) => {
+  if (Math.abs(+money) < 1_000 || stack >= abbCurrency.length - 1) {
+    if (stack < 2) return `${+money.toFixed(2)}${abbCurrency[stack]}`;
+
+    const [int, dec] = money.toFixed(2).split('.');
+    return `${int}${abbCurrency[stack]}${dec.replace(/0+$/, '')}`;
+  }
+
+  return shortenMoney(+(+money / 1_000).toFixed(2), ++stack);
+};
+
+const toCurrencyString = (money: number | string) => {
+  return shortenMoney(+money);
+};
+
 export {
   getSlug,
   isNullish,
@@ -208,4 +224,5 @@ export {
   removeNestedNullish,
   capitalizeFirstLetter,
   replaceTemplatePlaceholders,
+  toCurrencyString,
 };

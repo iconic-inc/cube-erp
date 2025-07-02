@@ -90,6 +90,10 @@ const navMain = [
         url: '/erp/nhan-vien/giao-dich',
       },
       {
+        title: 'Quỹ thưởng',
+        url: '/erp/nhan-vien/thuong',
+      },
+      {
         title: 'Báo cáo',
         url: '/erp/nhan-vien/giao-dich/bao-cao',
       },

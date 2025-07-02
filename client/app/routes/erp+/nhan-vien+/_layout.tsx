@@ -5,19 +5,33 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import Sidebar from '~/components/emp/SideBar';
 import { getCurrentUser } from '~/services/user.server';
 import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
-import { Outlet } from '@remix-run/react';
+import { Outlet, useLoaderData } from '@remix-run/react';
+import { getRewardStatsForEmployee } from '~/services/reward.server';
+import RewardDisplay from '~/components/RewardDisplay';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
 
-  const user = await getCurrentUser(session!);
+  const user = await getCurrentUser(session!).catch((error) => {
+    console.error('Error fetching user:', error);
+    return {} as any;
+  });
+  const reward = getRewardStatsForEmployee(session!).catch((error) => {
+    console.error('Error fetching reward stats:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi xảy ra khi lấy phần thưởng',
+    }; // Fallback in case of error
+  });
 
-  return { user };
+  return { user, reward };
 };
 
 export const ErrorBoundary = () => <HandsomeError basePath='/erp/nhan-vien' />;
 
 export default function RootAdminLayout() {
+  const { reward } = useLoaderData<typeof loader>();
+
   return (
     <SidebarProvider>
       <Sidebar />
@@ -31,6 +45,10 @@ export default function RootAdminLayout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Reward Display in Corner */}
+
+      <RewardDisplay rewardPromise={reward} />
     </SidebarProvider>
   );
 }

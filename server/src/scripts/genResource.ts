@@ -99,6 +99,11 @@ const RESOURCES = [
     slug: 'document',
     description: 'Quản lý tài liệu',
   },
+  {
+    name: 'Reward Management',
+    slug: 'reward',
+    description: 'Quản lý quỹ thưởng',
+  },
 ];
 
 main();

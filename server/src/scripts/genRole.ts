@@ -58,6 +58,7 @@ const ROLES = [
       'task',
       'transaction',
       'document',
+      'reward',
     ].map((resource) => ({
       resourceId: { slug: resource },
       actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
@@ -104,6 +105,10 @@ const ROLES = [
         resourceId: { slug: 'document' },
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
+      {
+        resourceId: { slug: 'reward' },
+        actions: ['read:any'],
+      },
     ],
   },
   {
@@ -143,6 +148,10 @@ const ROLES = [
       {
         resourceId: { slug: 'document' },
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+      },
+      {
+        resourceId: { slug: 'reward' },
+        actions: ['read:any'],
       },
     ],
   },

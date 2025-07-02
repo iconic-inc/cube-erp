@@ -53,6 +53,7 @@ export const TRANSACTION = {
       TAX: { value: 'tax', label: 'Thuế' },
       EQUIPMENT: { value: 'equipment', label: 'Mua sắm thiết bị' },
       TRAINING_EXPENSE: { value: 'training_expense', label: 'Chi phí đào tạo' },
+      REWARD: { value: 'reward', label: 'Thưởng' },
       OTHER: { value: 'other_outcome', label: 'Khác' },
     },
   },

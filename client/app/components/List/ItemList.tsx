@@ -134,7 +134,7 @@ export default function ItemList<T>({
             </Defer>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody className='overflow-x-auto'>
           <Defer
             resolve={itemsPromise}
             fallback={
