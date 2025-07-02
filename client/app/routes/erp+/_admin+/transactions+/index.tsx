@@ -69,25 +69,20 @@ export default function () {
     IListColumn<ITransaction>[]
   >([
     {
-      key: 'tx_code',
-      title: 'Mã giao dịch',
+      key: 'tx_title',
+      title: 'Tiêu đề',
       visible: true,
-      sortField: 'tx_code',
+      sortField: 'tx_title',
       render: (transaction) => (
         <Link
           to={`/erp/transactions/${transaction.id}`}
           className='text-blue-600 hover:underline py-2'
         >
-          {transaction.tx_code}
+          {transaction.tx_title || 'Không có tiêu đề'}
+          <br />
+          <span className='text-sm text-gray-500'>{transaction.tx_code}</span>
         </Link>
       ),
-    },
-    {
-      key: 'tx_title',
-      title: 'Tiêu đề',
-      visible: true,
-      sortField: 'tx_title',
-      render: (transaction) => transaction.tx_title,
     },
     {
       key: 'tx_type',
@@ -168,7 +163,7 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='w-full space-y-4 md:space-y-6'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách giao dịch'

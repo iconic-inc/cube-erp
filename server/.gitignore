@@ -11,3 +11,4 @@ public/exports
 dist
 
 src/logs
+src/postman/test.http

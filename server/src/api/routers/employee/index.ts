@@ -20,6 +20,7 @@ router.post(
 // Employee KPI route
 // router.use('/:userId/kpi', require('../kpi').employeeKPIRouter);
 router.use('/me/attendance', require('../attendance/employee'));
+router.use('/me/rewards', require('../reward/employee'));
 router.get(
   '/me',
   hasPermission('employee', 'readOwn'),

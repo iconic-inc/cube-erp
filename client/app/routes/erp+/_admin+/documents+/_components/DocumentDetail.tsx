@@ -34,15 +34,32 @@ export default function DocumentDetail({
 
   const handleDownload = (document: IDocument) => {
     if (document?.doc_url) {
-      // Create a temporary link element to trigger the download
-      const link = window.document.createElement('a');
-      link.href = document.doc_url;
-      link.download = document.doc_name || 'document.pdf'; // Use document name or default to 'document.pdf'
-      window.document.body.appendChild(link);
-      link.click();
-      window.document.body.removeChild(link);
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 2000); // Reset downloaded state after 2 seconds
+      // Prevent browser from opening the file by using fetch first
+      fetch(document.doc_url)
+        .then((response) => response.blob())
+        .then((blob) => {
+          // Create a blob URL for the file
+          const blobUrl = URL.createObjectURL(blob);
+
+          // Create a temporary link element to trigger the download
+          const link = window.document.createElement('a');
+          link.href = blobUrl;
+          link.download = document.doc_name || 'document.pdf'; // Use document name or default to 'document.pdf'
+          link.style.display = 'none';
+          window.document.body.appendChild(link);
+          link.click();
+
+          // Clean up
+          window.document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl); // Release the blob URL
+
+          setDownloaded(true);
+          setTimeout(() => setDownloaded(false), 2000); // Reset downloaded state after 2 seconds
+        })
+        .catch((error) => {
+          console.error('Error downloading the file:', error);
+          alert('Không thể tải xuống tập tin. Vui lòng thử lại sau.');
+        });
     }
   };
 

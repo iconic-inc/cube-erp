@@ -38,7 +38,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='app'>
+      <body className='app w-screen'>
         <Outlet />
 
         <ToastContainer

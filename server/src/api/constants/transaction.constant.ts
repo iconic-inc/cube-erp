@@ -33,6 +33,7 @@ export const TRANSACTION = {
       TAX: 'tax', // Thuế
       EQUIPMENT: 'equipment', // Mua sắm thiết bị
       TRAINING_EXPENSE: 'training_expense', // Chi phí đào tạo
+      REWARD: 'reward', // Thưởng
       OTHER: 'other_outcome', // Khác
     },
   },

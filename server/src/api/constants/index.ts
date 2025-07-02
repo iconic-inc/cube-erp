@@ -11,6 +11,8 @@ export * from './document.constant';
 export * from './documentCase.constant';
 export * from './task.constant';
 export * from './taskInstance.constant';
+export * from './transaction.constant';
+export * from './reward.constant';
 
 export const KEYTOKEN = {
   DOCUMENT_NAME: 'KeyToken',

@@ -77,7 +77,7 @@ app.use(
   '/uploads',
   express.static(UPLOADS_DIR, {
     setHeaders: (res, path) => {
-      res.setHeader('Content-Disposition', 'attachment');
+      // res.setHeader('Content-Disposition', 'attachment');
       res.setHeader('Cache-Control', 'public, max-age=31536000');
     },
   })
