@@ -32,7 +32,7 @@ export default function EmployeeAttendanceList({
             className='bg-white/20 hover:bg-white/30 text-white border-white/30'
             asChild
           >
-            <Link to={`/erp/attendance?employeeId=${employeeId}`}>
+            <Link to={`/erp/attendance/detail?employeeId=${employeeId}`}>
               Xem tất cả
             </Link>
           </Button>
@@ -70,7 +70,9 @@ export default function EmployeeAttendanceList({
                     nhất.
                   </p>
                   <Button variant='outline' asChild>
-                    <Link to={`/erp/attendance?employeeId=${employeeId}`}>
+                    <Link
+                      to={`/erp/attendance/detail?employeeId=${employeeId}`}
+                    >
                       Xem tất cả chấm công
                     </Link>
                   </Button>
@@ -164,7 +166,9 @@ export default function EmployeeAttendanceList({
                 {attendanceList.length > 0 && (
                   <div className='p-4 bg-gray-50 text-center'>
                     <Button variant='outline' asChild>
-                      <Link to={`/erp/attendance?employeeId=${employeeId}`}>
+                      <Link
+                        to={`/erp/attendance/detail?employeeId=${employeeId}`}
+                      >
                         Xem tất cả chấm công
                       </Link>
                     </Button>

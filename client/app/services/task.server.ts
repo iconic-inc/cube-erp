@@ -354,6 +354,33 @@ const exportTasks = async (
   }
 };
 
+const getEmployeesPerformance = async (
+  query: ITaskQuery = {},
+  options: IPaginationOptions = {},
+  request: ISessionUser,
+) => {
+  const { page = 1, limit = 10, sortBy, sortOrder } = options;
+  const searchParams = new URLSearchParams();
+  // Add pagination and sorting params
+  searchParams.set('page', String(page));
+  searchParams.set('limit', String(limit));
+  if (sortBy) searchParams.set('sortBy', sortBy);
+  if (sortOrder) searchParams.set('sortOrder', sortOrder);
+  // Add basic filtering params
+  if (query.search) searchParams.set('search', query.search);
+  if (query.assignee) searchParams.set('assignee', query.assignee);
+  if (query.status) searchParams.set('status', query.status);
+  if (query.priority) searchParams.set('priority', query.priority);
+
+  const performanceData = await fetcher(
+    `/tasks/performance?${searchParams.toString()}`,
+    {
+      request,
+    },
+  );
+  return performanceData;
+};
+
 export {
   getTasks,
   getTaskById,
@@ -363,4 +390,5 @@ export {
   deleteTask,
   bulkDeleteTasks,
   exportTasks,
+  getEmployeesPerformance,
 };

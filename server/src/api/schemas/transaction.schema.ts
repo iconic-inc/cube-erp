@@ -144,24 +144,7 @@ export const transactionQuerySchema = z
       .transform((val) => (val ? parseInt(val, 10) : 10))
       .refine((val) => val > 0 && val <= 100, 'Giới hạn phải từ 1 đến 100'),
     search: z.string().optional(),
-    sortBy: z
-      .enum(
-        [
-          'createdAt',
-          'tx_date',
-          'tx_amount',
-          'tx_title',
-          'tx_code',
-          'tx_type',
-          'tx_remain',
-          'tx_paymentMethod',
-          'tx_category',
-          'tx_paid',
-        ],
-        { message: 'Trường sắp xếp không hợp lệ' }
-      )
-      .optional()
-      .default('tx_date'),
+    sortBy: z.string().trim().optional().default('tx_date'),
     sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
     type: z
       .enum(Object.values(TRANSACTION.TYPE) as [string, ...string[]])

@@ -136,4 +136,15 @@ export class TaskController {
       metadata: tasks,
     });
   }
+
+  static async getEmployeesPerformance(req: Request, res: Response) {
+    const performanceData = await taskService.getEmployeesPerformance(
+      req.query
+    );
+    return OK({
+      res,
+      message: 'Lấy hiệu suất nhân viên thành công',
+      metadata: performanceData,
+    });
+  }
 }

@@ -7,6 +7,7 @@ import { IAttendance } from '~/interfaces/attendance.interface';
 import { IListColumn } from '~/interfaces/app.interface';
 import { calHourDiff } from '~/utils';
 import { Clock, Calendar, User, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from './ui/button';
 
 export default function EmployeeAttendanceList({
   attendanceStats,
@@ -124,6 +125,18 @@ export default function EmployeeAttendanceList({
               : 'Chưa ra'}
           </Badge>
         </div>
+      ),
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      visible: true,
+      render: (item) => (
+        <Button variant={'primary'} asChild>
+          <Link to={`/erp/attendance/detail?employeeId=${item.employee.id}`}>
+            Xem chi tiết
+          </Link>
+        </Button>
       ),
     },
   ]);

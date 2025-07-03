@@ -111,15 +111,18 @@ export default function CRMCaseService() {
       key: 'leadAttorney',
       visible: true,
       sortField: 'tsk_leadAttorney.emp_fullName',
-      render: (item) => (
-        <Link
-          to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
-          className='text-blue-600 hover:underline block w-full h-full'
-        >
-          {item.case_leadAttorney.emp_user.usr_firstName}{' '}
-          {item.case_leadAttorney.emp_user.usr_lastName}
-        </Link>
-      ),
+      render: (item) =>
+        item.case_leadAttorney ? (
+          <Link
+            to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
+            className='text-blue-600 hover:underline block w-full h-full'
+          >
+            {item.case_leadAttorney.emp_user.usr_firstName}{' '}
+            {item.case_leadAttorney.emp_user.usr_lastName}
+          </Link>
+        ) : (
+          'N/A'
+        ),
     },
     {
       title: 'Ngày bắt đầu',

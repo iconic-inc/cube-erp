@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AttendanceController } from '@controllers/attendance.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
+import { validateObjectId } from '@schemas/index';
 
 const router = Router();
 
@@ -42,6 +43,15 @@ router.get(
   authenticationV2,
   hasPermission('attendance', 'readAny'),
   AttendanceController.getTodayAttendance
+);
+
+// Route để lấy danh sách chấm công của nhân viên
+router.get(
+  '/employee/:employeeId',
+  validateObjectId('employeeId'),
+  authenticationV2,
+  hasPermission('attendance', 'readAny'),
+  AttendanceController.getEmployeeAttendances
 );
 
 router.put(

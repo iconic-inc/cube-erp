@@ -12,6 +12,13 @@ router.use(authenticationV2);
 // Admin routes
 // Create Task
 router.post('/', hasPermission('task', 'createAny'), TaskController.createTask);
+
+router.get(
+  '/performance',
+  hasPermission('task', 'readAny'),
+  TaskController.getEmployeesPerformance
+);
+
 // Get detailed Task by ID
 router.get(
   '/:id',

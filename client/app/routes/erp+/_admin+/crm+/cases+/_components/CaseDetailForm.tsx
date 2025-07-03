@@ -258,7 +258,9 @@ export default function CaseDetailForm({
             ) {
               setAssignees([
                 ...(caseData.case_assignees || []),
-                caseData.case_leadAttorney,
+                ...(caseData.case_leadAttorney
+                  ? [caseData.case_leadAttorney]
+                  : []),
               ]);
             }
           } else {

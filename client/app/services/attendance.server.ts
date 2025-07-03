@@ -162,6 +162,20 @@ const deleteAttendance = async (id: string, request: ISessionUser) => {
   return response;
 };
 
+// Get attendance records for a specific employee by ID
+const getAttendancesByEmployeeId = async (
+  employeeId: string,
+  request: ISessionUser,
+) => {
+  const response = await fetcher<IAttendance[]>(
+    `/attendance/employee/${employeeId}`,
+    {
+      request,
+    },
+  );
+  return response;
+};
+
 export {
   checkIn,
   checkOut,
@@ -178,4 +192,5 @@ export {
   getLast7DaysStatsForEmployee,
   getTodayAttendanceForEmployee,
   getMonthAttendanceForEmployee,
+  getAttendancesByEmployeeId,
 };

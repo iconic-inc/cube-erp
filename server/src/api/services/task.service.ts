@@ -982,6 +982,378 @@ const translatePriorityToVietnamese = (priority: string): string => {
   }
 };
 
+const getEmployeesPerformance = async (query: any = {}) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      employeeIds,
+      sortBy = 'completionRate',
+      sortOrder = 'desc',
+      limit = 10,
+      page = 1,
+    } = query;
+
+    // Set default date range if not provided (last 30 days)
+    const defaultEndDate = new Date();
+    const defaultStartDate = new Date();
+    defaultStartDate.setDate(defaultStartDate.getDate() - 30);
+
+    const periodStartDate = startDate ? new Date(startDate) : defaultStartDate;
+    const periodEndDate = endDate ? new Date(endDate) : defaultEndDate;
+
+    // Build aggregation pipeline
+    const pipeline: any[] = [];
+
+    // Stage 1: Match tasks within the date range
+    pipeline.push({
+      $match: {
+        $or: [
+          {
+            tsk_startDate: {
+              $gte: periodStartDate,
+              $lte: periodEndDate,
+            },
+          },
+          {
+            tsk_endDate: {
+              $gte: periodStartDate,
+              $lte: periodEndDate,
+            },
+          },
+          {
+            updatedAt: {
+              $gte: periodStartDate,
+              $lte: periodEndDate,
+            },
+          },
+        ],
+      },
+    });
+
+    // Stage 2: Unwind assignees to analyze individual performance
+    pipeline.push({
+      $unwind: {
+        path: '$tsk_assignees',
+        preserveNullAndEmptyArrays: false,
+      },
+    });
+
+    // Stage 3: Filter by specific employees if provided
+    if (employeeIds && employeeIds.length > 0) {
+      pipeline.push({
+        $match: {
+          tsk_assignees: {
+            $in: employeeIds.map((id: string) => new Types.ObjectId(id)),
+          },
+        },
+      });
+    }
+
+    // Stage 4: Lookup employee details
+    pipeline.push({
+      $lookup: {
+        from: USER.EMPLOYEE.COLLECTION_NAME,
+        localField: 'tsk_assignees',
+        foreignField: '_id',
+        as: 'employee',
+      },
+    });
+
+    pipeline.push({
+      $unwind: {
+        path: '$employee',
+        preserveNullAndEmptyArrays: false,
+      },
+    });
+
+    // Stage 5: Lookup user details for employee
+    pipeline.push({
+      $lookup: {
+        from: USER.COLLECTION_NAME,
+        localField: 'employee.emp_user',
+        foreignField: '_id',
+        as: 'employee.emp_user',
+      },
+    });
+
+    pipeline.push({
+      $unwind: {
+        path: '$employee.emp_user',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 6: Calculate task metrics
+    pipeline.push({
+      $addFields: {
+        isCompleted: {
+          $cond: [{ $eq: ['$tsk_status', TASK.STATUS.COMPLETED] }, 1, 0],
+        },
+        isOverdue: {
+          $cond: [
+            {
+              $and: [
+                { $lt: ['$tsk_endDate', new Date()] },
+                { $ne: ['$tsk_status', TASK.STATUS.COMPLETED] },
+              ],
+            },
+            1,
+            0,
+          ],
+        },
+        isOnTime: {
+          $cond: [
+            {
+              $and: [
+                { $eq: ['$tsk_status', TASK.STATUS.COMPLETED] },
+                { $lte: ['$updatedAt', '$tsk_endDate'] },
+              ],
+            },
+            1,
+            0,
+          ],
+        },
+        priorityScore: {
+          $switch: {
+            branches: [
+              { case: { $eq: ['$tsk_priority', TASK.PRIORITY.LOW] }, then: 1 },
+              {
+                case: { $eq: ['$tsk_priority', TASK.PRIORITY.MEDIUM] },
+                then: 2,
+              },
+              { case: { $eq: ['$tsk_priority', TASK.PRIORITY.HIGH] }, then: 3 },
+              {
+                case: { $eq: ['$tsk_priority', TASK.PRIORITY.URGENT] },
+                then: 4,
+              },
+            ],
+            default: 2,
+          },
+        },
+      },
+    });
+
+    // Stage 7: Group by employee to calculate performance metrics
+    pipeline.push({
+      $group: {
+        _id: '$employee._id',
+        employee: { $first: '$employee' },
+        totalTasks: { $sum: 1 },
+        completedTasks: { $sum: '$isCompleted' },
+        overdueTasks: { $sum: '$isOverdue' },
+        onTimeTasks: { $sum: '$isOnTime' },
+        averagePriorityScore: { $avg: '$priorityScore' },
+        totalPriorityScore: { $sum: '$priorityScore' },
+        tasksByStatus: {
+          $push: {
+            status: '$tsk_status',
+            priority: '$tsk_priority',
+            startDate: '$tsk_startDate',
+            endDate: '$tsk_endDate',
+            isCompleted: '$isCompleted',
+            isOverdue: '$isOverdue',
+            isOnTime: '$isOnTime',
+          },
+        },
+      },
+    });
+
+    // Stage 8: Calculate performance metrics
+    pipeline.push({
+      $addFields: {
+        completionRate: {
+          $cond: [
+            { $gt: ['$totalTasks', 0] },
+            {
+              $multiply: [{ $divide: ['$completedTasks', '$totalTasks'] }, 100],
+            },
+            0,
+          ],
+        },
+        onTimeRate: {
+          $cond: [
+            { $gt: ['$completedTasks', 0] },
+            {
+              $multiply: [
+                { $divide: ['$onTimeTasks', '$completedTasks'] },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
+        overdueRate: {
+          $cond: [
+            { $gt: ['$totalTasks', 0] },
+            { $multiply: [{ $divide: ['$overdueTasks', '$totalTasks'] }, 100] },
+            0,
+          ],
+        },
+        performanceScore: {
+          $add: [
+            // Completion rate weight: 40%
+            {
+              $multiply: [{ $divide: ['$completedTasks', '$totalTasks'] }, 40],
+            },
+            // On-time rate weight: 30%
+            {
+              $multiply: [
+                {
+                  $cond: [
+                    { $gt: ['$completedTasks', 0] },
+                    { $divide: ['$onTimeTasks', '$completedTasks'] },
+                    0,
+                  ],
+                },
+                30,
+              ],
+            },
+            // Priority handling weight: 20%
+            { $multiply: [{ $divide: ['$averagePriorityScore', 4] }, 20] },
+            // Task volume weight: 10%
+            {
+              $multiply: [
+                {
+                  $cond: [
+                    { $gte: ['$totalTasks', 10] },
+                    1,
+                    { $divide: ['$totalTasks', 10] },
+                  ],
+                },
+                10,
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    // Stage 9: Project final structure
+    pipeline.push({
+      $project: {
+        _id: 1,
+        employeeId: '$employee._id',
+        employeeCode: '$employee.emp_code',
+        employeeName: {
+          $concat: [
+            { $ifNull: ['$employee.emp_user.usr_firstName', ''] },
+            ' ',
+            { $ifNull: ['$employee.emp_user.usr_lastName', ''] },
+          ],
+        },
+        employeeEmail: '$employee.emp_user.usr_email',
+        employeeAvatar: '$employee.emp_user.usr_avatar',
+        department: '$employee.emp_department',
+        position: '$employee.emp_position',
+        totalTasks: 1,
+        completedTasks: 1,
+        overdueTasks: 1,
+        onTimeTasks: 1,
+        completionRate: { $round: ['$completionRate', 2] },
+        onTimeRate: { $round: ['$onTimeRate', 2] },
+        overdueRate: { $round: ['$overdueRate', 2] },
+        performanceScore: { $round: ['$performanceScore', 2] },
+        averagePriorityScore: { $round: ['$averagePriorityScore', 2] },
+        totalPriorityScore: 1,
+        tasksByStatus: 1,
+      },
+    });
+
+    // Stage 10: Sort results
+    const sortField =
+      sortBy === 'completionRate'
+        ? 'completionRate'
+        : sortBy === 'onTimeRate'
+        ? 'onTimeRate'
+        : sortBy === 'performanceScore'
+        ? 'performanceScore'
+        : sortBy === 'totalTasks'
+        ? 'totalTasks'
+        : 'performanceScore';
+
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({
+      $sort: { [sortField]: sortDirection },
+    });
+
+    // Get total count for pagination
+    const countPipeline = [...pipeline];
+    countPipeline.push({ $count: 'total' });
+    const countResult = await TaskModel.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Stage 11: Apply pagination
+    pipeline.push({ $skip: (Number(page) - 1) * Number(limit) });
+    pipeline.push({ $limit: Number(limit) });
+
+    // Execute aggregation
+    const performanceData = await TaskModel.aggregate(pipeline);
+
+    // Calculate summary statistics
+    const summaryPipeline = [
+      ...pipeline.slice(0, -2), // Remove pagination stages
+    ];
+
+    summaryPipeline.push({
+      $group: {
+        _id: null,
+        totalEmployees: { $sum: 1 },
+        averageCompletionRate: { $avg: '$completionRate' },
+        averageOnTimeRate: { $avg: '$onTimeRate' },
+        averagePerformanceScore: { $avg: '$performanceScore' },
+        totalTasksProcessed: { $sum: '$totalTasks' },
+        totalCompletedTasks: { $sum: '$completedTasks' },
+        totalOverdueTasks: { $sum: '$overdueTasks' },
+      },
+    });
+
+    const summaryResult = await TaskModel.aggregate(summaryPipeline);
+    const summary =
+      summaryResult.length > 0
+        ? summaryResult[0]
+        : {
+            totalEmployees: 0,
+            averageCompletionRate: 0,
+            averageOnTimeRate: 0,
+            averagePerformanceScore: 0,
+            totalTasksProcessed: 0,
+            totalCompletedTasks: 0,
+            totalOverdueTasks: 0,
+          };
+
+    const totalPages = Math.ceil(total / Number(limit));
+
+    return {
+      data: getReturnList(performanceData),
+      summary: {
+        ...summary,
+        averageCompletionRate:
+          Math.round(summary.averageCompletionRate * 100) / 100,
+        averageOnTimeRate: Math.round(summary.averageOnTimeRate * 100) / 100,
+        averagePerformanceScore:
+          Math.round(summary.averagePerformanceScore * 100) / 100,
+        periodStart: periodStartDate,
+        periodEnd: periodEndDate,
+      },
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getEmployeesPerformance:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      'Unknown error occurred while getting employees performance'
+    );
+  }
+};
+
 export {
   createTask,
   getTasks,
@@ -992,4 +1364,5 @@ export {
   getTasksByUserId,
   bulkDeleteTasks,
   exportTasks,
+  getEmployeesPerformance,
 };
