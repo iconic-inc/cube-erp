@@ -100,4 +100,15 @@ export class AttendanceController {
       metadata: result,
     });
   }
+
+  static async getEmployeeAttendances(req: Request, res: Response) {
+    const employeeId = req.params.employeeId;
+    const result = await attendanceService.getEmployeeAttendances(employeeId);
+
+    return OK({
+      res,
+      message: 'Employee attendances fetched successfully',
+      metadata: result,
+    });
+  }
 }

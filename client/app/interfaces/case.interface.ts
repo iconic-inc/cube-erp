@@ -7,7 +7,7 @@ export interface ICaseServiceBrief {
   id: string;
   case_customer: ICustomerBrief;
   case_code: string;
-  case_leadAttorney: IEmployeeBrief;
+  case_leadAttorney?: IEmployeeBrief;
   case_status: keyof typeof CASE_SERVICE.STATUS;
   case_startDate: string;
   case_endDate?: string;

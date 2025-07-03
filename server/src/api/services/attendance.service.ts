@@ -170,7 +170,7 @@ const getLast7DaysStats = async (userId: string) => {
 
   const attendance = await AttendanceModel.find({
     employee: employee.id,
-    date: { $gte: last7Days },
+    date: { $gte: last7Days.setHours(0, 0, 0, 0) },
   });
   return getReturnList(attendance);
 };
@@ -239,6 +239,41 @@ const deleteAttendance = async (id: string) => {
 //   // Tạo file Excel/PDF
 //   return generateReport(data);
 // };
+
+// Get all attendance records for a specific employee
+const getEmployeeAttendances = async (employeeId: string) => {
+  // Validate employee ID
+  if (!employeeId || !Types.ObjectId.isValid(employeeId)) {
+    throw new BadRequestError('Invalid employee ID');
+  }
+
+  // Verify employee exists
+  const employee = await getEmployeeById(employeeId);
+  if (!employee) {
+    throw new BadRequestError('Employee not found');
+  }
+
+  // Get all attendance records for the employee, sorted by date (newest first)
+  const attendances = await AttendanceModel.find({
+    employee: employeeId,
+  })
+    .populate({
+      path: 'employee',
+      select: 'emp_user emp_code emp_position emp_department',
+      populate: {
+        path: 'emp_user',
+        select: 'usr_firstName usr_lastName usr_avatar',
+        populate: {
+          path: 'usr_avatar',
+          select: 'img_url',
+        },
+      },
+    })
+    .sort({ date: -1 }); // Sort by date descending (newest first)
+
+  return getReturnList(attendances);
+};
+
 export {
   generateAttendanceQR,
   checkIn,
@@ -249,4 +284,5 @@ export {
   getTodayAttendanceStats,
   updateAttendance,
   deleteAttendance,
+  getEmployeeAttendances,
 };

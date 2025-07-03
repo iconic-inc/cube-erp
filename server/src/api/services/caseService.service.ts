@@ -347,6 +347,7 @@ const createCaseService = async (caseServiceData: ICaseServiceCreate) => {
             {
               ...step,
               _id: undefined, // Remove _id to avoid conflicts
+              name: `${caseServiceData.code} - ${step.name}`,
               caseService: caseService._id,
               startDate: new Date().addDays(step.caseOrder - 1), // Default start date is relative to case order (0-6)
               endDate: new Date().addDays(step.caseOrder), // Default end date is one day after start date (1-7)
