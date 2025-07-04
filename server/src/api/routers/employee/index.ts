@@ -2,6 +2,18 @@ import { Router } from 'express';
 import { EmployeeController } from '@controllers/employee.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
+import {
+  validateObjectId,
+  validateSchema,
+  validateQuery,
+} from '@schemas/index';
+import {
+  employeeCreateSchema,
+  employeeUpdateSchema,
+  employeeQuerySchema,
+  employeeBulkDeleteSchema,
+  employeeExportSchema,
+} from '@schemas/employee.schema';
 
 const router = Router();
 
@@ -13,6 +25,7 @@ router.use(authenticationV2);
 // Route để tạo nhân viên mới kèm user
 router.post(
   '/',
+  validateSchema(employeeCreateSchema),
   hasPermission('employee', 'createAny'),
   EmployeeController.createEmployee
 );
@@ -30,6 +43,7 @@ router.get(
 // Route để lấy thông tin một nhân viên
 router.get(
   '/user/:userId',
+  validateObjectId('userId'),
   hasPermission('employee', 'readAny'),
   EmployeeController.getEmployeeByUserId
 );
@@ -37,6 +51,7 @@ router.get(
 // Route để lấy thông tin một nhân viên
 router.get(
   '/:id',
+  validateObjectId('id'),
   hasPermission('employee', 'readAny'),
   EmployeeController.getEmployeeById
 );
@@ -44,6 +59,7 @@ router.get(
 // Self update route
 router.put(
   '/me',
+  validateSchema(employeeUpdateSchema),
   hasPermission('employee', 'updateOwn'),
   EmployeeController.updateCurrentEmployee
 );
@@ -51,6 +67,8 @@ router.put(
 // Route để cập nhật thông tin nhân viên
 router.put(
   '/:id',
+  validateObjectId('id'),
+  validateSchema(employeeUpdateSchema),
   hasPermission('employee', 'updateAny'),
   EmployeeController.updateEmployee
 );
@@ -58,6 +76,7 @@ router.put(
 // Route để xóa nhiều nhân viên
 router.delete(
   '/bulk',
+  validateSchema(employeeBulkDeleteSchema),
   hasPermission('employee', 'deleteAny'),
   EmployeeController.bulkDeleteEmployees
 );
@@ -65,6 +84,7 @@ router.delete(
 // Route để xóa nhân viên
 router.delete(
   '/:id',
+  validateObjectId('id'),
   hasPermission('employee', 'deleteAny'),
   EmployeeController.deleteEmployee
 );
@@ -72,6 +92,7 @@ router.delete(
 // Route để xuất danh sách nhân viên sang CSV
 router.get(
   '/export/csv',
+  validateQuery(employeeExportSchema),
   hasPermission('employee', 'readAny'),
   EmployeeController.exportEmployeesToCSV
 );
@@ -79,6 +100,7 @@ router.get(
 // Route để xuất danh sách nhân viên sang XLSX
 router.get(
   '/export/xlsx',
+  validateQuery(employeeExportSchema),
   hasPermission('employee', 'readAny'),
   EmployeeController.exportEmployeesToXLSX
 );
@@ -86,6 +108,7 @@ router.get(
 // Route để lấy danh sách nhân viên
 router.get(
   '/',
+  validateQuery(employeeQuerySchema),
   hasPermission('employee', 'readAny'),
   EmployeeController.getEmployees
 );

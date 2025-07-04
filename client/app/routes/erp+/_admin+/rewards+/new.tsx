@@ -139,7 +139,7 @@ export default function NewReward() {
   const formId = useMemo(() => generateFormId('reward-detail-form'), []);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Tạo quỹ thưởng mới'

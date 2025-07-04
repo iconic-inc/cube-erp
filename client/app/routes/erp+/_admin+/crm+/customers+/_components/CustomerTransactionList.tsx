@@ -27,7 +27,7 @@ export default function CustomerTransactionList({
 }: CustomerTransactionListProps): JSX.Element {
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-purple-600 to-violet-700 text-white py-4 flex flex-row items-center justify-between'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 flex flex-row items-center justify-between'>
         <div>
           <CardTitle className='text-white text-xl font-bold'>
             Giao dịch

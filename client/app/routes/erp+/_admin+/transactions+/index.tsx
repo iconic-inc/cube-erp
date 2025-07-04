@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   bulkDeleteTransactions,
@@ -163,13 +164,13 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách giao dịch'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm giao dịch
           </>
         }
@@ -282,7 +283,7 @@ export const action = async ({
             success: true,
             toast: {
               type: 'success',
-              message: 'Đã xuất dữ liệu Nhân sự thành công!',
+              message: 'Đã xuất dữ liệu Nhân viên thành công!',
             },
             data: {
               fileUrl: fileData.fileUrl,

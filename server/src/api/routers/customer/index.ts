@@ -2,6 +2,11 @@ import { Router } from 'express';
 import { CustomerController } from '@controllers/customer.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
+import { validateObjectId, validateSchema } from '@schemas/index';
+import {
+  customerBulkDeleteSchema,
+  customerCreateSchema,
+} from '@schemas/customer.schema';
 
 const router = Router();
 
@@ -15,44 +20,49 @@ router.get(
   CustomerController.exportCustomersToXLSX
 );
 
+// Get customer by ID
+router.get(
+  '/:id',
+  validateObjectId('id'),
+  hasPermission('customer', 'readAny'),
+  CustomerController.getCustomerById
+);
+
 // Get all customers
 router.get(
   '/',
-  hasPermission('customer', 'read'),
+  hasPermission('customer', 'readAny'),
   CustomerController.getCustomers
 );
 
 // Create new customer
 router.post(
   '/',
-  hasPermission('customer', 'create'),
+  validateSchema(customerCreateSchema),
+  hasPermission('customer', 'createAny'),
   CustomerController.createCustomer
 );
 
 // Delete multiple customers
 router.delete(
   '/delete-multiple',
-  hasPermission('customer', 'delete'),
+  validateSchema(customerBulkDeleteSchema),
+  hasPermission('customer', 'deleteAny'),
   CustomerController.deleteMultipleCustomers
-);
-
-// Get customer by ID
-router.get(
-  '/:id',
-  hasPermission('customer', 'read'),
-  CustomerController.getCustomerById
 );
 
 // Update customer
 router.put(
   '/:id',
-  hasPermission('customer', 'update'),
+  validateObjectId('id'),
+  hasPermission('customer', 'updateAny'),
   CustomerController.updateCustomer
 );
 // Delete customer
 router.delete(
   '/:id',
-  hasPermission('customer', 'delete'),
+  validateObjectId('id'),
+  hasPermission('customer', 'deleteAny'),
   CustomerController.deleteCustomer
 );
 

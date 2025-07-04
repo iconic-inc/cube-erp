@@ -51,7 +51,7 @@ export default function IndexHRM() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-8 p-6 bg-background min-h-screen'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Bảng điều khiển'

@@ -42,51 +42,19 @@ const getEmployeeById = async (id: string, request: ISessionUser) => {
 
 // Tạo nhân viên mới
 const createEmployee = async (data: IEmployeeCreate, request: ISessionUser) => {
-  try {
-    // Đảm bảo dữ liệu được format đúng trước khi gửi đến API
-    const formattedData = {
-      ...data,
-      // Đảm bảo role có giá trị
-      role: data.role || '',
-    };
+  // Đảm bảo dữ liệu được format đúng trước khi gửi đến API
+  const formattedData = {
+    ...data,
+    // Đảm bảo role có giá trị
+    role: data.role || '',
+  };
 
-    const response = await fetcher('/employees', {
-      method: 'POST',
-      body: JSON.stringify(formattedData),
-      request,
-    });
-    return response as IEmployee;
-  } catch (error: any) {
-    console.error('Error in createEmployee:', error);
-
-    // Xử lý lỗi từ API
-    if (error instanceof SyntaxError || error.message?.includes('JSON')) {
-      // Lỗi parse JSON
-      console.error('Invalid JSON response from server');
-      throw new Error('Lỗi từ server: Phản hồi không hợp lệ');
-    } else if (error.status === 400) {
-      // Lỗi validation
-      try {
-        const errorData = await error.json();
-        throw new Error(errorData.message || 'Dữ liệu không hợp lệ');
-      } catch (jsonError) {
-        console.error('Failed to parse error response:', jsonError);
-        throw new Error('Dữ liệu không hợp lệ');
-      }
-    } else if (error.status === 409) {
-      // Lỗi trùng lặp
-      try {
-        const errorData = await error.json();
-        throw new Error(errorData.message || 'Dữ liệu đã tồn tại');
-      } catch (jsonError) {
-        console.error('Failed to parse error response:', jsonError);
-        throw new Error('Dữ liệu đã tồn tại');
-      }
-    } else {
-      // Lỗi khác
-      throw new Error('Có lỗi xảy ra khi tạo nhân viên');
-    }
-  }
+  const response = await fetcher('/employees', {
+    method: 'POST',
+    body: JSON.stringify(formattedData),
+    request,
+  });
+  return response as IEmployee;
 };
 
 // Cập nhật thông tin nhân viên

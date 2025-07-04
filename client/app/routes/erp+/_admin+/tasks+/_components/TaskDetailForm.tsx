@@ -9,11 +9,11 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { IEmployeeBrief } from '~/interfaces/employee.interface';
+import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
-import { LoaderCircle, Plus, XCircle } from 'lucide-react';
+import { Plus, XCircle } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
@@ -36,6 +36,14 @@ import {
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
 import { ICaseService } from '~/interfaces/case.interface';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
+import Defer from '~/components/Defer';
 import CaseServiceBrief from './CaseServiceBrief';
 
 export default function TaskDetailForm({
@@ -274,7 +282,9 @@ export default function TaskDetailForm({
             setCaseService(caseData);
             setAssignees([
               ...(caseData.case_assignees || []),
-              caseData.case_leadAttorney,
+              ...(caseData.case_leadAttorney
+                ? [caseData.case_leadAttorney]
+                : []),
             ]);
             setStartDate(new Date(caseData.case_startDate));
           } else {
@@ -289,382 +299,355 @@ export default function TaskDetailForm({
       loadCase();
     }
   }, [type, taskPromise, casePromise]);
+  console.log('hi');
 
   return (
     <fetcher.Form
-      method='POST'
       id={formId}
+      method={type === 'create' ? 'POST' : 'PUT'}
       onSubmit={handleSubmit}
-      className='space-y-6'
     >
-      {/* Task Name */}
-      <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
-        <div className='md:col-span-8'>
-          <Label
-            htmlFor='name'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Tên Task
-          </Label>
-          <Input
-            id='name'
-            name='name'
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className='bg-white border-gray-300'
-            placeholder='Nhập tên Task'
-            required
-          />
-          {errors.name && (
-            <span className='text-red-500 text-sm'>{errors.name}</span>
-          )}
-        </div>
+      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
+          <CardTitle className='text-white text-3xl font-bold'>
+            {type === 'create'
+              ? 'Tạo Task mới'
+              : `Task: ${name || 'Chưa có tên'}`}
+          </CardTitle>
+        </CardHeader>
 
-        <div className='md:col-span-4'>
-          <Label
-            htmlFor='caseOrder'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Thứ tự
-          </Label>
-          <Input
-            id='caseOrder'
-            name='caseOrder'
-            type='number'
-            value={caseOrder}
-            onChange={(e) => setCaseOrder(Number(e.target.value))}
-            className='bg-white border-gray-300'
-            placeholder='Nhập tên Task'
-            required
-          />
-          {errors.name && (
-            <span className='text-red-500 text-sm'>{errors.name}</span>
+        <CardContent className='p-6 space-y-6'>
+          {/* Case Service Brief */}
+          {caseService && (
+            <div className='mb-6'>
+              <CaseServiceBrief caseService={caseService} />
+              <input type='hidden' name='caseService' value={caseService.id} />
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Task Description */}
-      <div>
-        <Label
-          htmlFor='description'
-          className='text-gray-700 font-semibold mb-2 block'
-        >
-          Mô tả
-        </Label>
-        <Hydrated>
-          {() => (
-            <div className='h-[200px]'>
-              <TextEditor
-                name='description'
-                value={description}
-                isReady={isContentReady}
-                onChange={handleDescriptionChange}
-                placeholder='Nhập mô tả chi tiết cho Task'
+          {/* Task Name and Order */}
+          <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
+            <div className='md:col-span-8'>
+              <Label
+                htmlFor='name'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Tên Task <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='name'
+                name='name'
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className='bg-white border-gray-300'
+                placeholder='Nhập tên Task'
+                required
+              />
+              {errors.name && (
+                <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+              )}
+            </div>
+
+            <div className='md:col-span-4'>
+              <Label
+                htmlFor='caseOrder'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Thứ tự
+              </Label>
+              <Input
+                id='caseOrder'
+                name='caseOrder'
+                type='number'
+                value={caseOrder}
+                onChange={(e) => setCaseOrder(Number(e.target.value))}
+                className='bg-white border-gray-300'
+                placeholder='Nhập thứ tự'
+                required
               />
             </div>
-          )}
-        </Hydrated>
-      </div>
+          </div>
 
-      {/* Priority, Status, Dates */}
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-gray-200 pt-6'>
-        <div>
-          <Label
-            htmlFor='priority'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Độ ưu tiên
-          </Label>
-          <Select
-            name='priority'
-            value={priority}
-            onValueChange={(value) =>
-              setPriority(value as keyof typeof TASK.PRIORITY)
-            }
-          >
-            <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
-              <SelectValue placeholder='Chọn độ ưu tiên' />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TASK.PRIORITY).map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* Status field */}
-        <div>
-          <Label
-            htmlFor='status'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Trạng thái
-          </Label>
-          <Select
-            name='status'
-            value={status}
-            onValueChange={(value) =>
-              setStatus(value as keyof typeof TASK.STATUS)
-            }
-          >
-            <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
-              <SelectValue placeholder='Chọn trạng thái' />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TASK.STATUS).map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label
-            htmlFor='startDate'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Ngày bắt đầu
-          </Label>
-          <DatePicker
-            name='startDate'
-            id='startDate'
-            initialDate={startDate}
-            onChange={(date) => setStartDate(date)}
-          />
-          <input
-            type='hidden'
-            name='startDate'
-            value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-          />
-        </div>
-        <div>
-          <Label
-            htmlFor='endDate'
-            className='text-gray-700 font-semibold mb-2 block'
-          >
-            Ngày kết thúc
-          </Label>
-          <DatePicker
-            id='endDate'
-            name='endDate'
-            initialDate={endDate}
-            onChange={(date) => setEndDate(date)}
-          />
-          <input
-            type='hidden'
-            name='endDate'
-            value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-          />
-          {errors.endDate && (
-            <span className='text-red-500 text-sm'>{errors.endDate}</span>
-          )}
-        </div>
-      </div>
+          {/* Task Description */}
+          <div>
+            <Label
+              htmlFor='description'
+              className='text-gray-700 font-semibold mb-2 block'
+            >
+              Mô tả
+            </Label>
+            <Hydrated>
+              {() => (
+                <div className='h-[200px]'>
+                  <TextEditor
+                    name='description'
+                    value={description}
+                    isReady={isContentReady}
+                    onChange={handleDescriptionChange}
+                    placeholder='Nhập mô tả chi tiết cho Task'
+                  />
+                </div>
+              )}
+            </Hydrated>
+          </div>
 
-      <div className='flex items-center justify-center border-t border-gray-200 pt-6'>
-        {caseService ? (
-          <>
-            <CaseServiceBrief caseService={caseService} />
-            <input type='hidden' name='caseService' value={caseService.id} />
-          </>
-        ) : (
-          <Button variant='primary' type='button'>
-            <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>
-          </Button>
-        )}
-      </div>
+          {/* Priority, Status, Dates */}
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+            <div>
+              <Label
+                htmlFor='priority'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Độ ưu tiên
+              </Label>
+              <Select
+                name='priority'
+                value={priority}
+                onValueChange={(value) =>
+                  setPriority(value as keyof typeof TASK.PRIORITY)
+                }
+              >
+                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
+                  <SelectValue placeholder='Chọn độ ưu tiên' />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TASK.PRIORITY).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* Assignees */}
-      <div className='border-t border-gray-200 pt-6'>
-        <Label
-          htmlFor='assignees'
-          className='text-gray-700 font-semibold mb-4 block flex items-center'
-        >
-          <span className='text-teal-600 mr-2'>&#128100;</span> Người thực hiện
-        </Label>
+            <div>
+              <Label
+                htmlFor='status'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Trạng thái
+              </Label>
+              <Select
+                name='status'
+                value={status}
+                onValueChange={(value) =>
+                  setStatus(value as keyof typeof TASK.STATUS)
+                }
+              >
+                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
+                  <SelectValue placeholder='Chọn trạng thái' />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TASK.STATUS).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {assignees.map((assignee) => (
-            <BriefEmployeeCard
-              key={assignee.id}
-              employee={assignee}
-              handleRemoveEmployee={handleRemoveAssignee}
-            />
-          ))}
-        </div>
+            <div>
+              <Label
+                htmlFor='startDate'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Ngày bắt đầu
+              </Label>
+              <DatePicker
+                name='startDate'
+                id='startDate'
+                initialDate={startDate}
+                onChange={(date) => setStartDate(date)}
+              />
+              <input
+                type='hidden'
+                name='startDate'
+                value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+              />
+            </div>
 
-        {/* AlertDialog for employee removal confirmation */}
-        <AlertDialog
-          open={!!employeeToRemove}
-          onOpenChange={(open) => !open && setEmployeeToRemove(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-              <AlertDialogDescription>
-                Bạn có chắc muốn xóa {employeeToRemove?.emp_user.usr_firstName}{' '}
-                {employeeToRemove?.emp_user.usr_lastName} khỏi danh sách người
-                thực hiện?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmRemoveAssignee} type='button'>
-                Xác nhận
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            <div>
+              <Label
+                htmlFor='endDate'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Ngày kết thúc <span className='text-red-500'>*</span>
+              </Label>
+              <DatePicker
+                id='endDate'
+                name='endDate'
+                initialDate={endDate}
+                onChange={(date) => setEndDate(date)}
+              />
+              <input
+                type='hidden'
+                name='endDate'
+                value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+              />
+              {errors.endDate && (
+                <p className='text-red-500 text-sm mt-1'>{errors.endDate}</p>
+              )}
+            </div>
+          </div>
 
-        <div className='mt-4 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-          {!!selected.length && (
-            <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800'>
-              <div className=''>
-                <span className='font-semibold text-sm'>{`Đã chọn ${selected.length} Nhân sự để thêm`}</span>
-              </div>
-
-              <div className='flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  type='button'
-                  onClick={() => setSelectedItems([])} // Clear selection
-                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
-                >
-                  <XCircle className='h-4 w-4' />
-                  <span>Bỏ chọn tất cả</span>
-                </Button>
-
-                <Button
-                  size='sm'
-                  onClick={() => {
-                    handleAddAssignees(selected);
-                  }}
-                  type='button'
-                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
-                >
-                  <Plus className='h-4 w-4' />
-                  <span>Thêm đã chọn</span>
-                </Button>
-              </div>
+          {/* Case Service Selection */}
+          {!caseService && (
+            <div className='flex items-center justify-center py-6 border-t border-gray-200'>
+              <Button variant='primary' type='button' asChild>
+                <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>
+              </Button>
             </div>
           )}
 
-          {/* AlertDialog for adding assignees confirmation */}
-          <AlertDialog
-            open={employeesToAdd.length > 0}
-            onOpenChange={(open) => !open && setEmployeesToAdd([])}
+          {/* Assignees */}
+          <div className='space-y-4'>
+            <Label className='text-gray-700 font-semibold block flex items-center'>
+              <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
+              {assignees.length === 0 && (
+                <span className='text-red-500 ml-1'>*</span>
+              )}
+            </Label>
+
+            {assignees.length > 0 && (
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                {assignees.map((assignee) => (
+                  <BriefEmployeeCard
+                    key={assignee.id}
+                    employee={assignee}
+                    handleRemoveEmployee={handleRemoveAssignee}
+                  />
+                ))}
+              </div>
+            )}
+
+            {errors.assignees && (
+              <p className='text-red-500 text-sm'>{errors.assignees}</p>
+            )}
+
+            <Defer resolve={employees}>
+              {(employeeData) => (
+                <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                  {!!selected.length && (
+                    <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg'>
+                      <div>
+                        <span className='font-semibold text-sm'>
+                          Đã chọn {selected.length} nhân viên để thêm
+                        </span>
+                      </div>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          type='button'
+                          onClick={() => setSelectedItems([])}
+                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
+                        >
+                          <XCircle className='h-4 w-4' />
+                          <span>Bỏ chọn tất cả</span>
+                        </Button>
+                        <Button
+                          size='sm'
+                          onClick={() => handleAddAssignees(selected)}
+                          type='button'
+                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
+                        >
+                          <Plus className='h-4 w-4' />
+                          <span>Thêm đã chọn</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <ItemList<IEmployeeBrief>
+                    addNewHandler={() => navigate('/erp/employees/new')}
+                    itemsPromise={employeeData}
+                    name='Nhân viên'
+                    visibleColumns={[
+                      {
+                        key: 'emp_user.usr_firstName',
+                        title: 'Tên nhân viên',
+                        visible: true,
+                        render: (item) => (
+                          <a
+                            href={`/erp/employees/${item.id}`}
+                            className='flex items-center space-x-3'
+                            target='_blank'
+                            rel='noopener noreferrer'
+                          >
+                            <span>
+                              {item.emp_user.usr_firstName}{' '}
+                              {item.emp_user.usr_lastName}
+                            </span>
+                          </a>
+                        ),
+                      },
+                      {
+                        key: 'emp_user.usr_username',
+                        title: 'Tài khoản',
+                        visible: true,
+                        render: (item) => item.emp_user.usr_username,
+                      },
+                      {
+                        key: 'emp_position',
+                        title: 'Chức vụ',
+                        visible: true,
+                        render: (item) => item.emp_position,
+                      },
+                      {
+                        key: 'action',
+                        title: 'Hành động',
+                        visible: true,
+                        render: (item) => {
+                          const isAdded = !!assignees.find(
+                            (selectedAssignee) =>
+                              selectedAssignee.id === item.id,
+                          );
+
+                          return (
+                            <Button
+                              variant='default'
+                              className={`bg-blue-500 hover:bg-blue-400 ${
+                                isAdded ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                              type='button'
+                              onClick={() => handleAddAssignees([item])}
+                              disabled={isAdded}
+                            >
+                              {isAdded ? 'Đã thêm' : 'Thêm'}
+                            </Button>
+                          );
+                        },
+                      },
+                    ]}
+                    selectedItems={selected}
+                    setSelectedItems={setSelectedItems}
+                  />
+                </div>
+              )}
+            </Defer>
+          </div>
+        </CardContent>
+
+        <CardFooter className='px-6 py-4 flex justify-between items-center border-t border-gray-200'>
+          <Link
+            to='/erp/tasks'
+            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
           >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào
-                  danh sách người thực hiện không?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmAddAssignees} type='button'>
-                  Xác nhận
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            <span className='material-symbols-outlined text-sm mr-1'>
+              keyboard_return
+            </span>
+            Trở về Danh sách
+          </Link>
 
-          <ItemList<IEmployeeBrief>
-            addNewHandler={() => {
-              navigate('/erp/employees/new');
-            }}
-            itemsPromise={employees}
-            name='Nhân viên'
-            visibleColumns={[
-              {
-                key: 'emp_user.usr_firstName',
-                title: 'Tên nhân viên',
-                visible: true,
-                render: (item) => (
-                  <a
-                    href={`/erp/employees/${item.id}`}
-                    className='flex items-center space-x-3'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <span>
-                      {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
-                    </span>
-                  </a>
-                ),
-              },
-              {
-                key: 'emp_user.usr_username',
-                title: 'Tài khoản',
-                visible: true,
-                render: (item) => item.emp_user.usr_username,
-              },
-              {
-                key: 'emp_position',
-                title: 'Chức vụ',
-                visible: true,
-                render: (item) => item.emp_position,
-              },
-              {
-                key: 'action',
-                title: 'Hành động',
-                visible: true,
-                render: (item) => {
-                  const isAdded = !!assignees.find(
-                    (selectedAssignee) => selectedAssignee.id === item.id,
-                  );
-
-                  return (
-                    <Button
-                      variant='default'
-                      className={`bg-blue-500 hover:bg-blue-400 ${
-                        isAdded ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                      type='button'
-                      onClick={() => {
-                        handleAddAssignees([item]);
-                      }}
-                    >
-                      {isAdded ? 'Đã thêm' : 'Thêm'}
-                    </Button>
-                  );
-                },
-              },
-            ]}
-            selectedItems={selected}
-            setSelectedItems={setSelectedItems}
-          />
-        </div>
-      </div>
-
-      {/* Submit Button */}
-      <div className='flex justify-between items-center mt-6'>
-        <Link
-          to='/erp/tasks'
-          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
-        >
-          <span className='material-symbols-outlined text-sm mr-1'>
-            keyboard_return
-          </span>
-          Trở về Danh sách
-        </Link>
-
-        <div className='flex space-x-2'>
           <Button
             variant='primary'
             type='submit'
-            form={formId}
-            disabled={!isChanged}
+            disabled={!isChanged || fetcher.state === 'submitting'}
           >
             {fetcher.state === 'submitting' ? (
               <>
-                <LoaderCircle className='animate-spin h-4 w-4 mr-2' />
+                <span className='animate-spin mr-2'>⏳</span>
                 <span>Đang lưu...</span>
               </>
             ) : (
@@ -676,8 +659,52 @@ export default function TaskDetailForm({
               </>
             )}
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
+
+      {/* Alert Dialogs */}
+      <AlertDialog
+        open={!!employeeToRemove}
+        onOpenChange={(open) => !open && setEmployeeToRemove(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn xóa {employeeToRemove?.emp_user.usr_firstName}{' '}
+              {employeeToRemove?.emp_user.usr_lastName} khỏi danh sách người
+              thực hiện?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveAssignee} type='button'>
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={employeesToAdd.length > 0}
+        onOpenChange={(open) => !open && setEmployeesToAdd([])}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào danh
+              sách người thực hiện không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAddAssignees} type='button'>
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </fetcher.Form>
   );
 }

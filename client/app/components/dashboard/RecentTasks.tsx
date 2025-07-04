@@ -13,6 +13,7 @@ import {
 import { Link } from '@remix-run/react';
 import { ITask } from '~/interfaces/task.interface';
 import { formatDate } from '~/utils';
+import { TASK } from '~/constants/task.constant';
 
 interface RecentTasksProps {
   tasks: ITask[];
@@ -66,21 +67,6 @@ const getStatusIcon = (status: string) => {
       return AlertCircle;
     default:
       return Clock;
-  }
-};
-
-const translateStatus = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'completed':
-      return 'hoàn thành';
-    case 'in_progress':
-      return 'đang thực hiện';
-    case 'pending':
-      return 'đang chờ';
-    case 'overdue':
-      return 'quá hạn';
-    default:
-      return status;
   }
 };
 
@@ -146,7 +132,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                         variant={getPriorityColor(task.tsk_priority)}
                         className='text-xs'
                       >
-                        {translatePriority(task.tsk_priority)}
+                        {TASK.PRIORITY[task.tsk_priority]}
                       </Badge>
 
                       <div
@@ -155,7 +141,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                         )}`}
                       >
                         <StatusIcon className='w-3 h-3' />
-                        <span>{translateStatus(task.tsk_status)}</span>
+                        <span>{TASK.STATUS[task.tsk_status]}</span>
                       </div>
                     </div>
                   </div>

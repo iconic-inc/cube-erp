@@ -33,7 +33,7 @@ export default function RewardDisplay({ rewardPromise }: RewardDisplayProps) {
   if (isResolveError(reward)) {
     return (
       <div
-        className={`fixed bottom-4 right-4 z-40 bg-gradient-to-br from-red-800 via-red-600 to-red-900 text-white rounded-xl shadow-xl transform hover:scale-105 transition-all duration-300 border border-red-300/30 p-2`}
+        className={`fixed bottom-4 right-4 z-40 bg-gradient-to-br from-red-800 via-red-600 to-red-800 text-white rounded-xl shadow-xl transform hover:scale-105 transition-all duration-300 border border-red-300/30 p-2`}
       >
         <div className='flex items-center space-x-1'>
           <XCircle className='text-red-100 text-lg' />
@@ -45,7 +45,7 @@ export default function RewardDisplay({ rewardPromise }: RewardDisplayProps) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-40 bg-gradient-to-br from-red-800 via-red-600 to-red-900 text-white rounded-xl shadow-xl transform hover:scale-105 transition-all duration-300 border border-red-300/30 ${isExpanded ? 'p-4 min-w-[220px]' : 'p-2'}`}
+      className={`fixed bottom-4 right-4 z-40 bg-gradient-to-br from-red-800 via-red-600 to-red-800 text-white rounded-xl shadow-xl transform hover:scale-105 transition-all duration-300 border border-red-300/30 ${isExpanded ? 'p-4 min-w-[220px]' : 'p-2'}`}
     >
       {/* Toggle Button */}
       <button

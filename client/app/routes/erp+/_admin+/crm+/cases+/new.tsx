@@ -18,7 +18,7 @@ import { Button } from '~/components/ui/button';
 import { getEmployees } from '~/services/employee.server';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
-import { CASE_SERVICE } from '../../../../../constants/caseService.constant';
+import { CASE_SERVICE } from '~/constants/caseService.constant';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -175,7 +175,7 @@ export default function NewCase() {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm Hồ sơ mới'

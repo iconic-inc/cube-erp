@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   bulkDeleteCaseService,
@@ -146,21 +147,18 @@ export default function CRMCaseService() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Hồ sơ vụ việc'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm Hồ sơ vụ việc
           </>
         }
         actionHandler={() => navigate('/erp/crm/cases/new')}
       />
-
-      {/* Case Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
 
       <List<ICaseService>
         itemsPromise={casesPromise}
@@ -170,7 +168,7 @@ export default function CRMCaseService() {
         exportable
         name='Hồ sơ vụ việc'
       />
-    </>
+    </div>
   );
 }
 
@@ -268,7 +266,7 @@ export const action = async ({
             success: true,
             toast: {
               type: 'success',
-              message: 'Đã xuất dữ liệu Nhân sự thành công!',
+              message: 'Đã xuất dữ liệu Nhân viên thành công!',
             },
             data: {
               fileUrl: fileData.fileUrl,

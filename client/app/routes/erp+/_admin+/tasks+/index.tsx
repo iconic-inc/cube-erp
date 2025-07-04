@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import { bulkDeleteTasks, getTasks } from '~/services/task.server';
 import ContentHeader from '~/components/ContentHeader';
@@ -144,21 +145,18 @@ export default function HRMTasks() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Task'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm Task
           </>
         }
         actionHandler={() => navigate('/erp/tasks/new')}
       />
-
-      {/* Task Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
 
       <List<ITask>
         itemsPromise={tasksPromise}
@@ -167,7 +165,7 @@ export default function HRMTasks() {
         addNewHandler={() => navigate('/erp/tasks/new')}
         name='Task'
       />
-    </>
+    </div>
   );
 }
 

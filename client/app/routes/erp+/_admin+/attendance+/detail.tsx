@@ -141,13 +141,13 @@ export default function AttendanceDetail() {
   ]);
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header with Back Button */}
       <ContentHeader title='Chi tiết chấm công' />
 
       {/* Employee Info Card */}
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
           <CardTitle className='text-white text-xl font-bold flex items-center'>
             <User className='w-5 h-5 mr-2' />
             Thông tin nhân viên
@@ -189,7 +189,7 @@ export default function AttendanceDetail() {
 
       {/* Attendance Records */}
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
           <CardTitle className='text-white text-xl font-bold flex items-center'>
             <Clock className='w-5 h-5 mr-2' />
             Lịch sử chấm công ({attendanceRecords.length} bản ghi)

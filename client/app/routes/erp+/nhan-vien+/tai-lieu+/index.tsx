@@ -177,7 +177,6 @@ export default function HRMDocuments() {
 
   useEffect(() => {
     if (uploadFetcher.data) {
-      console.log('Upload fetcher data:', uploadFetcher.data);
       if (uploadFetcher.data.success) {
         toastIdRef.current = toast.update(toastIdRef.current, {
           render: 'Tải lên thành công',
@@ -198,7 +197,7 @@ export default function HRMDocuments() {
   }, [uploadFetcher.data]);
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Trang chủ'
@@ -221,7 +220,7 @@ export default function HRMDocuments() {
         addNewHandler={addNewHandler}
         name='Tài liệu'
       />
-    </>
+    </div>
   );
 }
 

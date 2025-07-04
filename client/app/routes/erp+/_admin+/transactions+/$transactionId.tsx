@@ -31,7 +31,7 @@ export default function TransactionDetailPage() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Giao dịch'
         actionContent={

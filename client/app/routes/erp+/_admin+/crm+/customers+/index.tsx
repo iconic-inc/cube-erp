@@ -1,5 +1,8 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+
 import {
   deleteMultipleCustomers,
   exportCustomers,
@@ -9,7 +12,6 @@ import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ICustomer } from '~/interfaces/customer.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { useState } from 'react';
 import {
   IListColumn,
   IActionFunctionReturn,
@@ -148,13 +150,13 @@ export default function HRMCustomers() {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Khách hàng'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm Khách hàng
           </>
         }

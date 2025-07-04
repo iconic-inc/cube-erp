@@ -20,7 +20,7 @@ export default function EmployeeAttendanceList({
 }) {
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
         <div className='flex items-center justify-between'>
           <CardTitle className='text-white text-xl font-bold flex items-center'>
             <Clock className='w-6 h-6 mr-2' />

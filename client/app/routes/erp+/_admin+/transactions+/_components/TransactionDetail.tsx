@@ -71,7 +71,7 @@ export default function TransactionDetail({
 
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-            <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6 rounded-t-xl'>
+            <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
               <div className='flex items-center space-x-4'>
                 <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
                   <DollarSign className='w-8 h-8 text-white' />

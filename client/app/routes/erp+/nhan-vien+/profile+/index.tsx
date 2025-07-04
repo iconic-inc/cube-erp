@@ -77,7 +77,7 @@ export default function HRMProfile() {
   const [isChanged, setIsChanged] = useState(false);
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
         <div className='flex items-center'>
@@ -109,7 +109,7 @@ export default function HRMProfile() {
         formId={formId}
         setIsChanged={setIsChanged}
       />
-    </>
+    </div>
   );
 }
 

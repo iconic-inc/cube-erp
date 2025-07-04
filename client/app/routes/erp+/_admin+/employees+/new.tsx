@@ -1,24 +1,45 @@
-import { useState, useMemo } from 'react';
 import {
-  Link,
   useLoaderData,
   useLocation,
   data as dataResponse,
 } from '@remix-run/react';
+import { Save } from 'lucide-react';
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { toast } from 'react-toastify';
 
 import { getRoles } from '~/services/role.server';
-import EmployeeDetailForm from '../../../../components/EmployeeDetailForm';
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { authenticator, isAuthenticated } from '~/services/auth.server';
-import Defer from '~/components/Defer';
+import EmployeeDetailForm from './_components/EmployeeDetailForm';
+import { isAuthenticated } from '~/services/auth.server';
 import { createEmployee } from '~/services/employee.server';
-import { toast } from 'react-toastify';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { IEmployeeCreate } from '~/interfaces/employee.interface';
+import ContentHeader from '~/components/ContentHeader';
 import { generateFormId } from '~/utils';
+import { useMemo } from 'react';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  try {
+    const user = await parseAuthCookie(request);
+
+    const rolesPromise = getRoles(user!).catch((e) => {
+      console.error('Error fetching roles:', e);
+      return { success: false, message: 'Có lỗi khi lấy danh sách quyền' };
+    });
+
+    return { rolesPromise };
+  } catch (error) {
+    console.error('Error in loader:', error);
+    return {
+      rolesPromise: Promise.resolve({
+        success: false,
+        message: 'Có lỗi xảy ra',
+      }),
+    };
+  }
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
@@ -47,18 +68,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           department: formData.get('department') as string,
           joinDate: formData.get('joinDate') as string,
         };
+        console.log(data);
 
         // Kiểm tra dữ liệu bắt buộc
         if (
-          !data.code ||
-          !data.firstName ||
-          !data.lastName ||
-          !data.email ||
-          !data.role
+          ['code', 'firstName', 'lastName', 'email', 'role'].some(
+            (field) => !data[field as keyof IEmployeeCreate],
+          )
         ) {
           return dataResponse(
             {
               employee: null,
+              redirectTo: null,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
                 type: 'error' as ToastType,
@@ -73,6 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return dataResponse(
             {
               employee: null,
+              redirectTo: null,
               toast: {
                 message: 'Mật khẩu phải có ít nhất 8 ký tự',
                 type: 'error' as ToastType,
@@ -92,6 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return dataResponse(
             {
               employee: null,
+              redirectTo: null,
               toast: {
                 message:
                   'Role không hợp lệ. Vui lòng chọn quyền truy cập hợp lệ.',
@@ -108,43 +131,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           {
             employee: res,
             toast: {
-              message: 'Thêm mới nhân sự thành công!',
+              message: 'Thêm mới Nhân viên thành công!',
               type: 'success' as ToastType,
             },
-            redirectTo: '/erp/employees',
+            redirectTo: `/erp/employees/${res.id}`,
           },
           { headers },
         );
       } catch (error: any) {
         console.error('Error creating employee:', error);
-        let errorText = error.message || 'Có lỗi xảy ra khi thêm nhân sự';
-
-        if (error instanceof Response) {
-          // Nếu có lỗi từ server, trả về thông báo lỗi
-          errorText = await error.text();
-          console.error('Error response:', errorText);
-        }
-        let errorMessage = 'Có lỗi xảy ra khi thêm nhân sự';
-
-        // Xử lý lỗi từ API
-        if (errorText.includes('Employee code already exists')) {
-          errorMessage = 'Mã nhân viên đã tồn tại';
-        } else if (errorText.includes('Email already exists')) {
-          errorMessage = 'Email đã tồn tại trong hệ thống';
-        } else if (errorText.includes('Phản hồi không hợp lệ')) {
-          errorMessage =
-            'Lỗi từ server: Phản hồi không hợp lệ. Vui lòng kiểm tra lại dữ liệu.';
-        } else if (errorText.includes('JSON')) {
-          errorMessage =
-            'Lỗi từ server: Không thể xử lý dữ liệu. Vui lòng kiểm tra lại.';
-        } else if (errorText.includes('Bad data')) {
-          errorMessage =
-            'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại định dạng dữ liệu.';
-        }
+        let errorMessage = error.message || 'Có lỗi xảy ra khi thêm Nhân viên';
 
         return dataResponse(
           {
             employee: null,
+            redirectTo: null,
             toast: {
               message: errorMessage,
               type: 'error' as ToastType,
@@ -166,28 +167,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  try {
-    const user = await parseAuthCookie(request);
-
-    return {
-      roles: getRoles(user!).catch((e) => {
-        console.error(e);
-        return [];
-      }),
-    };
-  } catch (error) {
-    console.error(error);
-
-    return {
-      roles: Promise.resolve([] as any[]),
-    };
-  }
-};
-
 export default function NewEmployee() {
-  const { roles } = useLoaderData<typeof loader>();
-  const [isChanged, setIsChanged] = useState(false);
+  const { rolesPromise } = useLoaderData<typeof loader>();
   const location = useLocation();
   const actionData = location.state?.actionData;
 
@@ -196,93 +177,35 @@ export default function NewEmployee() {
     const toastType = actionData.toast.type as ToastType;
     toast[toastType](actionData.toast.message);
   }
-  const formId = useMemo(() => generateFormId('employee-create-form'), []);
 
+  const formId = useMemo(() => generateFormId('employee-detail-form'), []);
+
+  console.log(formId);
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-        <div className='flex items-center'>
-          <h1 className='text-xl font-semibold'>Thêm Nhân sự Mới</h1>
-          <div className='ml-3 text-gray-500 text-sm flex items-center'>
-            <a href='#' className='hover:text-blue-500 transition'>
-              Nhân sự
-            </a>
-            <span className='mx-2'>/</span>
-            <span>Nhân sự Mới</span>
-          </div>
-        </div>
-
-        <div className='flex space-x-2'>
-          <button
-            className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'
-            onClick={() => {
-              if (confirm('Bạn có chắc chắn muốn hủy bỏ?')) {
-                if (window.history.length > 1) window.history.back();
-                else window.location.href = '/erp/employees';
-              }
-            }}
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>
-              cancel
-            </span>
-            Hủy
-          </button>
-
-          <button
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
-            type='submit'
-            form={formId}
-            disabled={!isChanged}
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Nhân sự
-          </button>
-        </div>
-      </div>
+      <ContentHeader
+        title='Thêm Nhân viên mới'
+        actionContent={
+          <>
+            <Save className='inline mr-2' />
+            Lưu Nhân viên
+          </>
+        }
+        actionHandler={() => {
+          const form = document.getElementById(formId) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }}
+      />
 
       {/* Form Container */}
-      <div className='bg-white rounded-lg shadow-sm p-6 mb-6'>
-        <Defer resolve={roles}>
-          {(data) => (
-            <EmployeeDetailForm
-              roles={data}
-              setIsChanged={setIsChanged}
-              formId={formId}
-              type='create'
-            />
-          )}
-        </Defer>
-      </div>
-
-      {/* Bottom Action Buttons */}
-      <div className='flex justify-between items-center'>
-        <Link
-          to='/erp/employees'
-          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
-        >
-          <span className='material-symbols-outlined text-sm mr-1'>
-            keyboard_return
-          </span>
-          Trở về Danh sách
-        </Link>
-
-        <div className='flex space-x-2'>
-          {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Bản nháp
-          </button> */}
-          <button
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
-            type='submit'
-            form={formId}
-            disabled={!isChanged}
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Nhân sự
-          </button>
-        </div>
-      </div>
-    </>
+      <EmployeeDetailForm
+        rolesPromise={rolesPromise}
+        formId={formId}
+        type='create'
+      />
+    </div>
   );
 }

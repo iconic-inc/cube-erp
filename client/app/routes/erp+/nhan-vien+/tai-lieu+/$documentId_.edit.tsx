@@ -185,7 +185,7 @@ export default function DocumentDetailPage() {
   }, [fetcher.data]);
 
   return (
-    <div className='w-full space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chỉnh sửa tài liệu'
         actionContent={
@@ -214,7 +214,7 @@ export default function DocumentDetailPage() {
 
           return (
             <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-              <CardHeader className='bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-6 rounded-t-xl'>
+              <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
                 <CardTitle className='text-white text-3xl font-bold flex items-center justify-between'>
                   {name}
                   {/* <Badge
@@ -385,7 +385,7 @@ export default function DocumentDetailPage() {
                     {!!selectedEmployees.length && (
                       <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800'>
                         <div className=''>
-                          <span className='font-semibold text-sm'>{`Đã chọn ${selectedEmployees.length} Nhân sự để thêm`}</span>
+                          <span className='font-semibold text-sm'>{`Đã chọn ${selectedEmployees.length} Nhân viên để thêm`}</span>
                         </div>
 
                         <div className='flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0'>

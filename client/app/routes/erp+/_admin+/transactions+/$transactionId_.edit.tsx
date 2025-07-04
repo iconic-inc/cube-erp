@@ -87,7 +87,7 @@ export default function TransactionEdit() {
   const formId = useMemo(() => generateFormId('transaction-update-form'), []);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa Giao dịch'

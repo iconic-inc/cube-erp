@@ -9,7 +9,7 @@ export default function ManageQRCode({
 }) {
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-purple-600 to-violet-700 text-white py-4'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
         <CardTitle className='text-white text-xl font-bold flex items-center'>
           <QrCode className='w-5 h-5 mr-2' />
           Mã QR chấm công
@@ -48,12 +48,12 @@ export default function ManageQRCode({
         </div>
 
         {/* Instructions */}
-        {/* <div className='bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-4 border border-purple-200'>
-          <h4 className='font-medium text-purple-900 mb-2 flex items-center'>
+        {/* <div className='bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-4 border border-red-200'>
+          <h4 className='font-medium text-red-900 mb-2 flex items-center'>
             <MapPin className='w-4 h-4 mr-2' />
             Hướng dẫn sử dụng
           </h4>
-          <ul className='text-sm text-purple-700 space-y-1'>
+          <ul className='text-sm text-red-700 space-y-1'>
             <li>• Mở ứng dụng camera hoặc quét QR</li>
             <li>• Hướng camera vào mã QR phía trên</li>
             <li>• Thực hiện chấm công vào/ra</li>

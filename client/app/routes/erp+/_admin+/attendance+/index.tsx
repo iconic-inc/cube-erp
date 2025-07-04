@@ -36,7 +36,7 @@ export default function IndexAttendance() {
   const { qrcode, officeIPs, attendanceStats } = useLoaderData<typeof loader>();
 
   return (
-    <div className='space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader title='Chấm công' />
 

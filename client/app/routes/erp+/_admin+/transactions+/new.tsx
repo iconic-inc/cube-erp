@@ -93,7 +93,7 @@ export default function NewTransaction() {
   const formId = useMemo(() => generateFormId('transaction-detail-form'), []);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm mới giao dịch'

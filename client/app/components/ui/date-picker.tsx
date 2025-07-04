@@ -75,17 +75,6 @@ export function DatePicker({
             : ''
         }
         className='bg-background pr-10'
-        onChange={(e) => {
-          const date = new Date(e.target.value);
-          setValue(e.target.value);
-          if (isValidDate(date)) {
-            setDate(date);
-            setMonth(date);
-            if (onChange) {
-              onChange(date);
-            }
-          }
-        }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -97,7 +86,7 @@ export function DatePicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            id='date-picker'
+            id={'date-picker-' + id}
             variant='ghost'
             className='absolute top-1/2 right-2 size-6 -translate-y-1/2'
           >
@@ -122,6 +111,9 @@ export function DatePicker({
               setValue(formatDate(date));
               setMonth(date);
               setOpen(false);
+              if (date && isValidDate(date) && onChange) {
+                onChange(date);
+              }
             }}
           />
         </PopoverContent>

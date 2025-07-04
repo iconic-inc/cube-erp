@@ -18,8 +18,8 @@ export default function ERPSidebar() {
     <Sidebar className='lg:h-screen'>
       <SidebarHeader>
         <Link to='/erp' className='flex items-center mb-6'>
-          <div className='bg-primary text-white p-1 rounded'>
-            <span className='material-symbols-outlined text-xs'>grid_view</span>
+          <div className='w-12 h-12 rounded-full overflow-hidden'>
+            <img src='/assets/cube-lawfirm-logo.png' alt='Cube Lawfirm Logo' />
           </div>
           <span className='text-primary font-semibold ml-2'>
             Cube Lawfirm ERP
@@ -47,13 +47,13 @@ export default function ERPSidebar() {
 
 const navMain = [
   {
-    title: 'Quản lý nhân sự',
+    title: 'Quản lý Nhân viên',
     url: '#',
     icon: IdCard,
     isActive: true,
     items: [
       {
-        title: 'Nhân sự',
+        title: 'Nhân viên',
         url: '/erp/employees',
       },
       {

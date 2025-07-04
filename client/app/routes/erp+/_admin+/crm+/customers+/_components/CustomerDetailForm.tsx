@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
 
 import { action } from '~/routes/erp+/_admin+/crm+/customers+/new';
+import { format } from 'date-fns';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -21,6 +22,7 @@ import { SelectSearch } from '~/components/ui/SelectSearch';
 import { CUSTOMER } from '~/constants/customer.constant';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
+import { DatePicker } from '~/components/ui/date-picker';
 
 export default function CustomerDetailForm({
   formId,
@@ -44,7 +46,7 @@ export default function CustomerDetailForm({
   const [email, setEmail] = useState<string>('');
   const [msisdn, setMsisdn] = useState<string>('');
   const [address, setAddress] = useState<string>('');
-  const [birthDate, setBirthDate] = useState<string>('');
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [sex, setSex] = useState<string>('');
   const [contactChannel, setContactChannel] = useState<string>('');
   const [source, setSource] = useState<string>('');
@@ -95,6 +97,7 @@ export default function CustomerDetailForm({
     // If there are validation errors, show them and prevent form submission
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      toast.error(Object.values(validationErrors)[0]);
       return;
     }
 
@@ -104,17 +107,12 @@ export default function CustomerDetailForm({
     // Create FormData
     const formData = new FormData(e.currentTarget);
 
-    formData.append('code', code);
-    formData.append('firstName', firstName);
-    formData.append('lastName', lastName);
-    formData.append('email', email);
-    formData.append('msisdn', msisdn);
-    formData.append('address', address);
-    formData.append('birthDate', birthDate);
-    formData.append('sex', sex);
-    formData.append('contactChannel', contactChannel);
-    formData.append('source', source);
-    formData.append('notes', notes);
+    // Manually append birthDate if it exists
+    if (birthDate) {
+      formData.append('birthDate', format(birthDate, 'yyyy-MM-dd'));
+    } else {
+      formData.append('birthDate', '');
+    }
 
     toastIdRef.current = toast.loading('Đang xử lý...');
 
@@ -192,7 +190,11 @@ export default function CustomerDetailForm({
             setEmail(customerData.cus_email || '');
             setMsisdn(customerData.cus_msisdn || '');
             setAddress(customerData.cus_address || '');
-            setBirthDate(customerData.cus_birthDate || '');
+            setBirthDate(
+              customerData.cus_birthDate
+                ? new Date(customerData.cus_birthDate)
+                : null,
+            );
             setSex(customerData.cus_sex || '');
             setContactChannel(customerData.cus_contactChannel || '');
             setSource(customerData.cus_source || '');
@@ -228,11 +230,10 @@ export default function CustomerDetailForm({
     <fetcher.Form
       id={formId}
       method={type === 'create' ? 'POST' : 'PUT'}
-      action={actionPath}
       onSubmit={handleSubmit}
     >
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6 rounded-t-xl'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
           <CardTitle className='text-white text-3xl font-bold'>
             {code || 'Mã khách hàng'}
           </CardTitle>
@@ -243,14 +244,14 @@ export default function CustomerDetailForm({
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <Label
-                htmlFor='code'
+                htmlFor='customer_code'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Mã khách hàng <span className='text-red-500'>*</span>
               </Label>
               <div className='flex gap-2'>
                 <Input
-                  id='code'
+                  id='customer_code'
                   name='code'
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
@@ -278,13 +279,13 @@ export default function CustomerDetailForm({
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <Label
-                htmlFor='firstName'
+                htmlFor='customer_firstName'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Tên <span className='text-red-500'>*</span>
               </Label>
               <Input
-                id='firstName'
+                id='customer_firstName'
                 name='firstName'
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -298,13 +299,13 @@ export default function CustomerDetailForm({
 
             <div>
               <Label
-                htmlFor='lastName'
+                htmlFor='customer_lastName'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Họ <span className='text-red-500'>*</span>
               </Label>
               <Input
-                id='lastName'
+                id='customer_lastName'
                 name='lastName'
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -321,13 +322,13 @@ export default function CustomerDetailForm({
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <Label
-                htmlFor='email'
+                htmlFor='customer_email'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Email <span className='text-red-500'>*</span>
               </Label>
               <Input
-                id='email'
+                id='customer_email'
                 name='email'
                 type='email'
                 value={email}
@@ -342,13 +343,13 @@ export default function CustomerDetailForm({
 
             <div>
               <Label
-                htmlFor='msisdn'
+                htmlFor='customer_msisdn'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Số điện thoại <span className='text-red-500'>*</span>
               </Label>
               <Input
-                id='msisdn'
+                id='customer_msisdn'
                 name='msisdn'
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value)}
@@ -365,24 +366,22 @@ export default function CustomerDetailForm({
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
             <div>
               <Label
-                htmlFor='birthDate'
+                htmlFor='customer_birthDate'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Ngày sinh
               </Label>
-              <Input
-                id='birthDate'
+              <DatePicker
+                id='customer_birthDate'
                 name='birthDate'
-                type='date'
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className='bg-white border-gray-300'
+                initialDate={birthDate}
+                onChange={(date) => setBirthDate(date)}
               />
             </div>
 
             <div>
               <Label
-                htmlFor='sex'
+                htmlFor='customer_sex'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Giới tính
@@ -396,19 +395,19 @@ export default function CustomerDetailForm({
                 onValueChange={(value) => setSex(value)}
                 placeholder='Chọn giới tính'
                 name='sex'
-                id='sex'
+                id='customer_sex'
               />
             </div>
 
             <div>
               <Label
-                htmlFor='contactChannel'
+                htmlFor='customer_contactChannel'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Kênh liên hệ
               </Label>
               <Input
-                id='contactChannel'
+                id='customer_contactChannel'
                 name='contactChannel'
                 value={contactChannel}
                 onChange={(e) => setContactChannel(e.target.value)}
@@ -422,13 +421,13 @@ export default function CustomerDetailForm({
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <Label
-                htmlFor='address'
+                htmlFor='customer_address'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Địa chỉ
               </Label>
               <Input
-                id='address'
+                id='customer_address'
                 name='address'
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -439,13 +438,13 @@ export default function CustomerDetailForm({
 
             <div>
               <Label
-                htmlFor='source'
+                htmlFor='customer_source'
                 className='text-gray-700 font-semibold mb-2 block'
               >
                 Nguồn khách hàng
               </Label>
               <Input
-                id='source'
+                id='customer_source'
                 name='source'
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
@@ -464,12 +463,12 @@ export default function CustomerDetailForm({
             <Hydrated>
               {() => (
                 <TextEditor
-                  isReady={isContentReady}
                   name='notes'
                   value={notes}
+                  isReady={isContentReady}
                   onChange={setNotes}
+                  className='min-h-40'
                   placeholder='Nhập ghi chú về khách hàng...'
-                  className='min-h-[200px]'
                 />
               )}
             </Hydrated>

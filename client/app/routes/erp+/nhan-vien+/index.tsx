@@ -21,12 +21,12 @@ export default function IndexHRM() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <DashContentHeader title='Trang chủ' />
 
       {/* Main Dashboard Content */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8'></div>
-    </>
+    </div>
   );
 }

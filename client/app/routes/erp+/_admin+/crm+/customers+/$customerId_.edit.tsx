@@ -6,8 +6,6 @@ import CustomerDetailForm from './_components/CustomerDetailForm';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ICustomerCreate } from '~/interfaces/customer.interface';
 import ContentHeader from '~/components/ContentHeader';
-import { ArrowLeft, Save } from 'lucide-react';
-import { Button } from '~/components/ui/button';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 
@@ -138,30 +136,11 @@ export default function CustomerEditPage() {
   const formId = useMemo(() => generateFormId('customer-edit-form'), []);
 
   return (
-    <div className=''>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa khách hàng'
         backHandler={() => window.history.back()}
-        actionContent={
-          <div className='flex space-x-3'>
-            <Link
-              to={`/erp/crm/customers/${customerId}`}
-              className='inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-            >
-              <ArrowLeft className='h-4 w-4 mr-2' />
-              Quay lại
-            </Link>
-            <Button
-              type='submit'
-              form={formId}
-              className='inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-            >
-              <Save className='h-4 w-4 mr-2' />
-              Lưu thay đổi
-            </Button>
-          </div>
-        }
       />
 
       {/* Customer Edit Form */}

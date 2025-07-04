@@ -1,15 +1,15 @@
 import {
   Link,
-  useLocation,
-  data as dataResponse,
   useLoaderData,
+  data as dataResponse,
+  useFetcher,
 } from '@remix-run/react';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { createTask } from '~/services/task.server';
-import { toast } from 'react-toastify';
 import { ITaskCreate } from '~/interfaces/task.interface';
 import TaskDetailForm from './_components/TaskDetailForm';
 import ContentHeader from '~/components/ContentHeader';
@@ -45,6 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
     };
   });
+
   const casePromise = caseId
     ? getCaseServiceById(caseId, auth!).catch((e) => {
         console.error('Error fetching case:', e);
@@ -64,19 +65,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function NewTask() {
   const { employeesPromise, casePromise } = useLoaderData<typeof loader>();
-  const location = useLocation();
-  const actionData = location.state?.actionData;
-
-  // Hiển thị thông báo nếu có
-  if (actionData?.toast) {
-    const toastType = actionData.toast.type as ToastType;
-    toast[toastType](actionData.toast.message);
-  }
 
   const formId = useMemo(() => generateFormId('task-detail-form'), []);
-
   return (
-    <div className='w-full space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm mới Task'

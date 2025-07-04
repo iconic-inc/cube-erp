@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import { toast } from 'react-toastify';
 
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
@@ -35,10 +37,20 @@ import Hydrated from '~/components/Hydrated';
 import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { getEmployees } from '~/services/employee.server';
 import ItemList from '~/components/List/ItemList';
-import { toast } from 'react-toastify';
 import { Badge } from '~/components/ui/badge';
 import { Switch } from '~/components/ui/switch';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog';
+import { generateFormId } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -79,11 +91,136 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function DocumentDetailPage() {
   const { document, employeesPromise } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const fetcher = useFetcher<typeof action>();
+  const toastIdRef = useRef<any>(null);
+
+  const formId = useMemo(() => generateFormId('document-edit-form'), []);
+
+  const [description, setDescription] = useState(
+    document.doc_description || '',
+  );
+  const [name, setName] = useState(document.doc_name || '');
+  const [type, setType] = useState(document.doc_type || '');
+  const [whiteList, setWhiteList] = useState<IEmployeeBrief[]>(
+    document.doc_whiteList || [],
+  );
+  const [isPublic, setIsPublic] = useState(document.doc_isPublic || false);
+  const [selectedEmployees, setSelectedItems] = useState<IEmployeeBrief[]>([]);
+
+  // State management
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isChanged, setIsChanged] = useState(false);
+  const [employeeToRemove, setEmployeeToRemove] =
+    useState<IEmployeeBrief | null>(null);
+  const [employeesToAdd, setEmployeesToAdd] = useState<IEmployeeBrief[]>([]);
+
+  // Track changes
+  useEffect(() => {
+    const hasChanged =
+      name !== document.doc_name ||
+      type !== document.doc_type ||
+      description !== document.doc_description ||
+      isPublic !== document.doc_isPublic ||
+      JSON.stringify(whiteList.map((emp) => emp.id)) !==
+        JSON.stringify(document.doc_whiteList?.map((emp) => emp.id) || []);
+
+    setIsChanged(hasChanged);
+  }, [name, type, description, isPublic, whiteList, document]);
+
+  const handleRemoveEmployee = (employee: IEmployeeBrief) => {
+    if (employee.id === document.doc_createdBy?.id) {
+      toast.error(
+        'Bạn không thể xóa người tạo tài liệu khỏi danh sách truy cập.',
+      );
+      return;
+    }
+    setEmployeeToRemove(employee);
+  };
+
+  const confirmRemoveEmployee = () => {
+    if (employeeToRemove) {
+      setWhiteList((prev) =>
+        prev.filter((emp) => emp.id !== employeeToRemove.id),
+      );
+      setEmployeeToRemove(null);
+    }
+  };
+
+  const handleAddEmployees = (employees: IEmployeeBrief[]) => {
+    if (employees.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
+      return;
+    }
+
+    // Check if any of the selected employees are already in the whitelist
+    const newEmployees = employees.filter(
+      (emp) =>
+        !whiteList.some((whitelistedEmp) => whitelistedEmp.id === emp.id),
+    );
+
+    if (newEmployees.length === 0) {
+      toast.error('Tất cả nhân viên đã có trong danh sách truy cập.');
+      return;
+    }
+
+    setEmployeesToAdd(newEmployees);
+  };
+
+  const confirmAddEmployees = () => {
+    if (employeesToAdd.length > 0) {
+      setWhiteList((prev) => [...prev, ...employeesToAdd]);
+      setSelectedItems([]); // Clear selection after adding
+      setEmployeesToAdd([]); // Clear the employees to add
+    }
+  };
+
+  // Form submission handler
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validation
+    const validationErrors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      validationErrors.name = 'Vui lòng nhập tên tài liệu';
+    }
+
+    if (!type.trim()) {
+      validationErrors.type = 'Vui lòng nhập loại tài liệu';
+    }
+
+    // If there are validation errors, show them and prevent form submission
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error(Object.values(validationErrors)[0]);
+      return;
+    }
+
+    // Clear errors
+    setErrors({});
+
+    // Create FormData
+    const formData = new FormData(e.currentTarget);
+
+    // Add whitelist data
+    formData.append(
+      'whiteList',
+      JSON.stringify(whiteList.map((emp) => emp.id)),
+    );
+    formData.append('isPublic', String(isPublic));
+
+    toastIdRef.current = toast.loading('Đang cập nhật tài liệu...');
+
+    // Submit the form
+    fetcher.submit(formData, { method: 'POST' });
+  };
 
   useEffect(() => {
     // Check if the document is editable
     const confirmReload = (e: any) => {
-      return 'Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu.';
+      if (isChanged) {
+        return 'Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu.';
+      }
     };
 
     window.onbeforeunload = confirmReload;
@@ -91,253 +228,182 @@ export default function DocumentDetailPage() {
     return () => {
       window.onbeforeunload = null;
     };
-  }, []);
+  }, [isChanged]);
 
-  const [description, setDescription] = useState(
-    document.doc_description || '',
-  );
-  const [name, setName] = useState(document.doc_name || '');
-  const [type, setType] = useState(document.doc_type || '');
-  const [whiteList, setWhiteList] = useState(document.doc_whiteList || []);
-  const [isPublic, setIsPublic] = useState(document.doc_isPublic || false);
-  const [selectedEmployees, setSelectedItems] = useState<IEmployee[]>([]);
-  const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
-
-  const handleRemoveEmployee = (employee: IEmployeeBrief) => {
-    if (employee.id === document.doc_createdBy?.id) {
-      alert('Bạn không thể xóa người tạo tài liệu khỏi danh sách truy cập.');
-      return;
-    }
-
-    if (
-      confirm(
-        `Bạn có chắc muốn xóa nhân viên ${employee.emp_user.usr_firstName} ${employee.emp_user.usr_lastName} khỏi danh sách truy cập không?`,
-      )
-    ) {
-      setWhiteList((prev) => prev.filter((emp) => emp.id !== employee.id));
-    }
-  };
-
-  const handleWhileListEmployees = (employees: IEmployee[]) => {
-    if (employees.length === 0) {
-      alert('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
-      return;
-    }
-    if (
-      confirm(
-        `Bạn có chắc muốn thêm ${employees.length} nhân viên vào danh sách truy cập không?`,
-      )
-    ) {
-      // Check if any of the selected employees are already in the whitelist
-      const newWhiteList = employees.filter(
-        (emp) =>
-          !whiteList.some((whitelistedEmp) => whitelistedEmp.id === emp.id),
-      );
-      if (newWhiteList.length === 0) {
-        alert('Tất cả nhân viên đã có trong danh sách truy cập.');
-        return;
-      }
-      setWhiteList((prev) => [...prev, ...newWhiteList]);
-      setSelectedItems([]); // Clear selection after adding
-    }
-  };
-
-  const handleSave = async () => {
-    if (!name || !type) {
-      alert('Vui lòng điền đầy đủ thông tin tên và loại tài liệu.');
-      return;
-    }
-
-    try {
-      toastIdRef.current = toast.loading('Đang cập nhật tài liệu...');
-      // Call API to update document
-      fetcher.submit(
-        {
-          name,
-          type,
-          description,
-          isPublic,
-          whiteList: JSON.stringify(whiteList.map((emp) => emp.id)),
-        },
-        {
-          method: 'POST',
-          action: `/erp/documents/${document.id}/edit`,
-        },
-      );
-    } catch (error) {
-      console.error('Error updating document:', error);
-      toast.update(toastIdRef.current, {
-        render: 'Đã xảy ra lỗi khi cập nhật tài liệu. Vui lòng thử lại sau.',
-        type: 'error',
-        isLoading: false,
-        autoClose: 5000,
-      });
-    }
-  };
-
+  // Handle toast notifications and redirects
   useEffect(() => {
     if (fetcher.data?.toast) {
-      const { type, message } = fetcher.data.toast;
-      if (toastIdRef.current) {
-        toast.update(toastIdRef.current, {
-          render: message,
-          type,
-          isLoading: false,
-          autoClose: 5000,
-        });
-        if (type === 'success') {
-          toastIdRef.current = null; // Clear toast ID after success
-          navigate(`/erp/documents/${document.id}`);
-        }
-      } else {
-        toast[type](message);
+      const { toast: toastData } = fetcher.data;
+      toast.update(toastIdRef.current, {
+        type: toastData.type,
+        render: toastData.message,
+        isLoading: false,
+        autoClose: 3000,
+        closeOnClick: true,
+        pauseOnHover: true,
+        pauseOnFocusLoss: true,
+      });
+
+      // Redirect if success
+      if (toastData.type === 'success') {
+        navigate(`/erp/documents/${document.id}`, { replace: true });
       }
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, navigate, document.id]);
 
   return (
-    <div className='w-full space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chỉnh sửa tài liệu'
         actionContent={
           <>
             <Save />
-            <span className='hidden md:inline'>Lưu</span>
+            Lưu tài liệu
           </>
         }
-        actionHandler={handleSave}
+        actionHandler={() => {
+          const form = globalThis.document.getElementById(
+            formId,
+          ) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }}
         actionVariant={'primary'}
       />
 
-      <Defer
-        resolve={document}
-        fallback={
-          <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900'>
-            <p className='text-lg text-gray-700 dark:text-gray-300'>
-              Loading document details...
-            </p>
-          </div>
-        }
-      >
-        {(document) => {
-          const { doc_createdBy } = document;
-          const creatorUser = doc_createdBy?.emp_user;
+      <fetcher.Form id={formId} method='POST' onSubmit={handleSubmit}>
+        <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+          <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
+            <CardTitle className='text-white text-3xl font-bold flex items-center justify-between'>
+              {name || 'Tài liệu'}
+              <Badge
+                variant={isPublic ? 'default' : 'secondary'}
+                className={`ml-3 text-sm px-3 py-1 rounded-full ${
+                  isPublic
+                    ? 'bg-green-500 text-white'
+                    : 'bg-yellow-500 text-white'
+                }`}
+              >
+                {isPublic ? 'Công khai' : 'Hạn chế'}
+              </Badge>
+            </CardTitle>
+            <CardDescription className='text-purple-100 mt-2'>
+              <span>ID: {document.id}</span>
+            </CardDescription>
+          </CardHeader>
 
-          return (
-            <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-              <CardHeader className='bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-6 rounded-t-xl'>
-                <CardTitle className='text-white text-3xl font-bold flex items-center justify-between'>
-                  {name}
-                  {/* <Badge
-                    variant={document.doc_isPublic ? 'default' : 'secondary'}
-                    className={`ml-3 text-sm px-3 py-1 rounded-full ${document.doc_isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}
-                  >
-                    {document.doc_isPublic ? 'Public' : 'Private'}
-                  </Badge> */}
-                </CardTitle>
-                <CardDescription className='text-purple-100 mt-2'>
-                  <span>ID: {document.id}</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='p-6 space-y-6'>
-                <div>
-                  <Label
-                    htmlFor='name'
-                    className='text-gray-700 font-semibold mb-2 block'
-                  >
-                    Tên tài liệu
-                  </Label>
-                  <div className='flex items-center space-x-2'>
-                    <Input
-                      id='name'
-                      name='name'
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className='flex-grow bg-white border-gray-300 focus:ring-purple-500'
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor='type'
-                    className='text-gray-700 font-semibold mb-2 block'
-                  >
-                    Loại tài liệu
-                  </Label>
-                  <div className='flex items-center space-x-2'>
-                    <Input
-                      id='type'
-                      name='type'
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className='flex-grow bg-white border-gray-300 focus:ring-purple-500'
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor='docDescription'
-                    className='text-gray-700 font-semibold mb-2 block'
-                  >
-                    Mô tả
-                  </Label>
-
-                  <div className='h-80'>
-                    <Hydrated>
-                      {() => (
-                        <TextEditor
-                          name='description'
-                          onChange={setDescription}
-                          // className='rounded-lg border border-gray-300 p-3 bg-gray-50 text-gray-800 break-words'
-                          value={description}
-                          placeholder='Nhập mô tả tài liệu...'
-                        />
-                      )}
-                    </Hydrated>
-                  </div>
-                </div>
-
-                {creatorUser && (
-                  <div className='border-t border-gray-200 pt-6'>
-                    <h4 className='col-span-12 text-xl font-bold text-gray-800 mb-4 flex items-center'>
-                      <span className='text-purple-600 mr-2'>&#9432;</span>{' '}
-                      Người tạo
-                    </h4>
-                    <div className='flex items-center space-x-4 p-4 w-full md:w-1/2 lg:w-1/3 bg-purple-50 rounded-lg shadow-sm border border-purple-200'>
-                      <Avatar className='h-14 w-14 border-2 border-purple-400'>
-                        <AvatarImage
-                          src={creatorUser.usr_avatar?.img_url}
-                          alt={`${creatorUser.usr_firstName} ${creatorUser.usr_lastName} Avatar`}
-                        />
-
-                        <AvatarFallback>{`${creatorUser.usr_firstName[0]}${creatorUser.usr_lastName[0]}`}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='text-lg font-semibold text-gray-900'>
-                          {creatorUser.usr_firstName} {creatorUser.usr_lastName}
-                        </p>
-                        <p className='text-sm text-gray-600'>
-                          @{creatorUser.usr_username} (
-                          {doc_createdBy.emp_position})
-                        </p>
-                        <p className='text-sm text-gray-500'>
-                          {creatorUser.usr_email}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          <CardContent className='p-6 space-y-6'>
+            {/* Document Name and Type */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <Label
+                  htmlFor='name'
+                  className='text-gray-700 font-semibold mb-2 block'
+                >
+                  Tên tài liệu <span className='text-red-500'>*</span>
+                </Label>
+                <Input
+                  id='name'
+                  name='name'
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className='bg-white border-gray-300'
+                  placeholder='Nhập tên tài liệu'
+                  required
+                />
+                {errors.name && (
+                  <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
                 )}
+              </div>
 
-                <div className='flex items-center justify-between border-t border-gray-200 pt-6'>
-                  <Label
-                    htmlFor='isPublic'
-                    className='text-gray-700 font-semibold'
-                  >
-                    Chế độ truy cập
-                  </Label>
+              <div>
+                <Label
+                  htmlFor='type'
+                  className='text-gray-700 font-semibold mb-2 block'
+                >
+                  Loại tài liệu <span className='text-red-500'>*</span>
+                </Label>
+                <Input
+                  id='type'
+                  name='type'
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className='bg-white border-gray-300'
+                  placeholder='Nhập loại tài liệu'
+                  required
+                />
+                {errors.type && (
+                  <p className='text-red-500 text-sm mt-1'>{errors.type}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Document Description */}
+            <div>
+              <Label
+                htmlFor='docDescription'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Mô tả
+              </Label>
+              <div className='h-80'>
+                <Hydrated>
+                  {() => (
+                    <TextEditor
+                      name='description'
+                      onChange={setDescription}
+                      value={description}
+                      placeholder='Nhập mô tả tài liệu...'
+                    />
+                  )}
+                </Hydrated>
+              </div>
+            </div>
+
+            {/* Document Creator */}
+            {document.doc_createdBy && (
+              <div className='border-t border-gray-200 pt-6'>
+                <h4 className='text-xl font-bold text-gray-800 mb-4 flex items-center'>
+                  <span className='text-purple-600 mr-2'>ℹ️</span> Người tạo
+                </h4>
+                <div className='flex items-center space-x-4 p-4 w-full md:w-1/2 lg:w-1/3 bg-purple-50 rounded-lg shadow-sm border border-purple-200'>
+                  <Avatar className='h-14 w-14 border-2 border-purple-400'>
+                    <AvatarImage
+                      src={document.doc_createdBy.emp_user.usr_avatar?.img_url}
+                      alt={`${document.doc_createdBy.emp_user.usr_firstName} ${document.doc_createdBy.emp_user.usr_lastName} Avatar`}
+                    />
+                    <AvatarFallback>
+                      {`${document.doc_createdBy.emp_user.usr_firstName[0]}${document.doc_createdBy.emp_user.usr_lastName[0]}`}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className='text-lg font-semibold text-gray-900'>
+                      {document.doc_createdBy.emp_user.usr_firstName}{' '}
+                      {document.doc_createdBy.emp_user.usr_lastName}
+                    </p>
+                    <p className='text-sm text-gray-600'>
+                      @{document.doc_createdBy.emp_user.usr_username} (
+                      {document.doc_createdBy.emp_position})
+                    </p>
+                    <p className='text-sm text-gray-500'>
+                      {document.doc_createdBy.emp_user.usr_email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Access Control */}
+            <div className='border-t border-gray-200 pt-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <Label
+                  htmlFor='isPublic'
+                  className='text-gray-700 font-semibold'
+                >
+                  Chế độ truy cập
+                </Label>
+                <div className='flex items-center space-x-4'>
                   <Switch
                     id='isPublic'
                     name='isPublic'
@@ -345,33 +411,37 @@ export default function DocumentDetailPage() {
                     onCheckedChange={(checked) => setIsPublic(checked)}
                     className='data-[state=checked]:bg-green-500'
                   />
-
-                  <div className='w-28 flex items-center justify-end'>
-                    <Badge
-                      variant={isPublic ? 'default' : 'secondary'}
-                      className={`ml-3 text-sm px-3 py-1 rounded-full ${isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}
-                    >
-                      {isPublic ? 'Công khai' : 'Hạn chế'}
-                    </Badge>
-                  </div>
+                  <Badge
+                    variant={isPublic ? 'default' : 'secondary'}
+                    className={`text-sm px-3 py-1 rounded-full ${
+                      isPublic
+                        ? 'bg-green-500 text-white'
+                        : 'bg-yellow-500 text-white'
+                    }`}
+                  >
+                    {isPublic ? 'Công khai' : 'Hạn chế'}
+                  </Badge>
                 </div>
+              </div>
 
-                <div className='border-t border-gray-200 pt-6'>
-                  <h4 className='text-xl font-bold text-gray-800 mb-4 flex items-center'>
-                    <span className='text-indigo-600 mr-2'>&#128274;</span> Danh
-                    sách nhân viên được phép truy cập
-                  </h4>
+              {/* Employee Access List */}
+              <div>
+                <h4 className='text-xl font-bold text-gray-800 mb-4 flex items-center'>
+                  <span className='text-indigo-600 mr-2'>🔒</span> Danh sách
+                  nhân viên được phép truy cập
+                </h4>
 
-                  {isPublic ? (
-                    <div className='mt-4 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                      <p className='text-gray-600'>
-                        Tài liệu này đang ở chế độ công khai. Tất cả nhân viên
-                        trong hệ thống đều có thể truy cập tài liệu này.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                {isPublic ? (
+                  <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                    <p className='text-gray-600'>
+                      Tài liệu này đang ở chế độ công khai. Tất cả nhân viên
+                      trong hệ thống đều có thể truy cập tài liệu này.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {whiteList.length > 0 && (
+                      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4'>
                         {whiteList.map((employee) => (
                           <BriefEmployeeCard
                             key={employee.id}
@@ -380,131 +450,217 @@ export default function DocumentDetailPage() {
                           />
                         ))}
                       </div>
-                      <div className='mt-4 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                        {!!selectedEmployees.length && (
-                          <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800'>
-                            <div className=''>
-                              <span className='font-semibold text-sm'>{`Đã chọn ${selectedEmployees.length} Nhân sự để thêm`}</span>
-                            </div>
+                    )}
 
-                            <div className='flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0'>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => setSelectedItems([])} // Clear selection
-                                className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
-                              >
-                                <XCircle className='h-4 w-4' />
-                                <span>Bỏ chọn tất cả</span>
-                              </Button>
-
-                              <Button
-                                size='sm'
-                                onClick={() => {
-                                  handleWhileListEmployees(selectedEmployees);
-                                  setSelectedItems([]);
-                                }}
-                                className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
-                              >
-                                <Plus className='h-4 w-4' />
-                                <span>Thêm đã chọn</span>
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-
-                        <ItemList<IEmployee>
-                          addNewHandler={() => {
-                            navigate('/erp/employees/new');
-                          }}
-                          itemsPromise={employeesPromise}
-                          name='Nhân viên'
-                          visibleColumns={[
-                            {
-                              key: 'emp_user.usr_firstName',
-                              title: 'Tên nhân viên',
-                              sortField: 'emp_user.usr_firstName',
-                              visible: true,
-                              render: (item) => (
-                                <Link
-                                  to={`/erp/employees/${item.id}`}
-                                  className='flex items-center space-x-3'
-                                >
-                                  <span>
-                                    {item.emp_user.usr_firstName}{' '}
-                                    {item.emp_user.usr_lastName}
-                                  </span>
-                                </Link>
-                              ),
-                            },
-                            {
-                              key: 'emp_user.usr_username',
-                              title: 'Tài khoản',
-                              visible: true,
-                              render: (item) => item.emp_user.usr_username,
-                            },
-                            {
-                              key: 'emp_position',
-                              title: 'Chức vụ',
-                              visible: true,
-                              render: (item) => item.emp_position,
-                            },
-                            {
-                              key: 'action',
-                              title: 'Hành động',
-                              visible: true,
-                              render: (item) => (
+                    <Defer resolve={employeesPromise}>
+                      {(employeeData) => (
+                        <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                          {!!selectedEmployees.length && (
+                            <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg'>
+                              <div>
+                                <span className='font-semibold text-sm'>
+                                  Đã chọn {selectedEmployees.length} nhân viên
+                                  để thêm
+                                </span>
+                              </div>
+                              <div className='flex flex-wrap items-center gap-2'>
                                 <Button
-                                  variant='default'
-                                  className='bg-blue-500 hover:bg-blue-400'
-                                  onClick={() => {
-                                    handleWhileListEmployees([item]);
-                                  }}
+                                  variant='ghost'
+                                  size='sm'
+                                  type='button'
+                                  onClick={() => setSelectedItems([])}
+                                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
                                 >
-                                  Thêm
+                                  <XCircle className='h-4 w-4' />
+                                  <span>Bỏ chọn tất cả</span>
                                 </Button>
-                              ),
-                            },
-                          ]}
-                          selectedItems={selectedEmployees}
-                          setSelectedItems={setSelectedItems}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
+                                <Button
+                                  size='sm'
+                                  type='button'
+                                  onClick={() =>
+                                    handleAddEmployees(selectedEmployees)
+                                  }
+                                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
+                                >
+                                  <Plus className='h-4 w-4' />
+                                  <span>Thêm đã chọn</span>
+                                </Button>
+                              </div>
+                            </div>
+                          )}
 
-                <div className='sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 pt-6'>
-                  <Button
-                    variant='destructive'
-                    onClick={() => {
-                      if (
-                        confirm(
-                          'Bạn có chắc muốn xóa tài liệu này không? Tất cả dữ liệu sẽ bị mất vĩnh viễn.',
-                        )
-                      ) {
-                        fetcher.submit(
-                          {},
-                          {
-                            method: 'DELETE',
-                            action: `/erp/documents/${document.id}/edit`,
-                          },
-                        );
-                        navigate('/erp/documents');
-                      }
-                    }}
-                  >
-                    Xóa tài liệu
-                  </Button>
-                  <Button onClick={handleSave} variant='primary'>
+                          <ItemList<IEmployeeBrief>
+                            addNewHandler={() => navigate('/erp/employees/new')}
+                            itemsPromise={employeeData}
+                            name='Nhân viên'
+                            visibleColumns={[
+                              {
+                                key: 'emp_user.usr_firstName',
+                                title: 'Tên nhân viên',
+                                visible: true,
+                                render: (item) => (
+                                  <Link
+                                    to={`/erp/employees/${item.id}`}
+                                    className='flex items-center space-x-3'
+                                  >
+                                    <span>
+                                      {item.emp_user.usr_firstName}{' '}
+                                      {item.emp_user.usr_lastName}
+                                    </span>
+                                  </Link>
+                                ),
+                              },
+                              {
+                                key: 'emp_user.usr_username',
+                                title: 'Tài khoản',
+                                visible: true,
+                                render: (item) => item.emp_user.usr_username,
+                              },
+                              {
+                                key: 'emp_position',
+                                title: 'Chức vụ',
+                                visible: true,
+                                render: (item) => item.emp_position,
+                              },
+                              {
+                                key: 'action',
+                                title: 'Hành động',
+                                visible: true,
+                                render: (item) => {
+                                  const isAdded = !!whiteList.find(
+                                    (emp) => emp.id === item.id,
+                                  );
+
+                                  return (
+                                    <Button
+                                      variant='default'
+                                      className={`bg-blue-500 hover:bg-blue-400 ${
+                                        isAdded
+                                          ? 'opacity-50 cursor-not-allowed'
+                                          : ''
+                                      }`}
+                                      type='button'
+                                      onClick={() => handleAddEmployees([item])}
+                                      disabled={isAdded}
+                                    >
+                                      {isAdded ? 'Đã thêm' : 'Thêm'}
+                                    </Button>
+                                  );
+                                },
+                              },
+                            ]}
+                            selectedItems={selectedEmployees}
+                            setSelectedItems={setSelectedItems}
+                          />
+                        </div>
+                      )}
+                    </Defer>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className='bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200'>
+            <Link
+              to='/erp/documents'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+            >
+              <span className='material-symbols-outlined text-sm mr-1'>
+                keyboard_return
+              </span>
+              Trở về Danh sách
+            </Link>
+
+            <div className='flex space-x-2'>
+              <Button
+                variant='destructive'
+                type='button'
+                onClick={() => {
+                  if (
+                    confirm(
+                      'Bạn có chắc muốn xóa tài liệu này không? Tất cả dữ liệu sẽ bị mất vĩnh viễn.',
+                    )
+                  ) {
+                    fetcher.submit(
+                      {},
+                      {
+                        method: 'DELETE',
+                        action: `/erp/documents/${document.id}/edit`,
+                      },
+                    );
+                  }
+                }}
+              >
+                Xóa tài liệu
+              </Button>
+
+              <Button
+                type='submit'
+                disabled={!isChanged || fetcher.state === 'submitting'}
+              >
+                {fetcher.state === 'submitting' ? (
+                  <>
+                    <span className='animate-spin mr-2'>⏳</span>
+                    <span>Đang lưu...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className='material-symbols-outlined text-sm mr-1'>
+                      save
+                    </span>
                     Lưu thay đổi
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        }}
-      </Defer>
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+
+        {/* Alert Dialogs */}
+        <AlertDialog
+          open={!!employeeToRemove}
+          onOpenChange={(open) => !open && setEmployeeToRemove(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc muốn xóa {employeeToRemove?.emp_user.usr_firstName}{' '}
+                {employeeToRemove?.emp_user.usr_lastName} khỏi danh sách truy
+                cập?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmRemoveEmployee} type='button'>
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog
+          open={employeesToAdd.length > 0}
+          onOpenChange={(open) => !open && setEmployeesToAdd([])}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào danh
+                sách truy cập không?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmAddEmployees} type='button'>
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </fetcher.Form>
     </div>
   );
 }

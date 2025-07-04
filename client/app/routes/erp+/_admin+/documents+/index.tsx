@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useFetcher, useLoaderData } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   deleteMultipleDocuments,
@@ -170,7 +171,6 @@ export default function HRMDocuments() {
 
   useEffect(() => {
     if (uploadFetcher.data) {
-      console.log('Upload fetcher data:', uploadFetcher.data);
       if (uploadFetcher.data.success) {
         toastIdRef.current = toast.update(toastIdRef.current, {
           render: 'Tải lên thành công',
@@ -191,13 +191,13 @@ export default function HRMDocuments() {
   }, [uploadFetcher.data]);
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách tài liệu'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm tài liệu
           </>
         }

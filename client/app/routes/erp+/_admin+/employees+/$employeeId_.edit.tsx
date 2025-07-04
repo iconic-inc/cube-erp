@@ -17,7 +17,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { employeeId } = params;
 
   if (!employeeId) {
-    throw new Response('Không tìm thấy nhân sự.', {
+    throw new Response('Không tìm thấy Nhân viên.', {
       status: 404,
     });
   }
@@ -58,7 +58,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               employee: null,
               redirectTo: null,
               toast: {
-                message: 'Không tìm thấy nhân sự.',
+                message: 'Không tìm thấy Nhân viên.',
                 type: 'error',
               },
             },
@@ -78,7 +78,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             employee: updatedEmployee,
             redirectTo: `/erp/employees/${updatedEmployee.id}`,
             toast: {
-              message: 'Cập nhật thông tin nhân sự thành công!',
+              message: 'Cập nhật thông tin Nhân viên thành công!',
               type: 'success',
             },
           },
@@ -118,30 +118,23 @@ export default function EmployeeEditPage() {
   const formId = useMemo(() => generateFormId('employee-edit-form'), []);
 
   return (
-    <div className=''>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa nhân viên'
         backHandler={() => window.history.back()}
         actionContent={
-          <div className='flex space-x-3'>
-            <Link
-              to={`/erp/employees/${employeeId}`}
-              className='inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-            >
-              <ArrowLeft className='h-4 w-4 mr-2' />
-              Quay lại
-            </Link>
-            <Button
-              type='submit'
-              form={formId}
-              className='inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-            >
-              <Save className='h-4 w-4 mr-2' />
-              Lưu thay đổi
-            </Button>
-          </div>
+          <>
+            <Save className='w-4 h-4 mr-1' />
+            Cập nhật Nhân viên
+          </>
         }
+        actionHandler={() => {
+          const form = document.getElementById(formId) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }}
       />
 
       {/* Employee Edit Form */}
@@ -151,7 +144,6 @@ export default function EmployeeEditPage() {
           type='update'
           employeePromise={employeePromise}
           rolesPromise={rolesPromise}
-          action={`/erp/employees/${employeeId}/edit`}
         />
       </div>
     </div>

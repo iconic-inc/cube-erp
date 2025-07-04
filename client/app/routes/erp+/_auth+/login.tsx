@@ -191,7 +191,7 @@ const Login = () => {
             Đăng nhập
           </h1>
           <p className='text-center text-gray-500 mb-8'>
-            Đăng nhập để truy cập vào trang quản lý nhân sự.
+            Đăng nhập để truy cập vào trang quản lý Nhân viên.
           </p>
 
           <fetcher.Form method='POST' className='space-y-5'>
