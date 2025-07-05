@@ -523,4 +523,4 @@ export default function HRMProfile() {
   );
 }
 
-export const ErrorBoundary = () => <HandsomeError basePath='/erp/nhan-vien' />;
+export const ErrorBoundary = () => <HandsomeError basePath='/erp' />;

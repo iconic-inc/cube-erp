@@ -17,12 +17,20 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import { getCustomers } from '~/services/customer.server';
 import { getCaseServices } from '~/services/case.server';
 import { generateFormId } from '~/utils';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(auth?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   const url = new URL(request.url);
   const caseId = url.searchParams.get('caseId');
   const customerId = url.searchParams.get('customerId');

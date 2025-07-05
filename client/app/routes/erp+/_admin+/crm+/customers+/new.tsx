@@ -1,6 +1,6 @@
 import { useLocation, data as dataResponse } from '@remix-run/react';
 import { Save } from 'lucide-react';
-import { ActionFunctionArgs } from '@remix-run/node';
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { toast } from 'react-toastify';
 
 import { isAuthenticated } from '~/services/auth.server';
@@ -10,9 +10,23 @@ import CustomerDetailForm from './_components/CustomerDetailForm';
 import ContentHeader from '~/components/ContentHeader';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
+import { parseAuthCookie } from '~/services/cookie.server';
+import { canAccessCustomerManagement } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await parseAuthCookie(request);
+
+  if (!canAccessCustomerManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
+  return {};
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);

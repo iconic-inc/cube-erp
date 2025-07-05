@@ -6,9 +6,17 @@ import { isAuthenticated } from '~/services/auth.server';
 import ContentHeader from '~/components/ContentHeader';
 import DocumentDetail from './_components/DocumentDetail';
 import { Edit } from 'lucide-react';
+import { canAccessDocumentManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessDocumentManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   // Fetch document details from the API
   const documentId = params.documentId as string;
   const document = getDocumentById(documentId, user!).catch((error) => {

@@ -11,7 +11,6 @@ import {
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ICaseService } from '~/interfaces/case.interface';
-import { IListResponse } from '~/interfaces/response.interface';
 import {
   IListColumn,
   IActionFunctionReturn,
@@ -23,9 +22,15 @@ import {
   CASE_SERVICE,
   CASE_STATUS_BADGE_CLASSES,
 } from '~/constants/caseService.constant';
+import { canAccessCaseServices } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+  if (!canAccessCaseServices(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;

@@ -3,17 +3,16 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import { getRewards, deleteReward } from '~/services/reward.server';
+import { listRewardsForEmployee, deleteReward } from '~/services/reward.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { IActionFunctionReturn, IListColumn } from '~/interfaces/app.interface';
-import { isAuthenticated } from '~/services/auth.server';
-import List from '~/components/List';
 import { Badge } from '~/components/ui/badge';
 import { formatDate, formatCurrency } from '~/utils';
 import { IReward } from '~/interfaces/reward.interface';
 import { REWARD } from '~/constants/reward.constant';
 import { canAccessRewardManagement } from '~/utils/permission';
+import List from '~/components/List';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -35,7 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ...(status && { status }),
   };
 
-  const rewardsPromise = getRewards(query, { page, limit }, user!).catch(
+  const rewardsPromise = listRewardsForEmployee({ page, limit }, user!).catch(
     (error) => {
       console.error('Error fetching reward s:', error);
       return {
@@ -78,7 +77,7 @@ const getStatusLabel = (status: string) => {
 };
 
 export default function RewardsIndex() {
-  const { rewards, query } = useLoaderData<typeof loader>();
+  const { rewards } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [visibleColumns, setVisibleColumns] = useState<IListColumn<IReward>[]>([
@@ -87,14 +86,7 @@ export default function RewardsIndex() {
       title: 'Tên quỹ thưởng',
       visible: true,
       sortField: 'rw_name',
-      render: (item) => (
-        <Link
-          to={`/erp/rewards/${item.id}`}
-          className='text-blue-600 hover:underline block w-full h-full font-medium'
-        >
-          {item.rw_name}
-        </Link>
-      ),
+      render: (item) => <span>{item.rw_name}</span>,
     },
     {
       key: 'rw_currentAmount',
@@ -158,16 +150,7 @@ export default function RewardsIndex() {
 
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
-      <ContentHeader
-        title='Quản lý quỹ thưởng'
-        actionContent={
-          <>
-            <Plus className='w-4 h-4 mr-2' />
-            Tạo quỹ thưởng mới
-          </>
-        }
-        actionHandler={() => navigate('/erp/rewards/new')}
-      />
+      <ContentHeader title='Quản lý quỹ thưởng' />
 
       <List<IReward>
         itemsPromise={rewards}
@@ -176,7 +159,6 @@ export default function RewardsIndex() {
         addNewHandler={() => navigate('/erp/rewards/new')}
         exportable={false}
         name='Quỹ thưởng'
-        deleteHandleRoute='/erp/rewards'
       />
     </div>
   );
@@ -185,84 +167,11 @@ export default function RewardsIndex() {
 export const action = async ({
   request,
 }: ActionFunctionArgs): IActionFunctionReturn<any> => {
-  const { session, headers } = await isAuthenticated(request);
-  if (!session) {
-    return data(
-      {
-        success: false,
-        toast: {
-          type: 'error',
-          message: 'Bạn cần đăng nhập để thực hiện hành động này',
-        },
-      },
-      { headers },
-    );
-  }
-
-  try {
-    const formData = await request.formData();
-    switch (request.method) {
-      case 'DELETE':
-        const IdsString = formData.get('itemIds') as string;
-        if (!IdsString) {
-          return data(
-            {
-              success: false,
-              toast: {
-                message: 'Không có quỹ thưởng nào được chọn để xóa',
-                type: 'error',
-              },
-            },
-            { headers },
-          );
-        }
-
-        const Ids = JSON.parse(IdsString);
-
-        // Delete s one by one (API doesn't support bulk delete)
-        for (const Id of Ids) {
-          try {
-            await deleteReward(Id, session);
-          } catch (error: any) {
-            console.error(`Error deleting  ${Id}:`, error);
-            // Continue with other s even if one fails
-          }
-        }
-
-        return data(
-          {
-            success: true,
-            toast: {
-              message: `Đã xóa ${Ids.length} quỹ thưởng`,
-              type: 'success',
-            },
-          },
-          { headers },
-        );
-
-      default:
-        return data(
-          {
-            success: false,
-            toast: {
-              message: 'Phương thức không được hỗ trợ',
-              type: 'error',
-            },
-          },
-          { headers },
-        );
-    }
-  } catch (error: any) {
-    console.error('Error in reward s action:', error);
-    return data(
-      {
-        success: false,
-        toast: {
-          message: error.message || 'Đã xảy ra lỗi',
-          type: 'error',
-        },
-      },
-      { headers },
-    );
-  }
+  return data({
+    success: false,
+    toast: {
+      message: 'Bạn không có quyền thực hiện hành động này',
+      type: 'error',
+    },
+  });
 };

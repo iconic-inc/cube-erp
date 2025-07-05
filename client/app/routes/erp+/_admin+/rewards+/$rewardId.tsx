@@ -51,9 +51,17 @@ import TextAreaInput from '~/components/TextAreaInput';
 import TextInput from '~/components/TextInput';
 import NumericInput from '~/components/NumericInput';
 import TextRenderer from '~/components/TextRenderer';
+import { canAccessRewardManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessRewardManagement(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   if (!session) {
     throw new Response('Unauthorized', { status: 401 });
   }

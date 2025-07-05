@@ -1,14 +1,9 @@
-import {
-  ActionFunctionArgs,
-  data,
-  LoaderFunctionArgs,
-  redirect,
-} from '@remix-run/node';
+import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import { bulkDeleteTasks, getTasks } from '~/services/task.server';
+import { bulkDeleteTasks, getMyTasks, getTasks } from '~/services/task.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ITask } from '~/interfaces/task.interface';
@@ -22,13 +17,9 @@ import {
   TASK_STATUS_BADGE_CLASSES,
 } from '~/constants/task.constant';
 import { formatDate } from '~/utils';
-import { isAdmin } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
-  if (!isAdmin(user?.user.usr_role)) {
-    return redirect('/erp/nhan-vien/tasks');
-  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;
@@ -55,8 +46,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 
   return {
-    tasksPromise: getTasks({ ...query }, options, user!).catch((e) => {
-      console.error(e);
+    tasksPromise: getMyTasks({ ...query }, options, user!).catch((e) => {
+      console.error('Error getting my tasks: ', e);
       return {
         success: false,
         message: e.message || 'Có lỗi xảy ra khi lấy danh sách Task',

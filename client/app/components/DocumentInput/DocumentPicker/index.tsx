@@ -143,7 +143,7 @@ export default function DocumentPicker({
                 onClick={() => setActiveTab(2)}
                 type='button'
               >
-                Chọn từ thư viện Media
+                Chọn từ thư viện tài liệu
               </button>
             </div>
 

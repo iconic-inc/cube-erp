@@ -20,7 +20,7 @@ const router = Router();
 // Tất cả routes đều yêu cầu xác thực
 router.use(authenticationV2);
 
-// router.use('/me/tasks', require('../task/employee'));
+router.use('/me/tasks', require('../task/employee'));
 
 // Route để tạo nhân viên mới kèm user
 router.post(

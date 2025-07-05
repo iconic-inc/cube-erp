@@ -1,4 +1,9 @@
-import { useLoaderData, data as dataResponse, Link } from '@remix-run/react';
+import {
+  useLoaderData,
+  data as dataResponse,
+  Link,
+  useNavigate,
+} from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { getEmployeeById, updateEmployee } from '~/services/employee.server';
@@ -11,9 +16,17 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
+import { canAccessEmployeeManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
+
+  if (!canAccessEmployeeManagement(auth?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   const { employeeId } = params;
 
   if (!employeeId) {
@@ -122,7 +135,6 @@ export default function EmployeeEditPage() {
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa nhân viên'
-        backHandler={() => window.history.back()}
         actionContent={
           <>
             <Save className='w-4 h-4 mr-1' />

@@ -33,9 +33,16 @@ import StatisticsDisplay from './_components/StatisticsDisplay';
 import { DatePicker } from '~/components/ui/date-picker';
 import { TODAY } from '~/constants/date.constant';
 import { getFirstWeekDate, getLastWeekDate } from '~/utils/date.util';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
 

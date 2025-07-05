@@ -39,8 +39,7 @@ export default function CheckInCard({
         <p className='text-sm text-gray-500 mb-4'>Bắt đầu ngày làm việc</p>
 
         <Button
-          color='green'
-          className='w-full'
+          className='w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white'
           disabled={isDisabled}
           type='submit'
           name='type'

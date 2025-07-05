@@ -1,4 +1,9 @@
-import { useLoaderData, data as dataResponse, Link } from '@remix-run/react';
+import {
+  useLoaderData,
+  data as dataResponse,
+  Link,
+  useNavigate,
+} from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { getCustomerById, updateCustomer } from '~/services/customer.server';
@@ -8,9 +13,18 @@ import { ICustomerCreate } from '~/interfaces/customer.interface';
 import ContentHeader from '~/components/ContentHeader';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
+import { canAccessCustomerManagement } from '~/utils/permission';
+import { Save } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
+
+  if (!canAccessCustomerManagement(auth?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   const { customerId } = params;
 
   if (!customerId) {
@@ -140,7 +154,18 @@ export default function CustomerEditPage() {
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa khách hàng'
-        backHandler={() => window.history.back()}
+        actionContent={
+          <>
+            <Save className='inline mr-2' />
+            Cập nhật Khách hàng
+          </>
+        }
+        actionHandler={() => {
+          const form = document.getElementById(formId) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }}
       />
 
       {/* Customer Edit Form */}

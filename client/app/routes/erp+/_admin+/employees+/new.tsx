@@ -16,6 +16,7 @@ import { IEmployeeCreate } from '~/interfaces/employee.interface';
 import ContentHeader from '~/components/ContentHeader';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
+import { canAccessEmployeeManagement } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -23,6 +24,12 @@ type ToastType = 'success' | 'error' | 'info' | 'warning';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const user = await parseAuthCookie(request);
+
+    if (!canAccessEmployeeManagement(user?.user.usr_role)) {
+      throw new Response('Bạn không có quyền truy cập vào trang này.', {
+        status: 403,
+      });
+    }
 
     const rolesPromise = getRoles(user!).catch((e) => {
       console.error('Error fetching roles:', e);

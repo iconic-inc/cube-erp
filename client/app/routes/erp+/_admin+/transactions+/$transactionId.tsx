@@ -6,9 +6,17 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import TransactionDetail from './_components/TransactionDetail';
 import { Pencil } from 'lucide-react';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   // Fetch transaction details from the API
   const transactionId = params.transactionId as string;
   const transaction = getTransactionById(transactionId, user!).catch(

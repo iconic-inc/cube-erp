@@ -3,7 +3,7 @@ import {
   LoaderFunctionArgs,
   data as dataResponse,
 } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useMemo } from 'react';
 
 import TaskDetailForm from './_components/TaskDetailForm';

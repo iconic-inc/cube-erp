@@ -16,6 +16,7 @@ import { TASK } from '@constants/task.constant';
 import { CASE_SERVICE } from '@constants/caseService.constant';
 import { EmployeeModel } from '@models/employee.model';
 import { USER } from '@constants/user.constant';
+import { getEmployeeByUserId } from './employee.service';
 
 // Create new Task
 const createTask = async (data: ITaskCreate) => {
@@ -601,26 +602,28 @@ const getTasks = async (query: any = {}) => {
   };
 };
 
+const taskAssigneesPopulate = {
+  path: 'tsk_assignees',
+  select: 'emp_code emp_position emp_department emp_user',
+  populate: {
+    path: 'emp_user',
+    select: 'usr_firstName usr_lastName usr_email usr_avatar usr_username',
+  },
+};
+const taskCaseServicePopulate = {
+  path: 'tsk_caseService',
+  select:
+    'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
+  populate: {
+    path: 'case_customer',
+    select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+  },
+};
 // Get Task by ID
 const getTaskById = async (id: string) => {
   const task = await TaskModel.findById(id)
-    .populate({
-      path: 'tsk_assignees',
-      select: 'emp_code emp_position emp_department emp_user',
-      populate: {
-        path: 'emp_user',
-        select: 'usr_firstName usr_lastName usr_email usr_avatar usr_username',
-      },
-    })
-    .populate({
-      path: 'tsk_caseService',
-      select:
-        'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
-      populate: {
-        path: 'case_customer',
-        select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
-      },
-    });
+    .populate(taskAssigneesPopulate)
+    .populate(taskCaseServicePopulate);
 
   if (!task) {
     throw new NotFoundError('Task not found');
@@ -1354,6 +1357,50 @@ const getEmployeesPerformance = async (query: any = {}) => {
   }
 };
 
+const getMyTasks = async (userId: string, query: any = {}) => {
+  const employee = await getEmployeeByUserId(userId);
+  const myTasks = await getTasks({
+    ...query,
+    assignee: employee.id,
+    sortBy: query.sortBy || 'createdAt',
+    sortOrder: query.sortOrder || 'desc',
+    limit: query.limit || 10,
+    page: query.page || 1,
+  });
+  return myTasks;
+};
+
+const getMyTaskById = async (userId: string, taskId: string) => {
+  const employee = await getEmployeeByUserId(userId);
+  const task = await TaskModel.findOne({
+    _id: taskId,
+    tsk_assignees: employee.id,
+  })
+    .populate(taskAssigneesPopulate)
+    .populate(taskCaseServicePopulate);
+
+  if (!task) {
+    throw new NotFoundError(
+      'Không tìm thấy Task hoặc bạn không có quyền truy cập'
+    );
+  }
+
+  return getReturnData(task);
+};
+
+const getMyPerformance = async (userId: string, query: any = {}) => {
+  const employee = await getEmployeeByUserId(userId);
+
+  return await getEmployeesPerformance({
+    ...query,
+    employeeIds: [employee._id.toString()],
+    sortBy: query.sortBy || 'performanceScore',
+    sortOrder: query.sortOrder || 'desc',
+    limit: query.limit || 10,
+    page: query.page || 1,
+  });
+};
+
 export {
   createTask,
   getTasks,
@@ -1365,4 +1412,7 @@ export {
   bulkDeleteTasks,
   exportTasks,
   getEmployeesPerformance,
+  getMyTasks,
+  getMyTaskById,
+  getMyPerformance,
 };

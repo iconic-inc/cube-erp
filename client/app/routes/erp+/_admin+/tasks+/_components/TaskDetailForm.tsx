@@ -45,6 +45,7 @@ import {
 } from '~/components/ui/card';
 import Defer from '~/components/Defer';
 import CaseServiceBrief from './CaseServiceBrief';
+import { useERPLoaderData } from '~/lib';
 
 export default function TaskDetailForm({
   formId,
@@ -59,13 +60,16 @@ export default function TaskDetailForm({
   taskPromise?: ILoaderDataPromise<ITask>;
   casePromise?: ILoaderDataPromise<ICaseService>;
 }) {
+  const { employee } = useERPLoaderData();
   const fetcher = useFetcher<typeof action>({ key: formId });
   const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [assignees, setAssignees] = useState<IEmployeeBrief[]>([]);
+  const [assignees, setAssignees] = useState<IEmployeeBrief[]>(
+    employee ? [employee] : [],
+  );
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [caseOrder, setCaseOrder] = useState<number>(0);
   const [endDate, setEndDate] = useState<Date>(
@@ -299,7 +303,6 @@ export default function TaskDetailForm({
       loadCase();
     }
   }, [type, taskPromise, casePromise]);
-  console.log('hi');
 
   return (
     <fetcher.Form
@@ -492,7 +495,7 @@ export default function TaskDetailForm({
           </div>
 
           {/* Case Service Selection */}
-          {!caseService && (
+          {!caseService && type === 'create' && (
             <div className='flex items-center justify-center py-6 border-t border-gray-200'>
               <Button variant='primary' type='button' asChild>
                 <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>

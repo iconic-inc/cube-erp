@@ -11,7 +11,7 @@ router.use(authenticationV2);
 
 // Admin routes
 // Create Task
-router.post('/', hasPermission('task', 'createAny'), TaskController.createTask);
+router.post('/', hasPermission('task', 'createOwn'), TaskController.createTask);
 
 router.get(
   '/performance',
@@ -23,7 +23,7 @@ router.get(
 router.get(
   '/:id',
   validateObjectId('id'),
-  hasPermission('task', 'readAny'),
+  hasPermission('task', 'readOwn'),
   TaskController.getTaskById
 );
 
@@ -34,14 +34,14 @@ router.get('/', hasPermission('task', 'readAny'), TaskController.getTasks);
 router.put(
   '/:id',
   validateObjectId('id'),
-  hasPermission('task', 'updateAny'),
+  hasPermission('task', 'updateOwn'),
   TaskController.updateTask
 );
 
 // Delete multiple Tasks
 router.delete(
   '/bulk',
-  hasPermission('task', 'deleteAny'),
+  hasPermission('task', 'deleteOwn'),
   TaskController.bulkDeleteTasks
 );
 
@@ -49,7 +49,7 @@ router.delete(
 router.delete(
   '/:id',
   validateObjectId('id'),
-  hasPermission('task', 'deleteAny'),
+  hasPermission('task', 'deleteOwn'),
   TaskController.deleteTask
 );
 

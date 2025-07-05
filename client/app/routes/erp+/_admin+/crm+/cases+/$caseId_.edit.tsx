@@ -1,16 +1,12 @@
 import { Save } from 'lucide-react';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   data as dataResponse,
 } from '@remix-run/node';
 
-import {
-  createCaseService,
-  getCaseServiceById,
-  updateCaseService,
-} from '~/services/case.server';
+import { getCaseServiceById, updateCaseService } from '~/services/case.server';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import CaseDetailForm from './_components/CaseDetailForm';
@@ -20,9 +16,16 @@ import { ICaseServiceUpdate } from '~/interfaces/case.interface';
 import { CASE_SERVICE } from '~/constants/caseService.constant';
 import { useMemo } from 'react';
 import { generateFormId } from '~/utils';
+import { canAccessCaseServices } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+  if (!canAccessCaseServices(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   // Fetch case service data based on case ID
   const caseId = params.caseId;
   if (!caseId) {

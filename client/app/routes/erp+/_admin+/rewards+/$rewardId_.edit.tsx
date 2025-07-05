@@ -3,7 +3,7 @@ import {
   LoaderFunctionArgs,
   data as dataResponse,
 } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useMemo } from 'react';
 
 import RewardDetailForm from './_components/RewardDetailForm';
@@ -13,9 +13,16 @@ import { getRewardById, updateReward } from '~/services/reward.server';
 import { isAuthenticated } from '~/services/auth.server';
 import { IRewardUpdate } from '~/interfaces/reward.interface';
 import { generateFormId } from '~/utils';
+import { canAccessRewardManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
+
+  if (!canAccessRewardManagement(auth?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const rewardId = params.rewardId as string;
   if (!rewardId) {

@@ -4,6 +4,12 @@ import { IListResponse } from '~/interfaces/response.interface';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import { IAttendance } from '~/interfaces/attendance.interface';
+import { getEmployeesPerformance, getMyTasks } from './task.server';
+import { getEmployees } from './employee.server';
+import {
+  getTodayAttendance,
+  getTodayAttendanceStats,
+} from './attendance.server';
 
 export interface IDashboardStats {
   totalEmployees: number;
@@ -43,33 +49,20 @@ const getDashboardStats = async (
 ): Promise<IDashboardStats> => {
   try {
     // Lấy số lượng nhân viên
-    const employeesResponse = await fetcher<IListResponse<IEmployee>>(
-      '/employees?limit=1',
-      {
-        request,
-      },
-    );
+    const employeesResponse = await getEmployees({}, { limit: 1 }, request);
 
     // Lấy thống kê công việc
-    const tasksResponse = await fetcher<IListResponse<ITask>>(
-      '/tasks?limit=1',
-      {
-        request,
-      },
-    );
+    const tasksResponse = await getMyTasks({}, { limit: 1 }, request);
 
     // Lấy dữ liệu hiệu suất công việc
-    const performanceResponse = await fetcher('/tasks/performance?limit=1', {
+    const performanceResponse = await getEmployeesPerformance(
+      {},
+      { limit: 1 },
       request,
-    });
+    );
 
     // Lấy thống kê chấm công hôm nay
-    const attendanceResponse = await fetcher<IAttendance[]>(
-      '/attendance/stats/today',
-      {
-        request,
-      },
-    );
+    const attendanceResponse = await getTodayAttendanceStats(request);
 
     // Tính toán thống kê cơ bản
     const totalEmployees = employeesResponse.pagination?.total || 0;

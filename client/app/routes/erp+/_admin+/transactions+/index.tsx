@@ -11,7 +11,6 @@ import {
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ITransaction } from '~/interfaces/transaction.interface';
-import { IListResponse } from '~/interfaces/response.interface';
 import {
   IActionFunctionReturn,
   IExportResponse,
@@ -22,9 +21,16 @@ import List from '~/components/List';
 import { formatDate, formatCurrency } from '~/utils';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import { Badge } from '~/components/ui/badge';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;

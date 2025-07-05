@@ -1,5 +1,10 @@
 import { LoaderFunctionArgs } from '@remix-run/node';
-import { useLoaderData, useSearchParams, Link } from '@remix-run/react';
+import {
+  useLoaderData,
+  useSearchParams,
+  Link,
+  useNavigate,
+} from '@remix-run/react';
 import {
   ArrowLeft,
   Clock,
@@ -140,10 +145,14 @@ export default function AttendanceDetail() {
     },
   ]);
 
+  const navigate = useNavigate();
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header with Back Button */}
-      <ContentHeader title='Chi tiết chấm công' />
+      <ContentHeader
+        title='Chi tiết chấm công'
+        backHandler={() => navigate('/erp/attendance')}
+      />
 
       {/* Employee Info Card */}
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>

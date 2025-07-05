@@ -18,9 +18,16 @@ import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { toast } from 'react-toastify';
 import { Badge } from '~/components/ui/badge';
+import { canAccessDocumentManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessDocumentManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;

@@ -26,11 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return redirect('/erp/login' + `?redirect=${url.pathname}`);
     }
 
-    if (
-      !url.pathname.includes('/erp/nhan-vien') &&
-      !['admin'].includes(user.usr_role.slug)
-    )
-      return redirect('/erp/nhan-vien');
+    return {};
   } catch (error) {
     console.log(error);
     // delete keyToken in database
