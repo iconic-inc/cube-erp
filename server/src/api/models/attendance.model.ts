@@ -1,9 +1,8 @@
-import { Schema, model, Types, Model } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import { ATTENDANCE, USER } from '../constants';
 import {
   IAttendanceCreate,
   IAttendanceModel,
-  IAttendance,
   IAttendanceDocument,
 } from '../interfaces/attendance.interface';
 

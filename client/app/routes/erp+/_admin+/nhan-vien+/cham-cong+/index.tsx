@@ -5,20 +5,25 @@ import { isAuthenticated } from '~/services/auth.server';
 import {
   checkIn,
   checkOut,
-  getLast7DaysStats,
   getLast7DaysStatsForEmployee,
   getTodayAttendanceForEmployee,
 } from '~/services/attendance.server';
+import {
+  createAttendanceRequest,
+  getMyAttendanceRequests,
+} from '~/services/attendanceRequest.server';
+import { getOfficeIPs } from '~/services/officeIP.server';
 import Defer from '~/components/Defer';
 import AttendanceLog from '~/components/AttendanceLog';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
 import CheckInOutSection from './_components/CheckInOutSection';
+import MyAttendanceRequestList from './_components/MyAttendanceRequestList';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
   let ipAddress = getClientIPAddress(request);
-  // console.log(ipAddress);
+
   if (['production'].includes(process.env.NODE_ENV as string)) {
     if (!ipAddress) {
       return data(
@@ -37,6 +42,65 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   switch (request.method) {
     case 'POST': {
       const body = await request.formData();
+      const action = body.get('action') as string;
+
+      // Handle attendance request creation
+      if (action === 'create-attendance-request') {
+        const fingerprint = (body.get('fingerprint') as string) || '';
+        const message = body.get('message') as string;
+        const type = body.get('type') as string;
+
+        if (!message?.trim()) {
+          return data(
+            {
+              toast: {
+                type: 'error',
+                message: 'Vui lòng nhập lý do yêu cầu chấm công',
+              },
+              status: 400,
+            },
+            { headers },
+          );
+        }
+
+        try {
+          await createAttendanceRequest(
+            {
+              fingerprint,
+              ip: ipAddress!,
+              date: new Date().toISOString().split('T')[0],
+              message: message.trim(),
+              checkInTime:
+                type === 'check-in' ? new Date().toISOString() : undefined,
+              checkOutTime:
+                type === 'check-out' ? new Date().toISOString() : undefined,
+            },
+            session!,
+          );
+
+          return data(
+            {
+              toast: {
+                type: 'success',
+                message: 'Yêu cầu chấm công đã được gửi thành công!',
+              },
+            },
+            { headers },
+          );
+        } catch (error: any) {
+          return data(
+            {
+              toast: {
+                type: 'error',
+                message: error.message || 'Có lỗi xảy ra khi gửi yêu cầu!',
+              },
+            },
+            { headers },
+          );
+        }
+      }
+
+      // Handle regular check-in/check-out
       const type = body.get('type') || 'check-in';
       const fingerprint = (body.get('fingerprint') as string) || '';
       const longitude = parseFloat(body.get('longitude') as string) || 106;
@@ -50,6 +114,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
           { headers },
         );
+      }
+
+      // Check if IP is in allowed list
+      try {
+        const officeIPs = await getOfficeIPs(session!);
+        const allowedIPs = officeIPs.map((ip: any) => ip.ip_address);
+
+        if (!allowedIPs.includes(ipAddress)) {
+          return data(
+            {
+              ipNotAllowed: true,
+              type,
+              fingerprint,
+              ipAddress,
+              toast: {
+                type: 'warning',
+                message:
+                  'IP không được phép. Bạn có muốn tạo yêu cầu chấm công?',
+              },
+            },
+            { headers },
+          );
+        }
+      } catch (error) {
+        console.error('Error checking office IPs:', error);
+        // Continue with regular flow if IP check fails
       }
 
       const attendanceData = {
@@ -121,12 +211,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       message: (e.message as string) || 'Có lỗi khi lấy dữ liệu',
     };
   });
+  const attendanceRequests = getMyAttendanceRequests(user!).catch((e) => {
+    console.error('Error fetching attendance requests:', e);
+    return {
+      success: false,
+      message: (e.message as string) || 'Có lỗi khi lấy dữ liệu',
+    };
+  });
 
-  return { attendanceStats, todayAttendance };
+  return { attendanceStats, todayAttendance, attendanceRequests };
 };
 
 export default function EmployeeAttendance() {
-  const { attendanceStats, todayAttendance } = useLoaderData<typeof loader>();
+  const { attendanceStats, todayAttendance, attendanceRequests } =
+    useLoaderData<typeof loader>();
 
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
@@ -141,6 +239,10 @@ export default function EmployeeAttendance() {
         {/* Attendance Statistics */}
         <Defer resolve={attendanceStats}>
           {(data) => <AttendanceLog attendanceStats={data} />}
+        </Defer>
+
+        <Defer resolve={attendanceRequests}>
+          {(data) => <MyAttendanceRequestList attendanceRequests={data} />}
         </Defer>
       </div>
     </div>

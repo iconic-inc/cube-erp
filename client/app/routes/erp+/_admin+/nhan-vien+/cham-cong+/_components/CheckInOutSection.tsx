@@ -9,6 +9,7 @@ import { Clock } from 'lucide-react';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IAttendanceBrief } from '~/interfaces/attendance.interface';
 import { isResolveError } from '~/lib';
+import AttendanceRequestDialog from './AttendanceRequestDialog';
 
 export default function CheckInOutSection({
   todayAttendance,
@@ -20,6 +21,27 @@ export default function CheckInOutSection({
   const [loading, setLoading] = useState(false);
   const fetcher = useFetcher();
   const toastIdRef = useRef<any>(null);
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [type, setType] = useState<'check-in' | 'check-out' | null>(null);
+
+  const handleCreateRequest = (message: string) => {
+    if (!type) return;
+
+    const formData = new FormData();
+    formData.append('action', 'create-attendance-request');
+    formData.append('type', type);
+    formData.append('fingerprint', fingerprint);
+    formData.append('message', message.trim());
+
+    fetcher.submit(formData, { method: 'post' });
+    setShowRequestDialog(false);
+    setType(null);
+  };
+
+  const handleCloseDialog = () => {
+    setShowRequestDialog(false);
+    setType(null);
+  };
 
   useEffect(() => {
     // Initialize fingerprint
@@ -47,36 +69,41 @@ export default function CheckInOutSection({
   }, [todayAttendance]);
 
   useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Đang xử lý...', {
-          autoClose: false,
-        });
-        setLoading(true);
-        break;
+    if (
+      fetcher.data &&
+      typeof fetcher.data === 'object' &&
+      'toast' in fetcher.data &&
+      toastIdRef.current
+    ) {
+      const { toast: toastData } = fetcher.data as any;
+      toast.update(toastIdRef.current, {
+        render: toastData.message,
+        type: toastData.type || 'success',
+        autoClose: 3000,
+        isLoading: false,
+      });
+      toastIdRef.current = null;
+      setLoading(false);
 
-      case 'idle':
-        if (
-          fetcher.data &&
-          typeof fetcher.data === 'object' &&
-          'toast' in fetcher.data &&
-          toastIdRef.current
-        ) {
-          const { toast: toastData } = fetcher.data as any;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success',
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-          setLoading(false);
-        } else if (toastIdRef.current) {
-          toast.dismiss(toastIdRef.current);
-          toastIdRef.current = null;
-          setLoading(false);
-        }
-        break;
+      if ('ipNotAllowed' in fetcher.data) {
+        const data = fetcher.data as any;
+        setType(data.type);
+        setShowRequestDialog(true);
+      }
+    } else if (toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+      setLoading(false);
+    }
+  }, [fetcher.data]);
+
+  useEffect(() => {
+    if (fetcher.state === 'submitting') {
+      setLoading(true);
+      toastIdRef.current = toast.loading('Đang xử lý...');
+    } else if (fetcher.state === 'idle' && toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
     }
   }, [fetcher.state]);
 
@@ -116,6 +143,13 @@ export default function CheckInOutSection({
           <input type='hidden' name='fingerprint' value={fingerprint} />
         </fetcher.Form>
       </CardContent>
+
+      {/* Attendance Request Dialog */}
+      <AttendanceRequestDialog
+        isOpen={showRequestDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleCreateRequest}
+      />
     </Card>
   );
 }
