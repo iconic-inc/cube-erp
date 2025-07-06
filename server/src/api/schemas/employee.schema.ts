@@ -70,7 +70,6 @@ export const employeeCreateSchema = z
 export const employeeUpdateSchema = z
   .object({
     ...employeeBaseSchema,
-    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').optional(),
   })
   .partial() // Makes all fields optional for update
   .refine(

@@ -15,7 +15,7 @@ Updated the permission utility to use role-based checks instead of complex grant
 
 Each route now defines allowed roles explicitly:
 
-**Case Services** (`/erp/nhan-vien/case-services`):
+**Case Services** (`/erp/cases`):
 
 - ✅ Allowed roles: `['admin', 'attorney', 'specialist']`
 - ✅ Create permissions: `['admin', 'attorney']`

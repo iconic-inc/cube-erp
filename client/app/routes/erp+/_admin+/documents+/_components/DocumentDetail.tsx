@@ -167,7 +167,7 @@ export default function DocumentDetail({
                           onClick={() => handleDownload(document)}
                           className='bg-green-600 hover:bg-green-700 text-white'
                         >
-                          <Download className='w-3 h-3 mr-1' />
+                          <Download />
                           {downloaded ? 'Đã tải!' : 'Tải'}
                         </Button>
                       </div>
@@ -291,17 +291,16 @@ export default function DocumentDetail({
                   onClick={() => handleDownload(document)}
                   className='inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
                 >
-                  <Download className='w-4 h-4 mr-2' />
+                  <Download />
                   {downloaded ? 'Đã tải xuống!' : 'Tải xuống'}
                 </Button>
 
-                <Link
-                  to='/erp/documents'
-                  className='inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
-                >
-                  <ArrowLeft className='w-4 h-4 mr-2' />
-                  Quay lại danh sách
-                </Link>
+                <Button asChild variant={'secondary'}>
+                  <Link to='/erp/documents'>
+                    <ArrowLeft />
+                    Quay lại danh sách
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

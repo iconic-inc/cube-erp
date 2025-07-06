@@ -1,18 +1,11 @@
-import { useLoaderData, useFetcher, Link } from '@remix-run/react';
-import {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  data as dataResponse,
-} from '@remix-run/node';
+import { useFetcher, Link } from '@remix-run/react';
+import { ActionFunctionArgs, data as dataResponse } from '@remix-run/node';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Save } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
 
 import { isAuthenticated } from '~/services/auth.server';
 import HandsomeError from '~/components/HandsomeError';
-import { getCurrentUser, updateUser } from '~/services/user.server';
-import { parseAuthCookie } from '~/services/cookie.server';
 import { formatDate, generateFormId } from '~/utils';
 import ContentHeader from '~/components/ContentHeader';
 import {
@@ -32,19 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import ImageInput from '~/components/ImageInput';
-import { IImage } from '~/interfaces/image.interface';
+import { useERPLoaderData } from '~/lib';
+import { updateMyEmployee } from '~/services/employee.server';
 import { DatePicker } from '~/components/ui/date-picker';
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const auth = await parseAuthCookie(request);
-
-  const user = await getCurrentUser(auth!);
-  return {
-    user,
-  };
-};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
@@ -55,11 +38,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
-
-    // Extract ID
-    const id = data.id as string;
-    delete data.id;
-
     // Prepare update data
     const updateData = {
       firstName: data.firstName as string,
@@ -71,10 +49,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       birthdate: data.birthdate as string,
       username: data.username as string,
       password: data.password as string,
-      avatar: data.avatar as string,
+      // avatar: data.avatar as string,
     };
 
-    const updatedEmployee = await updateUser(auth?.user.id, updateData, auth!);
+    const updatedEmployee = await updateMyEmployee(updateData, auth!);
     return dataResponse(
       {
         employee: updatedEmployee,
@@ -94,16 +72,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function HRMProfile() {
-  const { user } = useLoaderData<typeof loader>();
+  const { employee } = useERPLoaderData();
+  const user = employee?.emp_user;
   const fetcher = useFetcher<typeof action>();
   const toastIdRef = useRef<any>(null);
 
   const formId = useMemo(() => generateFormId('admin-profile-form'), []);
 
   // Form state
-  const [avatar, setAvatar] = useState<IImage>(
-    user?.usr_avatar || ({} as IImage),
-  );
+  // const [avatar, setAvatar] = useState<IImage>(
+  //   user?.usr_avatar || ({} as IImage),
+  // );
   const [username, setUsername] = useState(user?.usr_username || '');
   const [firstName, setFirstName] = useState(user?.usr_firstName || '');
   const [lastName, setLastName] = useState(user?.usr_lastName || '');
@@ -111,10 +90,20 @@ export default function HRMProfile() {
   const [msisdn, setMsisdn] = useState(user?.usr_msisdn || '');
   const [address, setAddress] = useState(user?.usr_address || '');
   const [birthdate, setBirthdate] = useState(
-    new Date(user.usr_birthdate || Date.now()),
+    new Date(user?.usr_birthdate || Date.now()),
   );
   const [sex, setSex] = useState(user?.usr_sex || '');
   const [password, setPassword] = useState('');
+
+  // Status from user data (read-only for profile)
+  const status = user?.usr_status || 'active';
+
+  // Options
+  const sexOptions = [
+    { value: 'male', label: 'Nam' },
+    { value: 'female', label: 'Nữ' },
+    { value: 'other', label: 'Khác' },
+  ];
 
   // State management
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -129,13 +118,11 @@ export default function HRMProfile() {
       msisdn !== user?.usr_msisdn ||
       address !== user?.usr_address ||
       formatDate(birthdate) !==
-        (user?.usr_birthdate
-          ? formatDate(new Date(user.usr_birthdate))
-          : formatDate(new Date())) ||
+        formatDate(new Date(user?.usr_birthdate || Date.now())) ||
       sex !== user?.usr_sex ||
       password !== '' ||
-      username !== user?.usr_username ||
-      avatar.id !== user?.usr_avatar?.id;
+      username !== user?.usr_username;
+    // avatar.id !== user?.usr_avatar?.id;
 
     setIsChanged(hasChanged);
   }, [
@@ -148,7 +135,6 @@ export default function HRMProfile() {
     sex,
     password,
     username,
-    avatar.id,
     user,
   ]);
 
@@ -189,11 +175,8 @@ export default function HRMProfile() {
     const formData = new FormData(e.currentTarget);
 
     // Add user ID
-    formData.append('id', user.id);
-
-    // Add avatar if changed
-    if (avatar.id && avatar.id !== user?.usr_avatar?.id) {
-      formData.append('avatar', avatar.id);
+    if (user?.id) {
+      formData.append('id', user.id);
     }
 
     toastIdRef.current = toast.loading('Đang cập nhật...');
@@ -249,47 +232,15 @@ export default function HRMProfile() {
       <fetcher.Form id={formId} method='PUT' onSubmit={handleSubmit}>
         <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
           <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-            <CardTitle className='text-white text-3xl font-bold flex items-center space-x-4'>
-              {/* <Avatar className='h-16 w-16 border-4 border-white'>
-                <AvatarImage
-                  src={avatar?.img_url || user?.usr_avatar?.img_url}
-                  alt={`${firstName} ${lastName} Avatar`}
-                />
-                <AvatarFallback className='text-blue-900 text-xl font-bold'>
-                  {firstName?.[0]}
-                  {lastName?.[0]}
-                </AvatarFallback>
-              </Avatar> */}
-              <div>
-                <div>
-                  {firstName} {lastName}
-                </div>
-                <div className='text-blue-100 text-lg font-normal'>
-                  @{username}
-                </div>
-              </div>
+            <CardTitle className='text-white text-3xl font-bold'>
+              {employee?.emp_code || 'Hồ sơ cá nhân'}
             </CardTitle>
           </CardHeader>
 
           <CardContent className='p-6 space-y-6'>
-            {/* Avatar Upload */}
-            {/* <div>
-              <Label className='text-gray-700 font-semibold mb-2 block'>
-                Ảnh đại diện
-              </Label>
-              <ImageInput
-                value={avatar}
-                onChange={(value) =>
-                  setAvatar(Array.isArray(value) ? value[0] : value)
-                }
-                name='avatar'
-                className='w-32 h-32 rounded-full'
-              />
-            </div> */}
-
             {/* Personal Information */}
-            <div>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2'>
+            <div className='space-y-4'>
+              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
                 Thông tin cá nhân
               </h3>
 
@@ -304,11 +255,11 @@ export default function HRMProfile() {
                   <Input
                     id='firstName'
                     name='firstName'
+                    type='text'
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className='bg-white border-gray-300'
                     placeholder='Nhập tên'
-                    required
+                    className={errors.firstName ? 'border-red-500' : ''}
                   />
                   {errors.firstName && (
                     <p className='text-red-500 text-sm mt-1'>
@@ -327,11 +278,11 @@ export default function HRMProfile() {
                   <Input
                     id='lastName'
                     name='lastName'
+                    type='text'
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className='bg-white border-gray-300'
                     placeholder='Nhập họ'
-                    required
+                    className={errors.lastName ? 'border-red-500' : ''}
                   />
                   {errors.lastName && (
                     <p className='text-red-500 text-sm mt-1'>
@@ -353,9 +304,8 @@ export default function HRMProfile() {
                     type='email'
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className='bg-white border-gray-300'
                     placeholder='Nhập email'
-                    required
+                    className={errors.email ? 'border-red-500' : ''}
                   />
                   {errors.email && (
                     <p className='text-red-500 text-sm mt-1'>{errors.email}</p>
@@ -367,7 +317,7 @@ export default function HRMProfile() {
                     htmlFor='msisdn'
                     className='text-gray-700 font-semibold mb-2 block'
                   >
-                    Số điện thoại
+                    Số điện thoại <span className='text-red-500'>*</span>
                   </Label>
                   <Input
                     id='msisdn'
@@ -375,9 +325,12 @@ export default function HRMProfile() {
                     type='tel'
                     value={msisdn}
                     onChange={(e) => setMsisdn(e.target.value)}
-                    className='bg-white border-gray-300'
                     placeholder='Nhập số điện thoại'
+                    className={errors.msisdn ? 'border-red-500' : ''}
                   />
+                  {errors.msisdn && (
+                    <p className='text-red-500 text-sm mt-1'>{errors.msisdn}</p>
+                  )}
                 </div>
 
                 <div>
@@ -391,7 +344,7 @@ export default function HRMProfile() {
                     id='birthdate'
                     name='birthdate'
                     initialDate={birthdate}
-                    onChange={(value) => setBirthdate(value)}
+                    onChange={(e) => setBirthdate(e)}
                   />
                 </div>
 
@@ -402,44 +355,40 @@ export default function HRMProfile() {
                   >
                     Giới tính
                   </Label>
-                  <Select name='sex' value={sex} onValueChange={setSex}>
+                  <Select value={sex} onValueChange={setSex}>
                     <SelectTrigger>
                       <SelectValue placeholder='Chọn giới tính' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='male'>Nam</SelectItem>
-                      <SelectItem value='female'>Nữ</SelectItem>
-                      <SelectItem value='other'>Khác</SelectItem>
+                      {sexOptions.map((sexOption) => (
+                        <SelectItem
+                          key={sexOption.value}
+                          value={sexOption.value}
+                        >
+                          {sexOption.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className='mt-6'>
-                <Label
-                  htmlFor='address'
-                  className='text-gray-700 font-semibold mb-2 block'
-                >
-                  Địa chỉ
-                </Label>
-                <Input
-                  id='address'
-                  name='address'
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className='bg-white border-gray-300'
-                  placeholder='Nhập địa chỉ'
-                />
-              </div>
-            </div>
+                <div className='col-span-2'>
+                  <Label
+                    htmlFor='address'
+                    className='text-gray-700 font-semibold mb-2 block'
+                  >
+                    Địa chỉ
+                  </Label>
+                  <Input
+                    id='address'
+                    name='address'
+                    type='text'
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder='Nhập địa chỉ'
+                  />
+                </div>
 
-            {/* Account Information */}
-            <div className='border-t border-gray-200 pt-6'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2'>
-                Thông tin tài khoản
-              </h3>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
                   <Label
                     htmlFor='username'
@@ -450,11 +399,11 @@ export default function HRMProfile() {
                   <Input
                     id='username'
                     name='username'
+                    type='text'
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className='bg-white border-gray-300'
                     placeholder='Nhập tên đăng nhập'
-                    required
+                    className={errors.username ? 'border-red-500' : ''}
                   />
                   {errors.username && (
                     <p className='text-red-500 text-sm mt-1'>
@@ -468,7 +417,7 @@ export default function HRMProfile() {
                     htmlFor='password'
                     className='text-gray-700 font-semibold mb-2 block'
                   >
-                    Mật khẩu mới (Tùy chọn)
+                    Mật khẩu mới
                   </Label>
                   <Input
                     id='password'
@@ -476,46 +425,117 @@ export default function HRMProfile() {
                     type='password'
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className='bg-white border-gray-300'
-                    placeholder='Nhập mật khẩu mới'
+                    placeholder='Để trống nếu không thay đổi'
                   />
-                  {password && (
-                    <p className='text-gray-500 text-sm mt-1'>
-                      Để trống nếu không muốn thay đổi mật khẩu
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
+
+            {/* Employee Information (Read-only) */}
+            <div className='space-y-4'>
+              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                Thông tin nhân viên
+              </h3>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div>
+                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                    Mã nhân viên
+                  </Label>
+                  <Input
+                    value={employee?.emp_code || ''}
+                    readOnly
+                    className='bg-gray-100 cursor-not-allowed'
+                  />
+                </div>
+
+                <div>
+                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                    Phòng ban
+                  </Label>
+                  <Input
+                    value={employee?.emp_department || ''}
+                    readOnly
+                    className='bg-gray-100 cursor-not-allowed'
+                  />
+                </div>
+
+                <div>
+                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                    Chức vụ
+                  </Label>
+                  <Input
+                    value={employee?.emp_position || ''}
+                    readOnly
+                    className='bg-gray-100 cursor-not-allowed'
+                  />
+                </div>
+
+                <div>
+                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                    Trạng thái
+                  </Label>
+                  <Input
+                    value={
+                      status === 'active' ? 'Hoạt động' : 'Không hoạt động'
+                    }
+                    readOnly
+                    className='bg-gray-100 cursor-not-allowed'
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Avatar Section */}
+            {/* <div className='space-y-4'>
+              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                Ảnh đại diện
+              </h3>
+
+              <div className='flex flex-col items-center space-y-4'>
+                <Avatar className='w-24 h-24'>
+                  <AvatarImage
+                    src={avatar?.img_url || user?.usr_avatar?.img_url}
+                    alt='Avatar'
+                  />
+                  <AvatarFallback>
+                    {firstName?.[0]?.toUpperCase()}
+                    {lastName?.[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                <ImageInput
+                  name='avatar'
+                  value={avatar}
+                  onChange={(e) => setAvatar(e as IImage)}
+                  className='w-full max-w-md'
+                />
+              </div>
+            </div> */}
           </CardContent>
 
-          <CardFooter className='bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200'>
-            <Link
-              to='/erp'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
-            >
-              <span className='material-symbols-outlined text-sm mr-1'>
-                keyboard_return
-              </span>
-              Trở về Trang chủ
-            </Link>
+          <CardFooter>
+            <div className='w-full flex justify-between items-center'>
+              <Link
+                to='/erp'
+                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              >
+                <span className='material-symbols-outlined text-sm mr-1'>
+                  keyboard_return
+                </span>
+                Trở về Trang chủ
+              </Link>
 
-            <Button
-              type='submit'
-              disabled={!isChanged || fetcher.state === 'submitting'}
-            >
-              {fetcher.state === 'submitting' ? (
-                <>
-                  <span className='animate-spin mr-2'>⏳</span>
-                  <span>Đang lưu...</span>
-                </>
-              ) : (
-                <>
-                  <Save className='w-4 h-4 mr-2' />
-                  <span>Lưu thay đổi</span>
-                </>
-              )}
-            </Button>
+              <Button
+                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                type='submit'
+                form={formId}
+                disabled={!isChanged}
+              >
+                <Save className='w-4 h-4 mr-2' />
+                Cập nhật hồ sơ
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </fetcher.Form>

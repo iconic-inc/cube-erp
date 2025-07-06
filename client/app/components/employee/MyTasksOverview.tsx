@@ -108,7 +108,7 @@ export default function MyTasksOverview({
             >
               <div className='flex items-start justify-between mb-2'>
                 <Link
-                  to={`/erp/nhan-vien/tasks/${task.id}`}
+                  to={`/erp/tasks/${task.id}`}
                   className='font-medium text-sm hover:text-red-900 transition-colors flex-1 mr-2'
                 >
                   {task.tsk_name}

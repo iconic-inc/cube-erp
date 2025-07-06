@@ -1393,7 +1393,7 @@ const getMyPerformance = async (userId: string, query: any = {}) => {
 
   return await getEmployeesPerformance({
     ...query,
-    employeeIds: [employee._id.toString()],
+    employeeIds: [employee.id],
     sortBy: query.sortBy || 'performanceScore',
     sortOrder: query.sortOrder || 'desc',
     limit: query.limit || 10,
