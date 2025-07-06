@@ -51,9 +51,17 @@ import TextAreaInput from '~/components/TextAreaInput';
 import TextInput from '~/components/TextInput';
 import NumericInput from '~/components/NumericInput';
 import TextRenderer from '~/components/TextRenderer';
+import { canAccessRewardManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessRewardManagement(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   if (!session) {
     throw new Response('Unauthorized', { status: 401 });
   }
@@ -268,7 +276,7 @@ export default function RewardDetail() {
   }, [fetcher.data]);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Quỹ Thưởng'
         backHandler={() => navigate('/erp/rewards')}
@@ -285,7 +293,7 @@ export default function RewardDetail() {
 
       {/* Reward Details Card */}
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6 rounded-t-xl'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
           <div className='flex items-center space-x-4'>
             <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
               <Coins className='h-8 w-8' />

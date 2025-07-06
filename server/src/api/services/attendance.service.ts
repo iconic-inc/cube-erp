@@ -30,19 +30,19 @@ const checkIn = async (data: ICheckInData) => {
   console.log('Processing check-in for user:', data.userId);
 
   // Validate input data
-  if (!data.fingerprint) {
-    throw new BadRequestError('Fingerprint is required');
-  }
+  // if (!data.fingerprint) {
+  //   throw new BadRequestError('Fingerprint is required');
+  // }
 
   if (!data.ip) {
-    throw new BadRequestError('IP address is required');
+    throw new BadRequestError('Không tìm thấy địa chỉ IP. Vui lòng thử lại.');
   }
 
   const officeIPs = await getAllOfficeIPAddresses();
   const ipAddresses = officeIPs.map((ip) => ip.ipAddress);
 
   if (!ipAddresses.includes(data.ip)) {
-    throw new BadRequestError('Please use the company wifi to check in.');
+    throw new BadRequestError('Vui lòng sử dụng wifi công ty để chấm công.');
   }
 
   const employee = await getEmployeeByUserId(data.userId);
@@ -107,7 +107,7 @@ const checkOut = async (data: ICheckInData) => {
   const attendance = await AttendanceModel.findOneAndUpdate(
     {
       employee: employee.id,
-      fingerprint: data.fingerprint,
+      // fingerprint: data.fingerprint,
       date: today,
     },
     {
@@ -118,7 +118,9 @@ const checkOut = async (data: ICheckInData) => {
     }
   );
   if (!attendance) {
-    throw new BadRequestError('No attendance record found');
+    throw new BadRequestError(
+      'Không tìm thấy bản ghi chấm công. Vui lòng điểm danh trước hoặc sử dụng đúng trình duyệt đã điểm danh trước đó.'
+    );
   }
 
   console.log('Attendance record updated:', attendance);

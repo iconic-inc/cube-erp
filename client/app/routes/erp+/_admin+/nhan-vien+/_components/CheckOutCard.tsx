@@ -37,8 +37,7 @@ export default function CheckOutCard({
         <p className='text-sm text-gray-500 mb-4'>Kết thúc ngày làm việc</p>
 
         <Button
-          color='orange'
-          className='w-full'
+          className='w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white'
           disabled={isDisabled}
           type='submit'
           name='type'

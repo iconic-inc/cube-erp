@@ -1,8 +1,7 @@
-import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
+import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 
 import ContentHeader from '~/components/ContentHeader';
-import { isAuthenticated } from '~/services/auth.server';
 import {
   getAttendanceQR,
   getTodayAttendanceStats,
@@ -10,7 +9,7 @@ import {
 import Defer from '~/components/Defer';
 import ManageNetwork from '~/components/ManageNetwork';
 import ManageQRCode from '~/components/ManageQRCode';
-import { createOfficeIP, getOfficeIPs } from '~/services/officeIP.server';
+import { getOfficeIPs } from '~/services/officeIP.server';
 import EmployeeAttendanceList from '~/components/EmployeeAttendanceList';
 import { parseAuthCookie } from '~/services/cookie.server';
 
@@ -36,7 +35,7 @@ export default function IndexAttendance() {
   const { qrcode, officeIPs, attendanceStats } = useLoaderData<typeof loader>();
 
   return (
-    <div className='space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader title='Chấm công' />
 

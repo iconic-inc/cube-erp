@@ -8,9 +8,17 @@ import ContentHeader from '~/components/ContentHeader';
 import EmployeeDetail from './_components/EmployeeDetail';
 import EmployeeAttendanceList from './_components/EmployeeAttendanceList';
 import { Pen } from 'lucide-react';
+import { canAccessEmployeeManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessEmployeeManagement(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   const employeeId = params.employeeId;
 
   if (!employeeId) {
@@ -52,7 +60,7 @@ export default function EmployeeDetails() {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Nhân viên'
         actionContent={
@@ -64,6 +72,7 @@ export default function EmployeeDetails() {
         actionHandler={() => {
           navigate(`./edit`);
         }}
+        backHandler={() => navigate('/erp/employees')}
       />
 
       {/* Employee Details Card */}

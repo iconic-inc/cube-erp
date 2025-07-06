@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   bulkDeleteEmployees,
@@ -19,9 +20,17 @@ import {
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { Badge } from '~/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
+import { canAccessEmployeeManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessEmployeeManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;
@@ -77,9 +86,28 @@ export default function HRMEmployees() {
       render: (item) => (
         <Link
           to={`/erp/employees/${item.id}`}
-          className='text-blue-600 hover:underline block w-full h-full'
+          className='text-blue-600 hover:underline flex'
         >
-          {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
+          <Avatar className='w-8 h-8 mr-2'>
+            <AvatarImage
+              src={
+                item.emp_user.usr_avatar?.img_url ||
+                '/assets/avatar-placeholder.png'
+              }
+              alt={`${item.emp_user.usr_firstName} ${item.emp_user.usr_lastName}`}
+            />
+            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold'>
+              {item.emp_user.usr_firstName?.charAt(0).toUpperCase() || 'N/A'}
+            </AvatarFallback>
+          </Avatar>
+          <div className='flex flex-col'>
+            <span>
+              {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
+            </span>
+            <span className='text-gray-500 text-sm truncate'>
+              {item.emp_code || 'Chưa có mã'}
+            </span>
+          </div>
         </Link>
       ),
     },
@@ -143,21 +171,18 @@ export default function HRMEmployees() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Nhân viên'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm Nhân viên
           </>
         }
         actionHandler={() => navigate('/erp/employees/new')}
       />
-
-      {/* Employee Stats */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'></div>
 
       <List<IEmployee>
         itemsPromise={employeesPromise}
@@ -167,7 +192,7 @@ export default function HRMEmployees() {
         exportable
         name='Nhân viên'
       />
-    </>
+    </div>
   );
 }
 
@@ -264,7 +289,7 @@ export const action = async ({
             success: true,
             toast: {
               type: 'success',
-              message: `Đã xuất dữ liệu Nhân sự thành công!`,
+              message: `Đã xuất dữ liệu Nhân viên thành công!`,
             },
             data: {
               fileUrl: fileData.fileUrl,

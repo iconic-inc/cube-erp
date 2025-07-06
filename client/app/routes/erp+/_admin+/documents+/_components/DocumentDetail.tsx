@@ -84,7 +84,7 @@ export default function DocumentDetail({
 
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-            <CardHeader className='bg-gradient-to-r from-amber-500 to-yellow-500 text-white py-6 rounded-t-xl'>
+            <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
               <div className='flex items-center space-x-4'>
                 <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
                   <FileText className='w-8 h-8 text-white' />
@@ -165,7 +165,7 @@ export default function DocumentDetail({
                         <Button
                           size='sm'
                           onClick={() => handleDownload(document)}
-                          className='bg-amber-600 hover:bg-amber-700 text-white'
+                          className='bg-green-600 hover:bg-green-700 text-white'
                         >
                           <Download className='w-3 h-3 mr-1' />
                           {downloaded ? 'Đã tải!' : 'Tải'}
@@ -280,13 +280,12 @@ export default function DocumentDetail({
 
               {/* Actions */}
               <div className='flex flex-wrap gap-3 pt-4 border-t border-gray-200'>
-                <Link
-                  to='./edit'
-                  className='inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500'
-                >
-                  <Edit className='w-4 h-4 mr-2' />
-                  Chỉnh sửa tài liệu
-                </Link>
+                <Button asChild variant={'primary'}>
+                  <Link to='./edit'>
+                    <Edit className='w-4 h-4 mr-2' />
+                    Chỉnh sửa tài liệu
+                  </Link>
+                </Button>
 
                 <Button
                   onClick={() => handleDownload(document)}

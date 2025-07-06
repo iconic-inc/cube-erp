@@ -82,7 +82,7 @@ export default function CheckInOutSection({
 
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-green-600 to-emerald-700 text-white py-6'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6'>
         <div className='flex items-center space-x-4'>
           <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
             <Clock className='w-8 h-8 text-white' />

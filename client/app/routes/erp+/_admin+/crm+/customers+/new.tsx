@@ -1,16 +1,32 @@
-import { useState } from 'react';
-import { Link, useLocation, data as dataResponse } from '@remix-run/react';
+import { useLocation, data as dataResponse } from '@remix-run/react';
+import { Save } from 'lucide-react';
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { toast } from 'react-toastify';
 
-import { ActionFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { createCustomer } from '~/services/customer.server';
-import { toast } from 'react-toastify';
 import { ICustomerCreate } from '~/interfaces/customer.interface';
 import CustomerDetailForm from './_components/CustomerDetailForm';
-import { Button } from '~/components/ui/button';
+import ContentHeader from '~/components/ContentHeader';
+import { generateFormId } from '~/utils';
+import { useMemo } from 'react';
+import { parseAuthCookie } from '~/services/cookie.server';
+import { canAccessCustomerManagement } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await parseAuthCookie(request);
+
+  if (!canAccessCustomerManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
+  return {};
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session, headers } = await isAuthenticated(request);
@@ -67,30 +83,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       } catch (error: any) {
         console.error('Error creating customer:', error);
-        let errorText = error.message || 'Có lỗi xảy ra khi thêm Khách hàng';
-
-        if (error instanceof Response) {
-          // Nếu có lỗi từ server, trả về thông báo lỗi
-          errorText = await error.text();
-          console.error('Error response:', errorText);
-        }
-        let errorMessage = 'Có lỗi xảy ra khi thêm Khách hàng';
-
-        // Xử lý lỗi từ API
-        if (errorText.includes('Customer code already exists')) {
-          errorMessage = 'Mã nhân viên đã tồn tại';
-        } else if (errorText.includes('Email already exists')) {
-          errorMessage = 'Email đã tồn tại trong hệ thống';
-        } else if (errorText.includes('Phản hồi không hợp lệ')) {
-          errorMessage =
-            'Lỗi từ server: Phản hồi không hợp lệ. Vui lòng kiểm tra lại dữ liệu.';
-        } else if (errorText.includes('JSON')) {
-          errorMessage =
-            'Lỗi từ server: Không thể xử lý dữ liệu. Vui lòng kiểm tra lại.';
-        } else if (errorText.includes('Bad data')) {
-          errorMessage =
-            'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại định dạng dữ liệu.';
-        }
+        const errorMessage =
+          error.message || 'Có lỗi xảy ra khi thêm Khách hàng';
 
         return dataResponse(
           {
@@ -128,78 +122,29 @@ export default function NewCustomer() {
     toast[toastType](actionData.toast.message);
   }
 
+  const formId = useMemo(() => generateFormId('customer-detail-form'), []);
+
   return (
-    <>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-        <div className='flex items-center'>
-          <h1 className='text-xl font-semibold'>Thêm Khách hàng Mới</h1>
-          <div className='ml-3 text-gray-500 text-sm flex items-center'>
-            <a href='#' className='hover:text-blue-500 transition'>
-              Khách hàng
-            </a>
-            <span className='mx-2'>/</span>
-            <span>Khách hàng Mới</span>
-          </div>
-        </div>
-
-        <div className='flex space-x-2'>
-          <Button
-            className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'
-            onClick={() => {
-              if (confirm('Bạn có chắc chắn muốn hủy bỏ?')) {
-                if (window.history.length > 1) window.history.back();
-                else window.location.href = '/erp/crm/customers';
-              }
-            }}
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>
-              cancel
-            </span>
-            Hủy
-          </Button>
-
-          <Button
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
-            type='submit'
-            form='customer-detail-form'
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
+      <ContentHeader
+        title='Thêm Khách hàng mới'
+        actionContent={
+          <>
+            <Save className='inline mr-2' />
             Lưu Khách hàng
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        actionHandler={() => {
+          const form = document.getElementById(formId) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        }}
+      />
 
       {/* Form Container */}
-      <CustomerDetailForm formId='customer-detail-form' type='create' />
-
-      {/* Bottom Action Buttons */}
-      <div className='flex justify-between items-center mt-6'>
-        <Link
-          to='/erp/crm/customers'
-          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
-        >
-          <span className='material-symbols-outlined text-sm mr-1'>
-            keyboard_return
-          </span>
-          Trở về Danh sách
-        </Link>
-
-        <div className='flex space-x-2'>
-          {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Bản nháp
-          </button> */}
-          <Button
-            className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
-            type='submit'
-            form='customer-detail-form'
-          >
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Khách hàng
-          </Button>
-        </div>
-      </div>
-    </>
+      <CustomerDetailForm formId={formId} type='create' />
+    </div>
   );
 }

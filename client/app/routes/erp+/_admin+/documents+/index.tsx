@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useFetcher, useLoaderData } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   deleteMultipleDocuments,
@@ -17,9 +18,16 @@ import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { toast } from 'react-toastify';
 import { Badge } from '~/components/ui/badge';
+import { canAccessDocumentManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessDocumentManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;
@@ -170,7 +178,6 @@ export default function HRMDocuments() {
 
   useEffect(() => {
     if (uploadFetcher.data) {
-      console.log('Upload fetcher data:', uploadFetcher.data);
       if (uploadFetcher.data.success) {
         toastIdRef.current = toast.update(toastIdRef.current, {
           render: 'Tải lên thành công',
@@ -191,13 +198,13 @@ export default function HRMDocuments() {
   }, [uploadFetcher.data]);
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách tài liệu'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm tài liệu
           </>
         }

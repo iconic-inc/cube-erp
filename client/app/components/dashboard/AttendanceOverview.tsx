@@ -73,7 +73,6 @@ export default function AttendanceOverview({
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
   };
 
-  console.log(attendanceList);
   return (
     <Card className='h-full'>
       <CardHeader className='pb-4'>

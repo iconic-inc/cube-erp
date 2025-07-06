@@ -255,7 +255,7 @@ export default function TaskPerformancePage() {
   };
 
   return (
-    <div className='space-y-6 p-6 bg-background min-h-screen'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Hiệu suất nhân viên'

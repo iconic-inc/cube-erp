@@ -728,7 +728,7 @@ const exportEmployeesToXLSX = async (queryParams: any) => {
     // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Nhân sự');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Nhân viên');
 
     // Write to file
     XLSX.writeFile(workbook, filePath);

@@ -65,7 +65,7 @@ export default function EmployeeList({
                     type='checkbox'
                     className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500'
                   />
-                  Nhân sự
+                  Nhân viên
                 </div>
               </th>
 

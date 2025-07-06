@@ -18,7 +18,7 @@ import { Button } from '~/components/ui/button';
 import { getEmployees } from '~/services/employee.server';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
-import { CASE_SERVICE } from '../../../../../constants/caseService.constant';
+import { CASE_SERVICE } from '~/constants/caseService.constant';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -30,12 +30,19 @@ import {
 } from '~/components/ui/alert-dialog';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
+import { canAccessCaseServices } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessCaseServices(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const searchParams = url.searchParams;
@@ -175,7 +182,7 @@ export default function NewCase() {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-8'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm Hồ sơ mới'

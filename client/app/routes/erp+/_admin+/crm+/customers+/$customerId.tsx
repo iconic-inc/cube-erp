@@ -9,9 +9,17 @@ import CustomerDetail from './_components/CustomerDetail';
 import CustomerCaseServiceList from './_components/CustomerCaseServiceList';
 import CustomerTransactionList from './_components/CustomerTransactionList';
 import { Pen } from 'lucide-react';
+import { canAccessCustomerManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessCustomerManagement(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   // Fetch customer data based on customer ID
   const customerId = params.customerId;
   if (!customerId) {
@@ -66,7 +74,7 @@ export default function CustomerDetails() {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Khách hàng'
         actionContent={

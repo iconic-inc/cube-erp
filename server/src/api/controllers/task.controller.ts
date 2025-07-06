@@ -41,6 +41,16 @@ export class TaskController {
     });
   }
 
+  static async getMyTaskById(req: Request, res: Response) {
+    const { taskId } = req.params;
+    const task = await taskService.getMyTaskById(req.user.userId, taskId);
+    return OK({
+      res,
+      message: 'Lấy thông tin Task của bạn thành công',
+      metadata: task,
+    });
+  }
+
   // Update Task
   static async updateTask(req: Request, res: Response) {
     const { id } = req.params;
@@ -115,25 +125,18 @@ export class TaskController {
 
   // Get Tasks assigned to current user
   static async getMyTasks(req: Request, res: Response) {
-    const userId = req.user?.id;
-    if (!userId) {
-      return OK({
-        res,
-        message: 'Không được phép',
-        metadata: { success: false, message: 'Người dùng chưa xác thực' },
-      });
-    }
-
-    const validatedQuery = taskQuerySchema.parse({
-      ...req.query,
-      assignee: userId,
-    });
-
-    const tasks = await taskService.getTasks(validatedQuery);
     return OK({
       res,
       message: 'Lấy danh sách Task của bạn thành công',
-      metadata: tasks,
+      metadata: await taskService.getMyTasks(req.user.userId, req.query),
+    });
+  }
+
+  static async getMyPerformance(req: Request, res: Response) {
+    return OK({
+      res,
+      message: 'Lấy hiệu suất công việc của bạn thành công',
+      metadata: await taskService.getMyPerformance(req.user.userId, req.query),
     });
   }
 

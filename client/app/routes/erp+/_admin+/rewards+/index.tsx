@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import { getRewards, deleteReward } from '~/services/reward.server';
 import ContentHeader from '~/components/ContentHeader';
@@ -12,9 +13,16 @@ import { Badge } from '~/components/ui/badge';
 import { formatDate, formatCurrency } from '~/utils';
 import { IReward } from '~/interfaces/reward.interface';
 import { REWARD } from '~/constants/reward.constant';
+import { canAccessRewardManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessRewardManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;
@@ -109,6 +117,17 @@ export default function RewardsIndex() {
       ),
     },
     {
+      key: 'rw_startDate',
+      title: 'Ngày bắt đầu',
+      visible: true,
+      sortField: 'rw_startDate',
+      render: (item) => (
+        <div className='text-sm text-gray-600'>
+          {formatDate(item.rw_startDate)}
+        </div>
+      ),
+    },
+    {
       key: 'cashOutInfo',
       title: 'Ngày đóng',
       visible: true,
@@ -125,17 +144,6 @@ export default function RewardsIndex() {
       },
     },
     {
-      key: 'rw_startDate',
-      title: 'Ngày bắt đầu',
-      visible: true,
-      sortField: 'rw_startDate',
-      render: (item) => (
-        <div className='text-sm text-gray-600'>
-          {formatDate(item.rw_startDate)}
-        </div>
-      ),
-    },
-    {
       key: 'createdAt',
       title: 'Ngày tạo',
       visible: false,
@@ -149,12 +157,12 @@ export default function RewardsIndex() {
   ]);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Quản lý quỹ thưởng'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Tạo quỹ thưởng mới
           </>
         }

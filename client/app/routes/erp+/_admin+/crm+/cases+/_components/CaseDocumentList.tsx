@@ -140,7 +140,7 @@ export default function CaseDocumentList({
 
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200 mt-8'>
-      <CardHeader className='bg-gradient-to-r from-amber-500 to-yellow-500 text-white py-6 rounded-t-xl'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
         <CardTitle className='text-white text-3xl font-bold'>
           Tài liệu
         </CardTitle>

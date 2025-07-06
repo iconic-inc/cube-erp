@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from '@remix-run/node';
+import { LoaderFunctionArgs, redirect } from '@remix-run/node';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import {
   Plus,
@@ -19,9 +19,14 @@ import PerformanceOverview from '~/components/dashboard/PerformanceOverview';
 import RecentTasks from '~/components/dashboard/RecentTasks';
 import AttendanceOverview from '~/components/dashboard/AttendanceOverview';
 import DashboardSkeleton from '~/components/dashboard/DashboardSkeleton';
+import { isAdmin } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!isAdmin(user?.user.usr_role)) {
+    return redirect('/erp/nhan-vien');
+  }
 
   return {
     dashboardOverview: getDashboardOverview(user!).catch((error) => {
@@ -51,7 +56,7 @@ export default function IndexHRM() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-8 p-6 bg-background min-h-screen'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Bảng điều khiển'

@@ -15,11 +15,21 @@ import { IRewardCreate } from '~/interfaces/reward.interface';
 import RewardDetailForm from './_components/RewardDetailForm';
 import { generateFormId } from '~/utils';
 import { REWARD } from '~/constants/reward.constant';
+import { parseAuthCookie } from '~/services/cookie.server';
+import { canAccessRewardManagement } from '~/utils/permission';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await parseAuthCookie(request);
+
+  if (!canAccessRewardManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   await isAuthenticated(request);
   return {};
 };
@@ -139,7 +149,7 @@ export default function NewReward() {
   const formId = useMemo(() => generateFormId('reward-detail-form'), []);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Tạo quỹ thưởng mới'

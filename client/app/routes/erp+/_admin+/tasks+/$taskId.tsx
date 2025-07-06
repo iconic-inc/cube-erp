@@ -28,7 +28,7 @@ export default function TaskDetailPage() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Task'
         actionContent={

@@ -3,7 +3,7 @@ import {
   LoaderFunctionArgs,
   data as dataResponse,
 } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useMemo } from 'react';
 
 import TaskDetailForm from './_components/TaskDetailForm';
@@ -63,14 +63,14 @@ export default function TaskEdit() {
   const formId = useMemo(() => generateFormId('task-update-form'), []);
 
   return (
-    <div className='w-full space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa Task'
         actionContent={
           <>
             <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Task
+            Cập nhật Task
           </>
         }
         actionHandler={() => {

@@ -8,7 +8,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     const files = body.getAll('documents') as File[];
-    console.log('Files to upload:', files);
     if (!files.length) {
       return data(
         {

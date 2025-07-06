@@ -302,7 +302,6 @@ export const getDocuments = async (
     const documents = await DocumentModel.aggregate(pipeline);
     const totalPages = Math.ceil(total / limit);
 
-    console.log(pipeline);
     return {
       data: getReturnList(documents),
       pagination: {

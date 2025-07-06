@@ -8,11 +8,19 @@ import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
 import { Outlet, useLoaderData } from '@remix-run/react';
 import { getRewardStatsForEmployee } from '~/services/reward.server';
 import RewardDisplay from '~/components/RewardDisplay';
+import { getCurrentEmployeeByUserId } from '~/services/employee.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
 
-  const user = await getCurrentUser(session!);
+  // Basic authentication check
+  if (!session?.user) {
+    throw new Response('Bạn cần đăng nhập để truy cập trang này.', {
+      status: 401,
+    });
+  }
+
+  const employee = await getCurrentEmployeeByUserId(session!);
   const rewardPromise = getRewardStatsForEmployee(session!).catch((error) => {
     console.error('Error fetching reward stats:', error);
     return {
@@ -21,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }; // Fallback in case of error
   });
 
-  return { user, rewardPromise };
+  return { employee, rewardPromise };
 };
 
 export const ErrorBoundary = () => <HandsomeError basePath='/erp' />;

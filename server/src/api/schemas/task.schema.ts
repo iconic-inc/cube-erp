@@ -32,7 +32,8 @@ const taskBaseSchema = {
     .default(TASK.PRIORITY.MEDIUM),
   caseService: z
     .string()
-    .refine(isValidObjectId, {
+    .nullish()
+    .refine((id) => !id || isValidObjectId(id), {
       message: 'ID dịch vụ case không hợp lệ',
     })
     .optional(),

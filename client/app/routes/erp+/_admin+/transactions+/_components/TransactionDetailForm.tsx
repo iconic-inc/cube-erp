@@ -296,7 +296,7 @@ export default function TransactionDetailForm({
       onSubmit={handleSubmit}
     >
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-6 rounded-t-xl'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
           <CardTitle className='text-white text-3xl font-bold'>
             {code || 'Mã giao dịch'}
           </CardTitle>

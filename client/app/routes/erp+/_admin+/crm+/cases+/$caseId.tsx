@@ -11,9 +11,17 @@ import { useLoaderData, useNavigate } from '@remix-run/react';
 import ContentHeader from '~/components/ContentHeader';
 import { Pen } from 'lucide-react';
 import CaseDocumentList from './_components/CaseDocumentList';
+import { canAccessCaseServices } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+
+  if (!canAccessCaseServices(session?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
+
   // Fetch case service data based on case ID
   const caseId = params.caseId;
   if (!caseId) {
@@ -55,7 +63,7 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Hồ sơ Dịch vụ'
         actionContent={
@@ -67,6 +75,7 @@ export default function () {
         actionHandler={() => {
           navigate(`./edit`);
         }}
+        backHandler={() => navigate('/erp/crm/cases')}
       />
 
       {/* Case Service Details Card */}

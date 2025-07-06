@@ -19,9 +19,16 @@ import { isAuthenticated } from '~/services/auth.server';
 import { ITransactionUpdate } from '~/interfaces/transaction.interface';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import { generateFormId } from '~/utils';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(auth?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const transactionId = params.transactionId as string;
   if (!transactionId) {
@@ -87,7 +94,7 @@ export default function TransactionEdit() {
   const formId = useMemo(() => generateFormId('transaction-update-form'), []);
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa Giao dịch'

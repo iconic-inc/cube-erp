@@ -98,6 +98,14 @@ const getTaskById = async (id: string, request: ISessionUser) => {
 };
 
 /**
+ * Fetches a specific task by ID for the current user
+ */
+const getMyTaskById = async (id: string, request: ISessionUser) => {
+  const response = await fetcher(`/employees/me/tasks/${id}`, { request });
+  return response as ITask;
+};
+
+/**
  * Fetches tasks assigned to the current user
  */
 const getMyTasks = async (
@@ -164,9 +172,12 @@ const getMyTasks = async (
   // Add current user as assignee
   searchParams.set('assignee', request.user.id);
 
-  const response = await fetcher(`/tasks?${searchParams.toString()}`, {
-    request,
-  });
+  const response = await fetcher(
+    `/employees/me/tasks?${searchParams.toString()}`,
+    {
+      request,
+    },
+  );
   return response as IListResponse<ITask>;
 };
 
@@ -381,9 +392,37 @@ const getEmployeesPerformance = async (
   return performanceData;
 };
 
+const getMyTaskPerformance = async (
+  query: ITaskQuery = {},
+  options: IPaginationOptions = {},
+  request: ISessionUser,
+) => {
+  const { page = 1, limit = 10, sortBy, sortOrder } = options;
+  const searchParams = new URLSearchParams();
+  // Add pagination and sorting params
+  searchParams.set('page', String(page));
+  searchParams.set('limit', String(limit));
+  if (sortBy) searchParams.set('sortBy', sortBy);
+  if (sortOrder) searchParams.set('sortOrder', sortOrder);
+  // Add basic filtering params
+  if (query.search) searchParams.set('search', query.search);
+  if (query.assignee) searchParams.set('assignee', query.assignee);
+  if (query.status) searchParams.set('status', query.status);
+  if (query.priority) searchParams.set('priority', query.priority);
+
+  const performanceData = await fetcher(
+    `/employees/me/tasks/performance?${searchParams.toString()}`,
+    {
+      request,
+    },
+  );
+  return performanceData;
+};
+
 export {
   getTasks,
   getTaskById,
+  getMyTaskById,
   getMyTasks,
   createTask,
   updateTask,
@@ -391,4 +430,5 @@ export {
   bulkDeleteTasks,
   exportTasks,
   getEmployeesPerformance,
+  getMyTaskPerformance,
 };

@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import {
   bulkDeleteTransactions,
@@ -10,7 +11,6 @@ import {
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ITransaction } from '~/interfaces/transaction.interface';
-import { IListResponse } from '~/interfaces/response.interface';
 import {
   IActionFunctionReturn,
   IExportResponse,
@@ -21,9 +21,16 @@ import List from '~/components/List';
 import { formatDate, formatCurrency } from '~/utils';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import { Badge } from '~/components/ui/badge';
+import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
+  if (!canAccessTransactionManagement(user?.user.usr_role)) {
+    throw new Response('Bạn không có quyền truy cập vào trang này.', {
+      status: 403,
+    });
+  }
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page')) || 1;
@@ -163,13 +170,13 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='w-full space-y-4 md:space-y-6'>
+    <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách giao dịch'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>add</span>
+            <Plus className='w-4 h-4 mr-2' />
             Thêm giao dịch
           </>
         }
@@ -282,7 +289,7 @@ export const action = async ({
             success: true,
             toast: {
               type: 'success',
-              message: 'Đã xuất dữ liệu Nhân sự thành công!',
+              message: 'Đã xuất dữ liệu Nhân viên thành công!',
             },
             data: {
               fileUrl: fileData.fileUrl,
