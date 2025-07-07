@@ -103,7 +103,7 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case services imported successfully',
-      metadata: result,
+      metadata: {},
     });
   }
 
