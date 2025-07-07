@@ -210,11 +210,8 @@ export default function DocumentDetailPage() {
     const formData = new FormData(e.currentTarget);
 
     // Add whitelist data
-    formData.append(
-      'whiteList',
-      JSON.stringify(whiteList.map((emp) => emp.id)),
-    );
-    formData.append('isPublic', String(isPublic));
+    formData.set('whiteList', JSON.stringify(whiteList.map((emp) => emp.id)));
+    formData.set('isPublic', String(isPublic));
 
     toastIdRef.current = toast.loading('Đang cập nhật tài liệu...');
 
