@@ -7,6 +7,7 @@ interface MongodbConfig {
   dbUser: string;
   dbPwd: string;
   dbAppName: string;
+  dbConnectionString: string;
 }
 
 const mongodbConfigEnv: Record<'development' | 'production', MongodbConfig> = {
@@ -17,6 +18,7 @@ const mongodbConfigEnv: Record<'development' | 'production', MongodbConfig> = {
     dbUser: env.DEV_DB_USER as string,
     dbPwd: env.DEV_DB_PWD as string,
     dbAppName: env.DEV_DB_APP_NAME as string,
+    dbConnectionString: env.DEV_DB_CONNECTION_STRING as string,
   },
   production: {
     dbHost: env.PRO_DB_HOST as string,
@@ -25,6 +27,7 @@ const mongodbConfigEnv: Record<'development' | 'production', MongodbConfig> = {
     dbUser: env.PRO_DB_USER as string,
     dbPwd: env.PRO_DB_PWD as string,
     dbAppName: env.PRO_DB_APP_NAME as string,
+    dbConnectionString: env.PRO_DB_CONNECTION_STRING as string,
   },
 };
 
