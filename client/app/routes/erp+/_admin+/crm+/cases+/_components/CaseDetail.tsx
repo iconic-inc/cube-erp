@@ -26,6 +26,7 @@ import {
   Edit,
   ArrowLeft,
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 
 export default function CaseDetail({
   casePromise,
@@ -60,7 +61,7 @@ export default function CaseDetail({
                   <CardTitle className='text-white text-3xl font-bold'>
                     {caseService.case_code}
                   </CardTitle>
-                  <p className='text-emerald-100 text-lg'>
+                  <p className='text-yellow-500 text-lg'>
                     Khách hàng: {caseService.case_customer.cus_firstName}{' '}
                     {caseService.case_customer.cus_lastName}
                   </p>
@@ -234,21 +235,19 @@ export default function CaseDetail({
 
               {/* Actions */}
               <div className='flex flex-wrap gap-3 pt-4 border-t border-gray-200'>
-                <Link
-                  to='./edit'
-                  className='inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500'
-                >
-                  <Edit className='w-4 h-4 mr-2' />
-                  Chỉnh sửa hồ sơ
-                </Link>
+                <Button variant={'primary'} asChild>
+                  <Link to='./edit'>
+                    <Edit />
+                    Chỉnh sửa hồ sơ
+                  </Link>
+                </Button>
 
-                <Link
-                  to='/erp/crm/cases'
-                  className='inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
-                >
-                  <ArrowLeft className='w-4 h-4 mr-2' />
-                  Quay lại danh sách
-                </Link>
+                <Button variant={'secondary'} asChild>
+                  <Link to='/erp/crm/cases'>
+                    <ArrowLeft />
+                    Quay lại danh sách
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

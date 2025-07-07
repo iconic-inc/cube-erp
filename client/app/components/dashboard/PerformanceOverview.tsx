@@ -65,7 +65,7 @@ export default function PerformanceOverview({
                           ? 'bg-yellow-500'
                           : index === 1
                             ? 'bg-gray-400'
-                            : 'bg-amber-600'
+                            : 'bg-red-900'
                       }`}
                     >
                       {index + 1}

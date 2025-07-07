@@ -28,6 +28,7 @@ import {
   Edit,
   ArrowLeft,
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 
 export default function TaskDetail({
   taskPromise,
@@ -212,21 +213,19 @@ export default function TaskDetail({
 
               {/* Actions */}
               <div className='flex flex-wrap gap-3 pt-4 border-t border-gray-200'>
-                <Link
-                  to='./edit'
-                  className='inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
-                >
-                  <Edit className='w-4 h-4 mr-2' />
-                  Chỉnh sửa công việc
-                </Link>
+                <Button asChild variant={'primary'}>
+                  <Link to='./edit'>
+                    <Edit />
+                    Chỉnh sửa công việc
+                  </Link>
+                </Button>
 
-                <Link
-                  to='/erp/tasks'
-                  className='inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
-                >
-                  <ArrowLeft className='w-4 h-4 mr-2' />
-                  Quay lại danh sách
-                </Link>
+                <Button asChild variant={'secondary'}>
+                  <Link to='/erp/tasks'>
+                    <ArrowLeft />
+                    Quay lại danh sách
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

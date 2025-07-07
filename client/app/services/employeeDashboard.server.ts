@@ -44,7 +44,6 @@ const getEmployeeDashboardStats = async (
       request,
     );
 
-    console.log('My Performance Response:', myPerformanceResponse);
     // Get my attendance stats
     const myAttendanceResponse = await getLast7DaysStatsForEmployee(request);
 

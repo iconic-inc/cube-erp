@@ -97,13 +97,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
 
         // Kiểm tra mật khẩu
-        if (!data.password || data.password.length < 8) {
+        if (!data.password || data.password.length < 6) {
           return dataResponse(
             {
               employee: null,
               redirectTo: null,
               toast: {
-                message: 'Mật khẩu phải có ít nhất 8 ký tự',
+                message: 'Mật khẩu phải có ít nhất 6 ký tự',
                 type: 'error' as ToastType,
               },
             },

@@ -106,8 +106,8 @@ export default function EmployeeDetailForm({
       validationErrors.username = 'Vui lòng nhập tên đăng nhập';
     }
 
-    if (type === 'create' && (!password.trim() || password.length < 8)) {
-      validationErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+    if (type === 'create' && (!password.trim() || password.length < 6)) {
+      validationErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
     if (!msisdn.trim()) {
@@ -576,7 +576,7 @@ export default function EmployeeDetailForm({
                           type='password'
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          placeholder='Nhập mật khẩu (tối thiểu 8 ký tự)'
+                          placeholder='Nhập mật khẩu (tối thiểu 6 ký tự)'
                           className={errors.password ? 'border-red-500' : ''}
                         />
                         {errors.password && (

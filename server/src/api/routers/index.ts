@@ -30,6 +30,7 @@ router.use('/resources', require('./resource'));
 router.use('/employees', require('./employee'));
 router.use('/office-ips', require('./officeIP'));
 router.use('/attendance', require('./attendance'));
+router.use('/attendance-requests', require('./attendanceRequest'));
 router.use('/notifications', require('./notification'));
 router.use('/case-services', require('./caseService'));
 router.use('/documents', require('./document'));
