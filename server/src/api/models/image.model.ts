@@ -1,9 +1,13 @@
 import { Schema, Types, model, models } from 'mongoose';
-import { IImage, IImageModel } from '../interfaces/image.interface';
+import {
+  IImageCreate,
+  IImageDocument,
+  IImageModel,
+} from '../interfaces/image.interface';
 import { formatAttributeName } from '../utils';
 import { IMAGE } from '../constants';
 
-const sliderSchema = new Schema<IImage, IImageModel>(
+const sliderSchema = new Schema<IImageDocument, IImageModel>(
   {
     img_name: { type: String, required: true, unique: true },
     img_title: { type: String, required: true },
@@ -19,10 +23,10 @@ const sliderSchema = new Schema<IImage, IImageModel>(
   }
 );
 
-sliderSchema.statics.build = (attrs: IImage) => {
+sliderSchema.statics.build = (attrs: IImageCreate) => {
   return ImageModel.create(formatAttributeName(attrs, IMAGE.PREFIX));
 };
 
 export const ImageModel =
   // models[IMAGE.DOCUMENT_NAME] ||
-  model<IImage, IImageModel>(IMAGE.DOCUMENT_NAME, sliderSchema);
+  model<IImageDocument, IImageModel>(IMAGE.DOCUMENT_NAME, sliderSchema);

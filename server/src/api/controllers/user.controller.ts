@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import * as UserService from "../services/user.service";
+import * as UserService from '../services/user.service';
 
-import { OK } from "../core/success.response";
+import { OK } from '../core/success.response';
 
 export class UserController {
   static async getUsers(req: Request, res: Response) {
@@ -20,16 +20,16 @@ export class UserController {
     // Filter theo search term nếu có
     if (search) {
       query.$or = [
-        { usr_username: { $regex: search, $options: "i" } },
-        { usr_email: { $regex: search, $options: "i" } },
-        { usr_firstName: { $regex: search, $options: "i" } },
-        { usr_lastName: { $regex: search, $options: "i" } },
+        { usr_username: { $regex: search, $options: 'i' } },
+        { usr_email: { $regex: search, $options: 'i' } },
+        { usr_firstName: { $regex: search, $options: 'i' } },
+        { usr_lastName: { $regex: search, $options: 'i' } },
       ];
     }
 
     return OK({
       res,
-      message: "Users retrieved successfully",
+      message: 'Users retrieved successfully',
       metadata: await UserService.getUsers(query),
     });
   }
@@ -44,7 +44,7 @@ export class UserController {
     const { userId } = req.params;
     return OK({
       res,
-      message: "Password changed successfully",
+      message: 'Password changed successfully',
       metadata: await UserService.changePassword(userId, req.body),
     });
   }
@@ -53,7 +53,7 @@ export class UserController {
     const { userId } = req.params;
     return OK({
       res,
-      message: "User updated successfully",
+      message: 'User updated successfully',
       metadata: await UserService.updateUser(userId, req.body),
     });
   }

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 
-export interface ISuccessAttrs {
+export interface ISuccessCreate {
   res: Response;
   message?: string;
   metadata?: Object;
@@ -15,7 +15,7 @@ export interface ISuccessReponse {
   _link: Object;
 }
 
-export type ISuccessFunc = (obj: ISuccessAttrs) => void;
+export type ISuccessFunc = (obj: ISuccessCreate) => void;
 
 export interface IResponseList<T> {
   data: T[];

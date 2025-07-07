@@ -13,7 +13,7 @@ export default function TextAreaInput({
   label: string;
   type?: string;
   pattern?: string;
-  onChange?: (value: any) => void;
+  onChange?: (value: string) => void;
 } & Omit<
   DetailedHTMLProps<
     TextareaHTMLAttributes<HTMLTextAreaElement>,

@@ -1,8 +1,15 @@
 import { ClientSession, HydratedDocument, Model, Types } from 'mongoose';
 import { IRole, IRoleResponseData } from './role.interface';
 
-export interface IRawUser {
-  usr_id: Types.ObjectId;
+export interface IUserPopulate {
+  id: string;
+  usr_firstName: string;
+  usr_lastName: string;
+  usr_slug: string;
+}
+
+export interface IUser {
+  id: string;
   usr_username: string;
   usr_email: string;
   usr_firstName: string;
@@ -19,13 +26,13 @@ export interface IRawUser {
   usr_role: Types.ObjectId;
 }
 
-export interface IUser extends HydratedDocument<IRawUser> {}
+export interface IUserDocument extends HydratedDocument<IUser> {}
 
 export interface IUserDetail extends Omit<IUser, 'usr_role'> {
   usr_role: IRoleResponseData;
 }
 
-export interface IUserAttrs {
+export interface IUserCreate {
   id?: string;
   username: string;
   email: string;
@@ -44,7 +51,7 @@ export interface IUserAttrs {
 }
 
 export interface IUserModel extends Model<IUser> {
-  build(attrs: IUserAttrs, session?: ClientSession): Promise<IUser>;
+  build(attrs: IUserCreate): Promise<IUserDocument>;
 }
 
 export interface IUserJWTPayload {

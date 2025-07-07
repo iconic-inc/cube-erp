@@ -1,50 +1,38 @@
-import { IImage } from './image.interface';
+import { data } from '@remix-run/node';
 
-export interface IAppSettings {
-  app_title: string;
-  app_description: string;
-  app_logo?: IImage;
-  app_social: {
-    facebook: string;
-    youtube: string;
-    tiktok: string;
-    zalo: string;
-  };
-  app_taxCode: string;
-  app_headScripts?: string;
-  app_bodyScripts?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IAppSettingsAttrs {
+export interface IListColumn<T> {
+  key: string;
   title: string;
-  description: string;
-  logo: string;
-  social: {
-    facebook?: string;
-    youtube?: string;
-    tiktok?: string;
-    zalo?: string;
-  };
-  taxCode: string;
-  headScripts?: string;
-  bodyScripts?: string;
+  sortField?: string;
+  visible: boolean;
+  render: (item: T) => React.ReactNode;
+  filterable?: boolean;
 }
 
-export interface IPaginationOptions {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+export interface IResolveError {
+  success: boolean;
+  message: string;
 }
 
-export interface IResponseList<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+export type ILoaderDataPromise<T> =
+  | Promise<T | IResolveError>
+  | (T | IResolveError);
+
+export type IExportResponse = {
+  fileUrl: string;
+  fileName: string;
+  count: number;
+};
+
+export interface IActionFunctionResponse<T = undefined> {
+  success: boolean;
+  toast: {
+    type: 'error' | 'success';
+    message: string;
   };
+  data?: T;
 }
+
+export type IActionFunctionReturn<T = undefined> = Promise<
+  ReturnType<typeof data<IActionFunctionResponse<T>>>
+>;

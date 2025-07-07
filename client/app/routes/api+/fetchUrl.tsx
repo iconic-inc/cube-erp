@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from '@remix-run/node';
+import { LoaderFunctionArgs } from '@remix-run/node';
 import * as cheerio from 'cheerio';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Extract the meta description
     const description = $('meta[name="description"]').attr('content');
 
-    return json({
+    return Response.json({
       success: 1,
       link: link || '/',
       meta: {
@@ -35,7 +35,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
     });
   } catch (e: any) {
-    return json({
+    return Response.json({
       success: 0,
       link: link || '/',
     });

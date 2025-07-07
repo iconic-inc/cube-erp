@@ -35,140 +35,150 @@ async function main() {
   await mongodbInstance.disconnect();
 }
 
+// Base permissions shared by all employees
+const BASE_EMPLOYEE_GRANTS = [
+  { resourceId: { slug: 'officeIP' }, actions: ['read:any'] },
+  {
+    resourceId: { slug: 'keyToken' },
+    actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
+  },
+  { resourceId: { slug: 'user' }, actions: ['read:own', 'update:own'] },
+  { resourceId: { slug: 'employee' }, actions: ['read:any', 'update:own'] },
+  {
+    resourceId: { slug: 'attendance' },
+    actions: ['create:own', 'read:own', 'update:own'],
+  },
+  {
+    resourceId: { slug: 'image' },
+    actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+  },
+  { resourceId: { slug: 'reward' }, actions: ['read:any'] },
+];
+
 const ROLES = [
   {
-    name: 'Administrator',
+    name: 'Quản trị hệ thống',
     slug: 'admin',
     status: 'active',
     description: 'Quản trị hệ thống',
     grants: [
-      {
-        resourceId: { slug: 'notification' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'resource' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'template' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'role' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'page' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'otp' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'keyToken' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'image' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'category' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'branch' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'booking' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'app' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'apiKey' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'user' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'review' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-      {
-        resourceId: { slug: 'spa' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
-      },
-    ],
+      'resource',
+      'template',
+      'role',
+      'otp',
+      'apiKey',
+      'keyToken',
+      'image',
+      'user',
+      'officeIP',
+      'employee',
+      'attendance',
+      'caseService',
+      'customer',
+      'task',
+      'transaction',
+      'document',
+      'reward',
+    ].map((resource) => ({
+      resourceId: { slug: resource },
+      actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+    })),
   },
-
   {
-    name: 'Spa Owner',
-    slug: 'spa-owner',
+    name: 'Luật sư',
+    slug: 'attorney',
     status: 'active',
-    description: 'Chủ / quản lý spa',
+    description: 'Luật sư',
     grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Case management - attorneys can handle cases but not delete them
       {
-        resourceId: { slug: 'notification' },
-        actions: ['create:any', 'read:own', 'update:own', 'delete:own'],
+        resourceId: { slug: 'caseService' },
+        actions: ['create:any', 'read:any', 'update:any'],
       },
-      { resourceId: { slug: 'page' }, actions: ['read:any'] },
+      // Customer management - can create/update but not delete
       {
-        resourceId: { slug: 'image' },
-        actions: ['create:any', 'read:any', 'update:own', 'delete:own'],
+        resourceId: { slug: 'customer' },
+        actions: ['create:any', 'read:any', 'update:any'],
       },
-      { resourceId: { slug: 'category' }, actions: ['read:any'] },
-      { resourceId: { slug: 'branch' }, actions: ['read:any'] },
+      // Tasks - only own tasks
       {
-        resourceId: { slug: 'booking' },
-        actions: ['read:own', 'update:own', 'delete:own'],
-      },
-      { resourceId: { slug: 'app' }, actions: ['read:any'] },
-      { resourceId: { slug: 'user' }, actions: ['read:own', 'update:own'] },
-      {
-        resourceId: { slug: 'review' },
-        actions: ['create:own', 'read:any', 'update:own', 'delete:own'],
-      },
-      {
-        resourceId: { slug: 'spa' },
-        actions: ['create:own', 'read:any', 'update:own', 'delete:own'],
-      },
-    ],
-  },
-
-  {
-    name: 'Client',
-    slug: 'client',
-    status: 'active',
-    description: 'Khách hàng cuối',
-    grants: [
-      {
-        resourceId: { slug: 'notification' },
+        resourceId: { slug: 'task' },
         actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
       },
-      { resourceId: { slug: 'page' }, actions: ['read:any'] },
-      { resourceId: { slug: 'otp' }, actions: ['create:any'] },
-      { resourceId: { slug: 'image' }, actions: ['read:any'] },
-      { resourceId: { slug: 'category' }, actions: ['read:any'] },
-      { resourceId: { slug: 'branch' }, actions: ['read:any'] },
+      // Documents - full access for legal work
       {
-        resourceId: { slug: 'booking' },
-        actions: ['create:any', 'read:own', 'delete:own'],
+        resourceId: { slug: 'document' },
+        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
-      { resourceId: { slug: 'app' }, actions: ['read:any'] },
-      { resourceId: { slug: 'user' }, actions: ['read:own', 'delete:own'] },
+      // Read access to transactions for case billing
       {
-        resourceId: { slug: 'review' },
-        actions: ['create:own', 'read:any', 'update:own', 'delete:own'],
+        resourceId: { slug: 'transaction' },
+        actions: ['read:any'],
       },
-      { resourceId: { slug: 'spa' }, actions: ['read:any'] },
+    ],
+  },
+  {
+    name: 'Chuyên viên',
+    slug: 'specialist',
+    status: 'active',
+    description: 'Chuyên viên',
+    grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Support role - limited case access
+      {
+        resourceId: { slug: 'caseService' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Customer support
+      {
+        resourceId: { slug: 'customer' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Own tasks only
+      {
+        resourceId: { slug: 'task' },
+        actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
+      },
+      // Document access for support
+      {
+        resourceId: { slug: 'document' },
+        actions: ['create:any', 'read:any', 'update:any'],
+      },
+    ],
+  },
+  {
+    name: 'Kế toán',
+    slug: 'accountant',
+    status: 'active',
+    description: 'Kế toán',
+    grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Read-only case access for billing
+      {
+        resourceId: { slug: 'caseService' },
+        actions: ['read:any'],
+      },
+      // Customer billing info
+      {
+        resourceId: { slug: 'customer' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Own tasks
+      {
+        resourceId: { slug: 'task' },
+        actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
+      },
+      // Full transaction access
+      {
+        resourceId: { slug: 'transaction' },
+        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+      },
+      // Financial documents
+      {
+        resourceId: { slug: 'document' },
+        actions: ['create:any', 'read:any', 'update:any'],
+      },
     ],
   },
 ];

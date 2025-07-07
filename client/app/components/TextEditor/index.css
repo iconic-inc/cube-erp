@@ -1,0 +1,18 @@
+#quill-container {
+  img {
+    max-width: 50%;
+  }
+
+  .ql-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: white;
+  }
+
+  .ql-container {
+    flex: 1;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+}

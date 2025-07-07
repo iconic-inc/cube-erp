@@ -85,7 +85,10 @@ const isExpired = (token: string) => {
 };
 
 // Format date using format string
-const formatDate = (dateString?: string, format: string = 'DD/MM/YYYY') => {
+const formatDate = (
+  dateString?: string | Date,
+  format: string = 'DD/MM/YYYY',
+) => {
   if (!dateString) return 'N/A';
 
   const date = new Date(dateString);
@@ -157,6 +160,10 @@ function getValueByPath<T>(obj: T, path: string) {
   return path.split('.').reduce((o, k) => (o || {})[k], obj);
 }
 
+const generateFormId = (prefix: string) => {
+  return `${prefix}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
 export {
   toAgeString,
   toCurrencyString,
@@ -175,4 +182,5 @@ export {
   formatCurrency,
   calculateAge,
   getValueByPath,
+  generateFormId,
 };

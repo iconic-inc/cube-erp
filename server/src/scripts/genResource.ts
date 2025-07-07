@@ -20,11 +20,6 @@ async function main() {
 
 const RESOURCES = [
   {
-    name: 'Notification Management',
-    slug: 'notification',
-    description: 'Quản lý thông báo',
-  },
-  {
     name: 'Resource Management',
     slug: 'resource',
     description: 'Quản lý tài nguyên',
@@ -38,11 +33,6 @@ const RESOURCES = [
     name: 'Role Management',
     slug: 'role',
     description: 'Quản lý vai trò',
-  },
-  {
-    name: 'Page Management',
-    slug: 'page',
-    description: 'Quản lý trang',
   },
   {
     name: 'OTP Management',
@@ -60,27 +50,6 @@ const RESOURCES = [
     description: 'Quản lý hình ảnh',
   },
   {
-    name: 'Category Management',
-    slug: 'category',
-    description: 'Quản lý danh mục',
-  },
-  {
-    name: 'Branch Management',
-    slug: 'branch',
-    description: 'Quản lý chi nhánh',
-  },
-  {
-    name: 'Booking Management',
-    slug: 'booking',
-    description: 'Quản lý đặt lịch',
-  },
-  {
-    _id: '67d29e626f885210e0329c83',
-    name: 'App Management',
-    slug: 'app',
-    description: 'Quản lý ứng dụng',
-  },
-  {
     name: 'API Key Management',
     slug: 'apiKey',
     description: 'Quản lý khóa API',
@@ -91,14 +60,49 @@ const RESOURCES = [
     description: 'Quản lý người dùng hệ thống',
   },
   {
-    name: 'Spa Management',
-    slug: 'spa',
-    description: 'Quản lý spa',
+    name: 'Office IP Management',
+    slug: 'officeIP',
+    description: 'Quản lý IP văn phòng',
   },
   {
-    name: 'Review Management',
-    slug: 'review',
-    description: 'Quản lý đánh giá',
+    name: 'Employee Management',
+    slug: 'employee',
+    description: 'Quản lý nhân viên',
+  },
+  {
+    name: 'Attendance Management',
+    slug: 'attendance',
+    description: 'Quản lý điểm danh',
+  },
+  {
+    name: 'Case Service Management',
+    slug: 'caseService',
+    description: 'Quản lý dịch vụ vụ án',
+  },
+  {
+    name: 'Customer Management',
+    slug: 'customer',
+    description: 'Quản lý khách hàng',
+  },
+  {
+    name: 'Task Management',
+    slug: 'task',
+    description: 'Quản lý công việc',
+  },
+  {
+    name: 'Transaction Management',
+    slug: 'transaction',
+    description: 'Quản lý giao dịch',
+  },
+  {
+    name: 'Document Management',
+    slug: 'document',
+    description: 'Quản lý tài liệu',
+  },
+  {
+    name: 'Reward Management',
+    slug: 'reward',
+    description: 'Quản lý quỹ thưởng',
   },
 ];
 

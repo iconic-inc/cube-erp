@@ -7,7 +7,7 @@ import {
   removeNestedNullish,
 } from '@utils/index';
 import { BadRequestError, NotFoundError } from '../core/errors';
-import { IImageAttrs } from '../interfaces/image.interface';
+import { IImageCreate } from '../interfaces/image.interface';
 import { IMAGE } from '../constants';
 import { unlink } from 'fs/promises';
 import { isValidObjectId } from 'mongoose';
@@ -44,7 +44,7 @@ const createImage = async (files?: Express.Multer.File[]) => {
   return getReturnList(newImage);
 };
 
-const updateImage = async (id: string, image: IImageAttrs) => {
+const updateImage = async (id: string, image: IImageCreate) => {
   let updatedImage = await ImageModel.findOneAndUpdate(
     { $or: [{ _id: isValidObjectId(id) ? id : null }, { img_name: id }] },
     {

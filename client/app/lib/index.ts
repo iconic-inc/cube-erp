@@ -1,3 +1,7 @@
+import { useRouteLoaderData } from '@remix-run/react';
+import { IResolveError } from '~/interfaces/app.interface';
+import { loader } from '~/routes/erp+/_admin+/_layout';
+
 const MINUTES_AGO = 'phút trước';
 const HOURS_AGO = 'giờ trước';
 const YESTERDAY = 'Hôm qua';
@@ -61,10 +65,42 @@ const clientFetch = async (url: string, init?: RequestInit) => {
   return res.json();
 };
 
+const isResolveError = (data: any): data is IResolveError => {
+  return (
+    data &&
+    typeof data.success === 'boolean' &&
+    typeof data.message === 'string'
+  );
+};
+
+const useERPLoaderData = () => {
+  return (
+    useRouteLoaderData<typeof loader>('routes/erp+/_admin+/_layout') || {
+      employee: null,
+      rewardPromise: null,
+      punishmentPromise: null,
+      performancePromise: null,
+      documentsPromise: null,
+      tasksPromise: null,
+      projectsPromise: null,
+      customersPromise: null,
+      vendorsPromise: null,
+      productsPromise: null,
+      servicesPromise: null,
+      ordersPromise: null,
+      invoicesPromise: null,
+      paymentsPromise: null,
+      reportsPromise: null,
+    }
+  );
+};
+
 export {
   getPublicPeriod,
   getNumerator,
   getDemonator,
   getPageOffset,
   clientFetch,
+  isResolveError,
+  useERPLoaderData,
 };

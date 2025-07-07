@@ -2,13 +2,13 @@ import { Schema, model, models } from 'mongoose';
 
 import { KEYTOKEN } from '../constants';
 import {
-  IKeyTokenAttrs,
-  IKeyToken,
+  IKeyTokenCreate,
+  IKeyTokenDocument,
   IKeyTokenModel,
 } from '../interfaces/keyToken.interface';
 import { UserModel } from './user.model';
 
-const keyTokenSchema = new Schema<IKeyToken, IKeyTokenModel>(
+const keyTokenSchema = new Schema<IKeyTokenDocument, IKeyTokenModel>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -45,10 +45,13 @@ const keyTokenSchema = new Schema<IKeyToken, IKeyTokenModel>(
   }
 );
 
-keyTokenSchema.statics.build = async (attrs: IKeyTokenAttrs) => {
+keyTokenSchema.statics.build = async (attrs: IKeyTokenCreate) => {
   return KeyTokenModel.create(attrs);
 };
 
 export const KeyTokenModel =
   // models[KEYTOKEN.DOCUMENT_NAME] ||
-  model<IKeyToken, IKeyTokenModel>(KEYTOKEN.DOCUMENT_NAME, keyTokenSchema);
+  model<IKeyTokenDocument, IKeyTokenModel>(
+    KEYTOKEN.DOCUMENT_NAME,
+    keyTokenSchema
+  );

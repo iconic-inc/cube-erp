@@ -9,5 +9,10 @@ export const ATTENDANCE = {
     START: '07:00',
     END: '09:00',
   },
-  // Thêm các constant khác nếu cần
+
+  REQUEST: {
+    DOCUMENT_NAME: 'AttendanceRequest',
+    COLLECTION_NAME: 'attendance_requests',
+    PREFIX: 'arq_',
+  },
 };
