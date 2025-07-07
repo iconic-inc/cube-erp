@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
-import { IKeyToken, IKeyTokenCreate } from '../interfaces/keyToken.interface';
+import {
+  IKeyToken,
+  IKeyTokenCreate,
+  IKeyTokenDocument,
+  IKeyTokenModel,
+} from '../interfaces/keyToken.interface';
 import { KeyTokenModel } from '../models/keyToken.model';
 
 async function createKeyToken({
@@ -36,7 +41,7 @@ async function createKeyToken({
 }
 
 const findByUserId = async (userId: string, browserId: string) => {
-  return KeyTokenModel.findOne<IKeyToken>({
+  return KeyTokenModel.findOne<IKeyTokenDocument>({
     user: new mongoose.Types.ObjectId(userId),
     browserId,
   });
@@ -55,7 +60,7 @@ const findByRefreshToken = async (refreshToken: string) => {
 };
 
 const updateRefreshToken = async (
-  foundToken: IKeyToken,
+  foundToken: IKeyTokenDocument,
   refreshToken: string,
   newRefreshToken: string
 ) => {
