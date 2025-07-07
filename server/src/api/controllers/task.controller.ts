@@ -6,11 +6,12 @@ import {
   taskQuerySchema,
   taskUpdateSchema,
 } from '../schemas/task.schema';
+import { ITaskCreate, ITaskUpdate } from '../interfaces/task.interface';
 
 export class TaskController {
   // Create new Task
   static async createTask(req: Request, res: Response) {
-    const validatedData = taskCreateSchema.parse(req.body);
+    const validatedData = taskCreateSchema.parse(req.body) as ITaskCreate;
     const result = await taskService.createTask(validatedData);
     return OK({
       res,
@@ -54,7 +55,7 @@ export class TaskController {
   // Update Task
   static async updateTask(req: Request, res: Response) {
     const { id } = req.params;
-    const validatedData = taskUpdateSchema.parse(req.body);
+    const validatedData = taskUpdateSchema.parse(req.body) as ITaskUpdate;
     const task = await taskService.updateTask(id, validatedData);
     return OK({
       res,

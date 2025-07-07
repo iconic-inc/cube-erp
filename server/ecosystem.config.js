@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'iconicspa',
+      name: 'cube-erp',
       script: './dist/server.js', // Path to the compiled JavaScript file
       instances: 'max', // Scales app to the number of CPU cores
       exec_mode: 'cluster', // Enables clustering mode
