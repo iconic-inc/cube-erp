@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import { mongodbConfig } from '../configs/config.mongodb';
 import { InternalServerError } from '../api/core/errors';
 
-const { dbHost, dbName, dbPort, dbUser, dbPwd, dbAppName } = mongodbConfig;
+const { dbConnectionString, dbName } = mongodbConfig;
 
 //Using Singleton pattern to init mongodb
 class MongoDB {
@@ -23,14 +23,9 @@ class MongoDB {
 
     console.log('Retrying to connect to MongoDB...', this.retryCount);
     this.retryCount++;
-    const connectionStr = {
-      // production: `mongodb+srv://${dbUser}:${dbPwd}@${dbHost}?retryWrites=true&w=majority&appName=${dbAppName}`,
-      development: `mongodb+srv://${dbUser}:${dbPwd}@${dbHost}?retryWrites=true&w=majority&appName=${dbAppName}`,
-      production: `mongodb://${dbUser}:${dbPwd}@${dbHost}:${dbPort}`,
-    }[process.env.NODE_ENV as 'development' | 'production'];
 
     return await mongoose
-      .connect(connectionStr, {
+      .connect(dbConnectionString, {
         connectTimeoutMS: 5000,
         serverSelectionTimeoutMS: 3000,
         dbName,
