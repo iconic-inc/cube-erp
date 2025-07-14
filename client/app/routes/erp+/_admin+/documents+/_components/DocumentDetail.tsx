@@ -130,7 +130,7 @@ export default function DocumentDetail({
                   </h3>
 
                   <div className='space-y-3'>
-                    <div className='flex items-center space-x-3'>
+                    {/* <div className='flex items-center space-x-3'>
                       <FileText className='w-4 h-4 text-gray-400' />
                       <span className='text-sm text-gray-500'>
                         Loại tài liệu:
@@ -138,7 +138,7 @@ export default function DocumentDetail({
                       <span className='text-sm font-medium'>
                         {document.doc_type || 'Chưa phân loại'}
                       </span>
-                    </div>
+                    </div> */}
 
                     <div className='flex items-center space-x-3'>
                       <Globe className='w-4 h-4 text-gray-400' />

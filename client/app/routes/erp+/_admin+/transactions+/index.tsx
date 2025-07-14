@@ -33,31 +33,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'tx_date';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
 
   return {
-    transactionsPromise: getTransactions({ ...query }, options, user!).catch(
+    transactionsPromise: getTransactions(url.searchParams, user!).catch(
       (e: any) => {
         console.error(e);
         return {
@@ -96,6 +74,11 @@ export default function () {
       title: 'Loại giao dịch',
       visible: true,
       sortField: 'tx_type',
+      filterField: 'type',
+      options: Object.values(TRANSACTION.TYPE).map((type) => ({
+        value: type.value,
+        label: type.label,
+      })),
       render: (transaction) => (
         <Badge
           className={`${
@@ -163,7 +146,8 @@ export default function () {
       title: 'Ngày giao dịch',
       visible: true,
       sortField: 'tx_date',
-      render: (transaction) => formatDate(transaction.tx_date),
+      render: (transaction) =>
+        formatDate(transaction.tx_date, 'HH:mm - DD/MM/YYYY'),
     },
   ]);
 
@@ -273,14 +257,7 @@ export const action = async ({
         // TODO: Implement export functionality when exportCaseServices is available
         const url = new URL(request.url);
         const fileData = await exportTransactionsToXLSX(
-          {
-            search: url.searchParams.get('search') || '',
-          },
-          {
-            sortBy: url.searchParams.get('sortBy') || 'createdAt',
-            sortOrder:
-              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-          },
+          url.searchParams,
           session,
         );
 

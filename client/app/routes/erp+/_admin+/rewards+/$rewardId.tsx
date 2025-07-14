@@ -76,13 +76,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       console.error('Error fetching reward :', error);
       throw new Response('Reward  not found', { status: 404 });
     }),
-    getEmployees({}, { page: 1, limit: 1000 }, session).catch((error) => {
-      console.error('Error fetching employees:', error);
-      return {
-        data: [],
-        pagination: { total: 0, page: 1, limit: 1000, totalPages: 0 },
-      };
-    }),
+    getEmployees(new URLSearchParams([['limit', '1000']]), session).catch(
+      (error) => {
+        console.error('Error fetching employees:', error);
+        return {
+          data: [],
+          pagination: { total: 0, page: 1, limit: 1000, totalPages: 0 },
+        };
+      },
+    ),
   ]);
 
   return {

@@ -24,17 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const search = url.searchParams.get('search') || '';
-  const status = url.searchParams.get('status') || '';
-
-  const query = {
-    ...(search && { search }),
-    ...(status && { status }),
-  };
-
-  const rewardsPromise = listRewardsForEmployee({ page, limit }, user!).catch(
+  const rewardsPromise = listRewardsForEmployee(url.searchParams, user!).catch(
     (error) => {
       console.error('Error fetching reward s:', error);
       return {
@@ -46,7 +36,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return {
     rewards: rewardsPromise,
-    query: { page, limit, search, status },
   };
 };
 

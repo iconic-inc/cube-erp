@@ -26,8 +26,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const data = await services[getter as keyof typeof services](
-    {},
-    { limit, page },
+    new URLSearchParams([
+      ['limit', limit.toString()],
+      ['page', page.toString()],
+    ]),
     session,
   );
 

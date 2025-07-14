@@ -6,7 +6,14 @@ export interface IListColumn<T> {
   sortField?: string;
   visible: boolean;
   render: (item: T) => React.ReactNode;
-  filterable?: boolean;
+  filterField?: string;
+  options?:
+    | {
+        label: string;
+        value: string;
+      }[]
+    | ((item: T) => { label: string; value: string });
+  dateFilterable?: boolean;
 }
 
 export interface IResolveError {

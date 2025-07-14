@@ -88,4 +88,14 @@ export interface ITransactionStats {
     net: number;
     count: number;
   }>;
+
+  byProvince: Array<{
+    province: string;
+    income: number;
+    outcome: number;
+    total: number;
+    net: number;
+    count: number;
+    customerCount: number;
+  }>;
 }

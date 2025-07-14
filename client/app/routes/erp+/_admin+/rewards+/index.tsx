@@ -25,29 +25,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const search = url.searchParams.get('search') || '';
-  const status = url.searchParams.get('status') || '';
 
-  const query = {
-    ...(search && { search }),
-    ...(status && { status }),
-  };
-
-  const rewardsPromise = getRewards(query, { page, limit }, user!).catch(
-    (error) => {
-      console.error('Error fetching reward s:', error);
-      return {
-        data: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
-      };
-    },
-  );
+  const rewardsPromise = getRewards(url.searchParams, user!).catch((error) => {
+    console.error('Error fetching reward s:', error);
+    return {
+      data: [],
+      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+    };
+  });
 
   return {
     rewards: rewardsPromise,
-    query: { page, limit, search, status },
   };
 };
 
@@ -78,7 +66,7 @@ const getStatusLabel = (status: string) => {
 };
 
 export default function RewardsIndex() {
-  const { rewards, query } = useLoaderData<typeof loader>();
+  const { rewards } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [visibleColumns, setVisibleColumns] = useState<IListColumn<IReward>[]>([

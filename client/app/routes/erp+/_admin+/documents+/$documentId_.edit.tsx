@@ -63,27 +63,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
 
   try {
     // Fetch document details from the API
     const documentId = params.documentId as string;
     const document = await getDocumentById(documentId, user!);
-    const employeesPromise = getEmployees(
-      {},
-      {
-        limit,
-        page,
+    const employeesPromise = getEmployees(url.searchParams, user!).catch(
+      (e) => {
+        console.error('Error fetching employees:', e);
+        return {
+          success: false,
+          message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
+        };
       },
-      user!,
-    ).catch((e) => {
-      console.error('Error fetching employees:', e);
-      return {
-        success: false,
-        message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
-      };
-    });
+    );
 
     return { document, employeesPromise };
   } catch (error) {
@@ -107,7 +100,7 @@ export default function DocumentDetailPage() {
     document.doc_description || '',
   );
   const [name, setName] = useState(document.doc_name || '');
-  const [type, setType] = useState(document.doc_type || '');
+  // const [type, setType] = useState(document.doc_type || '');
   const [whiteList, setWhiteList] = useState<IEmployeeBrief[]>(
     document.doc_whiteList || [],
   );
@@ -125,14 +118,14 @@ export default function DocumentDetailPage() {
   useEffect(() => {
     const hasChanged =
       name !== document.doc_name ||
-      type !== document.doc_type ||
+      // type !== document.doc_type ||
       description !== document.doc_description ||
       isPublic !== document.doc_isPublic ||
       JSON.stringify(whiteList.map((emp) => emp.id)) !==
         JSON.stringify(document.doc_whiteList?.map((emp) => emp.id) || []);
 
     setIsChanged(hasChanged);
-  }, [name, type, description, isPublic, whiteList, document]);
+  }, [name, description, isPublic, whiteList, document]);
 
   const handleRemoveEmployee = (employee: IEmployeeBrief) => {
     if (employee.id === document.doc_createdBy?.id) {
@@ -192,9 +185,9 @@ export default function DocumentDetailPage() {
       validationErrors.name = 'Vui lòng nhập tên tài liệu';
     }
 
-    if (!type.trim()) {
-      validationErrors.type = 'Vui lòng nhập loại tài liệu';
-    }
+    // if (!type.trim()) {
+    //   validationErrors.type = 'Vui lòng nhập loại tài liệu';
+    // }
 
     // If there are validation errors, show them and prevent form submission
     if (Object.keys(validationErrors).length > 0) {
@@ -210,11 +203,8 @@ export default function DocumentDetailPage() {
     const formData = new FormData(e.currentTarget);
 
     // Add whitelist data
-    formData.append(
-      'whiteList',
-      JSON.stringify(whiteList.map((emp) => emp.id)),
-    );
-    formData.append('isPublic', String(isPublic));
+    formData.set('whiteList', JSON.stringify(whiteList.map((emp) => emp.id)));
+    formData.set('isPublic', String(isPublic));
 
     toastIdRef.current = toast.loading('Đang cập nhật tài liệu...');
 
@@ -302,7 +292,7 @@ export default function DocumentDetailPage() {
 
           <CardContent className='p-6 space-y-6'>
             {/* Document Name and Type */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className='grid grid-cols-1 gap-6'>
               <div>
                 <Label
                   htmlFor='name'
@@ -324,7 +314,7 @@ export default function DocumentDetailPage() {
                 )}
               </div>
 
-              <div>
+              {/* <div>
                 <Label
                   htmlFor='type'
                   className='text-gray-700 font-semibold mb-2 block'
@@ -343,7 +333,7 @@ export default function DocumentDetailPage() {
                 {errors.type && (
                   <p className='text-red-500 text-sm mt-1'>{errors.type}</p>
                 )}
-              </div>
+              </div> */}
             </div>
 
             {/* Document Description */}
@@ -691,19 +681,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     case 'POST':
       const formData = await request.formData();
       const name = formData.get('name')?.toString().trim();
-      const type = formData.get('type')?.toString().trim();
+      // const type = formData.get('type')?.toString().trim();
       const description = formData.get('description')?.toString().trim();
       const whiteList = formData.get('whiteList')
         ? JSON.parse(formData.get('whiteList')!.toString())
         : [];
       const isPublic = formData.get('isPublic') === 'true';
       const documentId = params.documentId as string;
-      if (!name || !type) {
+      if (!name) {
         return data(
           {
             toast: {
               type: 'error' as const,
-              message: 'Vui lòng điền đầy đủ thông tin tên và loại tài liệu.',
+              message: 'Vui lòng nhập tên tài liệu',
             },
           },
           { status: 400, statusText: 'Bad Request' },
@@ -712,7 +702,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       try {
         await updateDocument(
           documentId,
-          { name, type, description, whiteList, isPublic },
+          { name, description, whiteList, isPublic },
           session!,
         );
         return data(
