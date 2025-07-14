@@ -7,6 +7,8 @@ import {
   TrendingUp,
   BarChart3,
   Calendar,
+  MapPin,
+  Globe,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -20,6 +22,7 @@ import { Line, LineChart, Pie, XAxis, YAxis, PieChart, Cell } from 'recharts';
 import { ITransactionStats } from '~/interfaces/transaction.interface';
 import { formatCurrency } from '~/utils';
 import { TRANSACTION } from '~/constants/transaction.constant';
+import { getProvinceBySlug } from '~/utils/address.util';
 
 export default function StatisticsDisplay({
   statisticsData,
@@ -43,7 +46,7 @@ export default function StatisticsDisplay({
       color: 'hsl(var(--chart-3))',
     },
     net: {
-      label: 'Lãi/Lỗ',
+      label: 'Lợi nhuận',
       color: 'hsl(var(--chart-4))',
     },
   };
@@ -98,6 +101,17 @@ export default function StatisticsDisplay({
       outcome: day.outcome || 0,
       net: day.net || 0,
       count: day.count || 0,
+    })) || [];
+
+  // Prepare location data for charts
+  const topProvinces =
+    stats.byProvince?.slice(0, 8).map((province, index) => ({
+      province: getProvinceBySlug(province.province)?.name || province.province,
+      total: province.total || 0,
+      income: province.income || 0,
+      outcome: province.outcome || 0,
+      customerCount: province.customerCount || 0,
+      fill: `hsl(${(index * 45) % 360}, 70%, 50%)`,
     })) || [];
 
   return (
@@ -410,7 +424,7 @@ export default function StatisticsDisplay({
                     dataKey='net'
                     stroke='var(--color-net)'
                     strokeWidth={2}
-                    name='Lãi/Lỗ'
+                    name='Lợi nhuận'
                   />
                 </LineChart>
               </ChartContainer>
@@ -419,6 +433,202 @@ export default function StatisticsDisplay({
                 Chưa có dữ liệu theo ngày
               </p>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Location Analytics */}
+      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8'>
+        {/* By Location Statistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center'>
+              <Globe className='h-5 w-5 mr-2' />
+              Thống kê thu nhập theo tỉnh/thành phố
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProvinces.length > 0 ? (
+              <ChartContainer
+                config={chartConfig}
+                className='mx-auto aspect-square max-h-[300px]'
+              >
+                <PieChart>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name, props) => [
+                          formatCurrency(Number(value)),
+                          `${name} (${props.payload?.customerCount || 0} khách hàng)`,
+                        ]}
+                      />
+                    }
+                  />
+                  <ChartLegend />
+                  <Pie
+                    data={topProvinces}
+                    dataKey='income'
+                    nameKey='province'
+                    cx='50%'
+                    cy='50%'
+                    outerRadius={80}
+                  >
+                    {topProvinces.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <p className='text-center text-gray-500 py-8'>
+                Chưa có dữ liệu theo địa điểm
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center'>
+              <Globe className='h-5 w-5 mr-2' />
+              Thống kê chi tiêu theo tỉnh/thành phố
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProvinces.length > 0 ? (
+              <ChartContainer
+                config={chartConfig}
+                className='mx-auto aspect-square max-h-[300px]'
+              >
+                <PieChart>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name, props) => [
+                          formatCurrency(Number(value)),
+                          `${name} (${props.payload?.customerCount || 0} khách hàng)`,
+                        ]}
+                      />
+                    }
+                  />
+                  <ChartLegend />
+                  <Pie
+                    data={topProvinces}
+                    dataKey='outcome'
+                    nameKey='province'
+                    cx='50%'
+                    cy='50%'
+                    outerRadius={80}
+                  >
+                    {topProvinces.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <p className='text-center text-gray-500 py-8'>
+                Chưa có dữ liệu theo địa điểm
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center'>
+              <Globe className='h-5 w-5 mr-2' />
+              Thống kê lợi nhuận theo tỉnh/thành phố
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProvinces.length > 0 ? (
+              <ChartContainer
+                config={chartConfig}
+                className='mx-auto aspect-square max-h-[300px]'
+              >
+                <PieChart>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name, props) => [
+                          formatCurrency(Number(value)),
+                          `${name} (${props.payload?.customerCount || 0} khách hàng)`,
+                        ]}
+                      />
+                    }
+                  />
+                  <ChartLegend />
+                  <Pie
+                    data={topProvinces}
+                    dataKey='total'
+                    nameKey='province'
+                    cx='50%'
+                    cy='50%'
+                    outerRadius={80}
+                  >
+                    {topProvinces.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <p className='text-center text-gray-500 py-8'>
+                Chưa có dữ liệu theo địa điểm
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Location Summary Tables */}
+      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8'>
+        {/* Province Summary Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center'>
+              <Globe className='h-5 w-5 mr-2' />
+              Bảng thống kê theo tỉnh/thành phố
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-2 max-h-64 overflow-y-auto'>
+              {stats.byProvince?.slice(0, 10).map((province, index) => (
+                <div
+                  key={province.province}
+                  className='flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'
+                >
+                  <div className='flex-1'>
+                    <div className='font-medium text-sm'>
+                      {province.province}
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      {province.customerCount} khách hàng • {province.count}{' '}
+                      giao dịch
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <div className='font-bold text-sm'>
+                      {formatCurrency(province.total)}
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      <span className='text-green-600'>
+                        +{formatCurrency(province.income)}
+                      </span>
+                      {' / '}
+                      <span className='text-red-600'>
+                        -{formatCurrency(province.outcome)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )) || (
+                <p className='text-center text-gray-500 py-4'>
+                  Chưa có dữ liệu theo tỉnh/thành phố
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -123,12 +123,12 @@ export default function MyTasksOverview({
 
               <div className='flex items-center justify-between text-xs text-muted-foreground'>
                 <div className='flex items-center space-x-3'>
-                  <span
+                  <Badge
                     className={`flex items-center ${TASK_PRIORITY_BADGE_CLASSES[task.tsk_priority]}`}
                   >
                     <AlertTriangle className='w-3 h-3 mr-1' />
                     {TASK.PRIORITY[task.tsk_priority]}
-                  </span>
+                  </Badge>
 
                   {task.tsk_endDate && (
                     <span className='flex items-center'>

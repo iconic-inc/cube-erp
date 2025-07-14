@@ -781,12 +781,57 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
     ];
 
+    // Province-only breakdown pipeline
+    const provincePipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'tx_customer',
+          foreignField: '_id',
+          as: 'customerData',
+        },
+      },
+      {
+        $unwind: {
+          path: '$customerData',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: '$customerData.cus_address.province',
+          income: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
+            },
+          },
+          outcome: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'outcome'] }, '$tx_amount', 0],
+            },
+          },
+          total: { $sum: '$tx_amount' },
+          count: { $sum: 1 },
+          customerCount: { $addToSet: '$tx_customer' },
+        },
+      },
+      {
+        $addFields: {
+          customerCount: { $size: '$customerCount' },
+        },
+      },
+      { $sort: { total: -1 } },
+    ];
+
     // Execute all aggregations in parallel
-    const [mainStats, categoryStats, dailyStats] = await Promise.all([
-      TransactionModel.aggregate(mainStatsPipeline),
-      TransactionModel.aggregate(categoryPipeline),
-      TransactionModel.aggregate(dailyPipeline),
-    ]);
+    const [mainStats, categoryStats, dailyStats, provinceStats] =
+      await Promise.all([
+        TransactionModel.aggregate(mainStatsPipeline),
+        TransactionModel.aggregate(categoryPipeline),
+        TransactionModel.aggregate(dailyPipeline),
+        TransactionModel.aggregate(provincePipeline),
+      ]);
 
     const stats = mainStats[0] || {
       totalIncome: 0,
@@ -806,6 +851,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       total: item.total,
       count: item.count,
     }));
+
     // Format daily data for charts
     const byDay = dailyStats.map((item) => ({
       date: `${item._id.year}-${String(item._id.month).padStart(
@@ -819,6 +865,17 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       outcome: item.outcome,
       net: item.income - item.outcome,
       count: item.count,
+    }));
+
+    // Format province data for charts
+    const byProvince = provinceStats.map((item) => ({
+      province: item._id || 'Không xác định',
+      income: item.income,
+      outcome: item.outcome,
+      total: item.total,
+      net: item.income - item.outcome,
+      count: item.count,
+      customerCount: item.customerCount,
     }));
 
     // Calculate additional metrics for charts
@@ -847,6 +904,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       // Chart-friendly breakdowns
       byCategory,
       byDay,
+      byProvince,
     };
   } catch (error) {
     throw new BadRequestError(

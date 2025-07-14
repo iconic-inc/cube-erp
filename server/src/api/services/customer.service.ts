@@ -25,6 +25,12 @@ interface ICustomerQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  source?: string;
+  contactChannel?: string;
+  province?: string;
+  district?: string;
+  createdAtFrom?: string;
+  createdAtTo?: string;
 }
 
 // Enhanced createCustomer method to support creating customer with case service
@@ -53,13 +59,18 @@ const createCustomer = async (customerData: ICustomerCreate) => {
       lastName: customerData.lastName,
       email: customerData.email,
       msisdn: customerData.msisdn,
-      address: customerData.address,
+      address: {
+        province: customerData.province || '',
+        district: customerData.district || '',
+        street: customerData.street || '',
+      },
       sex: customerData.sex,
       contactChannel: customerData.contactChannel,
       source: customerData.source,
       notes: customerData.notes,
       code: customerData.code,
       birthDate: customerData.birthDate,
+      createdAt: new Date(customerData.createdAt || Date.now()).toISOString(),
     });
 
     return getReturnData(newCustomer);
@@ -79,7 +90,19 @@ const createCustomer = async (customerData: ICustomerCreate) => {
 const getCustomers = async (query: ICustomerQuery = {}) => {
   try {
     // Apply pagination options
-    const { page = 1, limit = 10, search, sortBy, sortOrder } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy,
+      sortOrder,
+      source,
+      contactChannel,
+      province,
+      district,
+      createdAtFrom,
+      createdAtTo,
+    } = query;
 
     // Build the aggregation pipeline
     const pipeline: any[] = [];
@@ -95,9 +118,57 @@ const getCustomers = async (query: ICustomerQuery = {}) => {
             { cus_email: searchRegex },
             { cus_msisdn: searchRegex },
             { cus_code: searchRegex },
-            { cus_address: searchRegex },
             { cus_notes: searchRegex },
           ],
+        },
+      });
+    }
+
+    if (source) {
+      pipeline.push({
+        $match: {
+          cus_source: source,
+        },
+      });
+    }
+    if (contactChannel) {
+      pipeline.push({
+        $match: {
+          cus_contactChannel: contactChannel,
+        },
+      });
+    }
+
+    // Filter by province if provided
+    if (province) {
+      pipeline.push({
+        $match: {
+          'cus_address.province': province,
+        },
+      });
+    }
+
+    // Filter by district if provided
+    if (district) {
+      pipeline.push({
+        $match: {
+          'cus_address.district': district,
+        },
+      });
+    }
+
+    // Filter by createdAt date range if provided
+    if (createdAtFrom || createdAtTo) {
+      const dateFilter: any = {};
+      if (createdAtFrom) {
+        dateFilter.$gte = new Date(createdAtFrom);
+      }
+      if (createdAtTo) {
+        dateFilter.$lte = new Date(createdAtTo);
+      }
+      pipeline.push({
+        $match: {
+          createdAt: dateFilter,
         },
       });
     }
@@ -228,13 +299,25 @@ const updateCustomer = async (
 
     // Format and clean data
     const cleanedData = removeNestedNullish<ICustomerUpdate>(customerData);
-    const formattedData = formatAttributeName(cleanedData, CUSTOMER.PREFIX);
+    const formattedData = formatAttributeName(
+      {
+        ...cleanedData,
+        address: {
+          province: cleanedData.province,
+          district: cleanedData.district,
+          street: cleanedData.street,
+        },
+      },
+      CUSTOMER.PREFIX
+    );
 
     // Update customer
     const updatedCustomer = await CustomerModel.findByIdAndUpdate(
       customerId,
-      { $set: formattedData },
-      { new: true }
+      {
+        $set: formattedData,
+      },
+      { new: true, timestamps: false }
     );
 
     if (!updatedCustomer) {
@@ -371,11 +454,14 @@ const searchCustomers = async (searchQuery: any) => {
     if (searchQuery.text) {
       const searchText = searchQuery.text;
       query.$or = [
-        { cus_fistName: { $regex: searchText, $options: 'i' } },
+        { cus_firstName: { $regex: searchText, $options: 'i' } },
         { cus_lastName: { $regex: searchText, $options: 'i' } },
         { cus_email: { $regex: searchText, $options: 'i' } },
         { cus_msisdn: { $regex: searchText, $options: 'i' } },
         { cus_notes: { $regex: searchText, $options: 'i' } },
+        { 'cus_address.province': { $regex: searchText, $options: 'i' } },
+        { 'cus_address.district': { $regex: searchText, $options: 'i' } },
+        { 'cus_address.street': { $regex: searchText, $options: 'i' } },
       ];
     }
 
@@ -390,6 +476,15 @@ const searchCustomers = async (searchQuery: any) => {
 
     if (searchQuery.contactChannel) {
       query.cus_contactChannel = searchQuery.contactChannel;
+    }
+
+    // Filter by address components if provided
+    if (searchQuery.province) {
+      query['cus_address.province'] = searchQuery.province;
+    }
+
+    if (searchQuery.district) {
+      query['cus_address.district'] = searchQuery.district;
     }
 
     // Date range filters
@@ -534,13 +629,20 @@ const exportCustomersToXLSX = async (queryParams: any) => {
 
     // Map customer data for Excel
     const excelData = customersList.map((customer: any) => {
+      // Format address from object to string
+      let addressString = '';
+      if (customer.cus_address) {
+        const { street, district, province } = customer.cus_address;
+        addressString = [street, district, province].filter(Boolean).join(', ');
+      }
+
       return {
         'Mã khách hàng': customer.cus_code || '',
         Họ: customer.cus_lastName || '',
         Tên: customer.cus_firstName || '',
         Email: customer.cus_email || '',
         'Số điện thoại': customer.cus_msisdn || '',
-        'Địa chỉ': customer.cus_address || '',
+        'Địa chỉ': addressString,
         'Giới tính': customer.cus_sex || '',
         'Kênh liên hệ': customer.cus_contactChannel || '',
         Nguồn: customer.cus_source || '',

@@ -5,14 +5,13 @@ import {
   redirect,
 } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import { bulkDeleteTasks, getTasks } from '~/services/task.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { ITask } from '~/interfaces/task.interface';
-import { IListResponse } from '~/interfaces/response.interface';
 import { IListColumn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
@@ -23,6 +22,9 @@ import {
 } from '~/constants/task.constant';
 import { formatDate } from '~/utils';
 import { isAdmin } from '~/utils/permission';
+import { getEmployees } from '~/services/employee.server';
+import { isResolveError } from '~/lib';
+import { IEmployeeBrief } from '~/interfaces/employee.interface';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -31,42 +33,62 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
 
   return {
-    tasksPromise: getTasks({ ...query }, options, user!).catch((e) => {
+    tasksPromise: getTasks(url.searchParams, user!).catch((e) => {
       console.error(e);
       return {
         success: false,
         message: e.message || 'Có lỗi xảy ra khi lấy danh sách Task',
       };
     }),
+    employeesPromise: getEmployees(
+      new URLSearchParams([['limit', '1000']]),
+      user!,
+    ).catch((e) => {
+      console.error(e);
+      return {
+        success: false,
+        message: e.message || 'Có lỗi xảy ra khi lấy danh sách nhân viên',
+      };
+    }),
   };
 };
 
 export default function HRMTasks() {
-  const { tasksPromise } = useLoaderData<typeof loader>();
+  const { tasksPromise, employeesPromise } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    const loadEmployees = async () => {
+      const employeesData = (await employeesPromise) as any;
+      if (isResolveError(employeesData)) {
+        console.error('Error loading employees:', employeesData.message);
+        return;
+      }
+      setVisibleColumns((prevColumns) =>
+        prevColumns.map((col) => {
+          if (col.key === 'tsk_assignees') {
+            return {
+              ...col,
+              options: employeesData.data.length
+                ? employeesData.data.map((emp: IEmployeeBrief) => ({
+                    value: emp.id,
+                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
+                  }))
+                : [
+                    {
+                      value: '',
+                      label: 'Không có nhân viên',
+                    },
+                  ],
+            };
+          }
+          return col;
+        }),
+      ); // Trigger re-render to update options
+    };
+    loadEmployees();
+  }, [employeesPromise]);
 
   const [visibleColumns, setVisibleColumns] = useState<IListColumn<ITask>[]>([
     {
@@ -88,6 +110,8 @@ export default function HRMTasks() {
       title: 'Người thực hiện',
       visible: true,
       sortField: 'tsk_assignees',
+      filterField: 'assignee',
+      options: [],
       render: (task) => (
         <span>
           {task.tsk_assignees
@@ -118,20 +142,29 @@ export default function HRMTasks() {
       title: 'Ngày bắt đầu',
       visible: true,
       sortField: 'tsk_startDate',
-      render: (task) => formatDate(task.tsk_startDate),
+      filterField: 'startDate',
+      dateFilterable: true,
+      render: (task) => formatDate(task.tsk_startDate, 'HH:mm - DD/MM/YYYY'),
     },
     {
       key: 'tsk_endDate',
       title: 'Ngày kết thúc',
       visible: true,
       sortField: 'tsk_endDate',
-      render: (task) => formatDate(task.tsk_endDate),
+      filterField: 'endDate',
+      dateFilterable: true,
+      render: (task) => formatDate(task.tsk_endDate, 'HH:mm - DD/MM/YYYY'),
     },
     {
       key: 'tsk_priority',
       title: 'Ưu tiên',
       visible: true,
       sortField: 'tsk_priority',
+      filterField: 'priority',
+      options: Object.keys(TASK.PRIORITY).map((key) => ({
+        value: key,
+        label: TASK.PRIORITY[key as keyof typeof TASK.PRIORITY],
+      })),
       render: (task) => (
         <span className={`${TASK_PRIORITY_BADGE_CLASSES[task.tsk_priority]}`}>
           {TASK.PRIORITY[task.tsk_priority]}
@@ -143,6 +176,11 @@ export default function HRMTasks() {
       title: 'Trạng thái',
       visible: true,
       sortField: 'tsk_status',
+      filterField: 'status',
+      options: Object.keys(TASK.STATUS).map((key) => ({
+        value: key,
+        label: TASK.STATUS[key as keyof typeof TASK.STATUS],
+      })),
       render: (task) => (
         <span className={`${TASK_STATUS_BADGE_CLASSES[task.tsk_status]}`}>
           {TASK.STATUS[task.tsk_status]}

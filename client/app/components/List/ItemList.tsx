@@ -202,7 +202,7 @@ export default function ItemList<T>({
                         .map((column) => (
                           <TableCell
                             key={column.key}
-                            className='max-w-[400px] overflow-hidden truncate'
+                            className='max-w-[250px] overflow-hidden truncate'
                           >
                             {column.render(item)}
                           </TableCell>

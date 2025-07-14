@@ -6,21 +6,12 @@ import {
   IEmployeeUpdate,
 } from '~/interfaces/employee.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { IPaginationOptions } from '~/interfaces/request.interface';
 
 // Lấy danh sách nhân viên
 const getEmployees = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-  const searchParams = new URLSearchParams(query);
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   const response = await fetcher(`/employees?${searchParams.toString()}`, {
     request,
   });
@@ -108,14 +99,10 @@ const bulkDeleteEmployees = async (
 
 // Xuất dữ liệu nhân viên
 const exportEmployees = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   fileType: 'csv' | 'xlsx',
   request: ISessionUser,
 ) => {
-  const searchParams = new URLSearchParams(query);
-  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
-  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
   return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
     `/employees/export/${fileType}?${searchParams.toString()}`,
     {

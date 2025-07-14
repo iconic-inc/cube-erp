@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate, Link } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import {
@@ -23,6 +23,12 @@ import {
   CASE_STATUS_BADGE_CLASSES,
 } from '~/constants/caseService.constant';
 import { canAccessCaseServices } from '~/utils/permission';
+import { getEmployees } from '~/services/employee.server';
+import { getCustomers } from '~/services/customer.server';
+import { isResolveError } from '~/lib';
+import { IEmployeeBrief } from '~/interfaces/employee.interface';
+import { ICustomerBrief } from '~/interfaces/customer.interface';
+import { formatDate } from '~/utils';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -33,42 +39,88 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
 
   return {
-    casesPromise: getCaseServices({ ...query }, options, user!).catch((e) => {
+    casesPromise: getCaseServices(url.searchParams, user!).catch((e) => {
       console.error(e);
       return {
         success: false,
         message: 'Không thể tải danh sách Hồ sơ vụ việc',
       };
     }),
+    employeesPromise: getEmployees(
+      new URLSearchParams([['limit', '1000']]),
+      user!,
+    ).catch((e) => {
+      console.error(e);
+      return {
+        success: false,
+        message: e.message || 'Có lỗi xảy ra khi lấy danh sách nhân viên',
+      };
+    }),
+    customersPromise: getCustomers(
+      new URLSearchParams([['limit', '1000']]),
+      user!,
+    ).catch((e) => {
+      console.error(e);
+      return {
+        success: false,
+        message: e.message || 'Có lỗi xảy ra khi lấy danh sách khách hàng',
+      };
+    }),
   };
 };
 
 export default function CRMCaseService() {
-  const { casesPromise } = useLoaderData<typeof loader>();
+  const { casesPromise, employeesPromise, customersPromise } =
+    useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    const loadFilterData = async () => {
+      // Load employees for lead attorney filter
+      const employeesData = (await employeesPromise) as any;
+      const customersData = (await customersPromise) as any;
+
+      setVisibleColumns((prevColumns) =>
+        prevColumns.map((col) => {
+          if (col.key === 'leadAttorney' && !isResolveError(employeesData)) {
+            return {
+              ...col,
+              options: employeesData.data.length
+                ? employeesData.data.map((emp: IEmployeeBrief) => ({
+                    value: emp.id,
+                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
+                  }))
+                : [
+                    {
+                      value: '',
+                      label: 'Không có nhân viên',
+                    },
+                  ],
+            };
+          }
+          if (col.key === 'customer' && !isResolveError(customersData)) {
+            return {
+              ...col,
+              options: customersData.data.length
+                ? customersData.data.map((customer: ICustomerBrief) => ({
+                    value: customer.id,
+                    label: `${customer.cus_firstName} ${customer.cus_lastName}`,
+                  }))
+                : [
+                    {
+                      value: '',
+                      label: 'Không có khách hàng',
+                    },
+                  ],
+            };
+          }
+          return col;
+        }),
+      );
+    };
+    loadFilterData();
+  }, [employeesPromise, customersPromise]);
 
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<ICaseService>[]
@@ -77,7 +129,7 @@ export default function CRMCaseService() {
       title: 'Mã Hồ sơ',
       key: 'code',
       visible: true,
-      sortField: 'tsk_code',
+      sortField: 'case_code',
       render: (item) => (
         <Link
           to={`/erp/crm/cases/${item.id}`}
@@ -91,7 +143,9 @@ export default function CRMCaseService() {
       title: 'Khách hàng',
       key: 'customer',
       visible: true,
-      sortField: 'tsk_customer.cus_firstName',
+      sortField: 'case_customer.cus_firstName',
+      filterField: 'customerId',
+      options: [],
       render: (item) => (
         <Link
           to={`/erp/crm/customers/${item.case_customer.id}`}
@@ -105,7 +159,12 @@ export default function CRMCaseService() {
       title: 'Trạng thái',
       key: 'status',
       visible: true,
-      sortField: 'tsk_status',
+      sortField: 'case_status',
+      filterField: 'status',
+      options: Object.keys(CASE_SERVICE.STATUS).map((key) => ({
+        value: key,
+        label: CASE_SERVICE.STATUS[key as keyof typeof CASE_SERVICE.STATUS],
+      })),
       render: (item) => (
         <span className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]}`}>
           {CASE_SERVICE.STATUS[item.case_status] || '-'}
@@ -116,7 +175,9 @@ export default function CRMCaseService() {
       title: 'Luật sư chính',
       key: 'leadAttorney',
       visible: true,
-      sortField: 'tsk_leadAttorney.emp_fullName',
+      sortField: 'case_leadAttorney.emp_user.usr_firstName',
+      filterField: 'leadAttorneyId',
+      options: [],
       render: (item) =>
         item.case_leadAttorney ? (
           <Link
@@ -134,18 +195,20 @@ export default function CRMCaseService() {
       title: 'Ngày bắt đầu',
       key: 'startDate',
       visible: true,
-      sortField: 'tsk_startDate',
-      render: (item) => new Date(item.case_startDate).toLocaleDateString(),
+      sortField: 'case_startDate',
+      filterField: 'startDate',
+      dateFilterable: true,
+      render: (item) => formatDate(item.case_startDate, 'DD/MM/YYYY'),
     },
     {
       title: 'Ngày kết thúc',
       key: 'endDate',
       visible: true,
-      sortField: 'tsk_endDate',
+      sortField: 'case_endDate',
+      filterField: 'endDate',
+      dateFilterable: true,
       render: (item) =>
-        item.case_endDate
-          ? new Date(item.case_endDate).toLocaleDateString()
-          : '-',
+        item.case_endDate ? formatDate(item.case_endDate, 'DD/MM/YYYY') : '-',
     },
   ]);
 
@@ -255,14 +318,7 @@ export const action = async ({
         // TODO: Implement export functionality when exportCaseServices is available
         const url = new URL(request.url);
         const fileData = await exportCaseServicesToXLSX(
-          {
-            search: url.searchParams.get('search') || '',
-          },
-          {
-            sortBy: url.searchParams.get('sortBy') || 'createdAt',
-            sortOrder:
-              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-          },
+          url.searchParams,
           session,
         );
 
@@ -271,7 +327,7 @@ export const action = async ({
             success: true,
             toast: {
               type: 'success',
-              message: 'Đã xuất dữ liệu Nhân viên thành công!',
+              message: 'Đã xuất dữ liệu Hồ sơ vụ việc thành công!',
             },
             data: {
               fileUrl: fileData.fileUrl,

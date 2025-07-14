@@ -49,4 +49,6 @@ export interface IDocumentQuery {
   type?: string;
   startDate?: string;
   endDate?: string;
+  isPublic?: string;
+  createdBy?: string; // Employee ID of the creator
 }

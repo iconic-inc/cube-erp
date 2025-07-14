@@ -37,8 +37,9 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
       unique: true,
     },
     cus_address: {
-      type: String,
-      trim: true,
+      province: { type: String, required: true },
+      district: { type: String, required: true },
+      street: { type: String, required: true },
     },
     cus_sex: {
       type: String,
@@ -59,6 +60,10 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
     cus_notes: {
       type: String,
       trim: true,
+    },
+    cus_createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {

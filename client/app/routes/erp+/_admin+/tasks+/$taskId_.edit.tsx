@@ -24,19 +24,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response('Không tìm thấy Task', { status: 404 });
   }
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 100;
+  const searchParams = new URLSearchParams(url.searchParams);
+  searchParams.set('sortBy', 'createdAt');
+  searchParams.set('sortOrder', 'desc');
 
-  const employeesPromise = getEmployees(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    },
-    auth!,
-  ).catch((e) => {
+  const employeesPromise = getEmployees(searchParams, auth!).catch((e) => {
     console.error('Error fetching employees:', e);
     return {
       success: false,

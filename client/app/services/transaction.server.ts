@@ -1,6 +1,5 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
 import { fetcher } from '.';
-import { IPaginationOptions } from '~/interfaces/request.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import {
   ITransaction,
@@ -12,27 +11,9 @@ import {
 
 // Get list of transactions with pagination and query
 const getTransactions = async (
-  query: ITransactionQuery = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-
-  const searchParams = new URLSearchParams();
-
-  // Add query parameters
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.set(key, String(value));
-    }
-  });
-
-  // Add pagination and sorting options
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   const response = await fetcher<IListResponse<ITransaction>>(
     `/transactions?${searchParams.toString()}`,
     { request },
@@ -120,23 +101,9 @@ const bulkDeleteTransactions = async (
 
 // Export transactions to XLSX
 const exportTransactionsToXLSX = async (
-  query: ITransactionQuery = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const searchParams = new URLSearchParams();
-
-  // Add query parameters
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.set(key, String(value));
-    }
-  });
-
-  // Add sorting options
-  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
-  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
-
   return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
     `/transactions/export/xlsx?${searchParams.toString()}`,
     {

@@ -1,6 +1,11 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
-import { Link, useLoaderData, useNavigate } from '@remix-run/react';
-import { useState } from 'react';
+import {
+  Link,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import {
@@ -21,6 +26,15 @@ import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { Button } from '~/components/ui/button';
 import { canAccessCustomerManagement } from '~/utils/permission';
+import {
+  getDistrictBySlug,
+  getDistrictsByProvinceCode,
+  getProvinceBySlug,
+  provinces,
+  toAddressString,
+} from '~/utils/address.util';
+import { CUSTOMER } from '~/constants/customer.constant';
+import { formatDate } from '~/utils';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -32,31 +46,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
 
   return {
-    customersPromise: getCustomers({ ...query }, options, user!).catch((e) => {
+    customersPromise: getCustomers(url.searchParams, user!).catch((e) => {
       console.error(e);
       return {
         data: [],
@@ -74,6 +66,51 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function HRMCustomers() {
   const { customersPromise } = useLoaderData<typeof loader>();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [province, setProvince] = useState(provinces[0]);
+  const [districts, setDistricts] = useState(
+    getDistrictsByProvinceCode(province.code),
+  );
+
+  // Handle province changes
+  useEffect(() => {
+    const provinceSlug = searchParams.get('province');
+    const selectedProvince =
+      getProvinceBySlug(provinceSlug || '') || provinces[0];
+
+    setProvince(selectedProvince);
+
+    const newDistricts = getDistrictsByProvinceCode(selectedProvince.code);
+    setDistricts(newDistricts);
+    setVisibleColumns((prevColumns) =>
+      prevColumns.map((col) => {
+        if (col.key === 'district') {
+          return {
+            ...col,
+            options: newDistricts.map((d) => ({
+              value: d.slug,
+              label: d.name,
+            })),
+          };
+        }
+        return col;
+      }),
+    );
+  }, [searchParams]);
+
+  const getSourceLabel = (source?: string) => {
+    return (
+      Object.values(CUSTOMER.SOURCE).find((src) => src.value === source)
+        ?.label || CUSTOMER.SOURCE.OTHER.label
+    );
+  };
+
+  const getContactChannelLabel = (channel?: string) => {
+    return (
+      Object.values(CUSTOMER.CONTACT_CHANNEL).find((ch) => ch.value === channel)
+        ?.label || CUSTOMER.CONTACT_CHANNEL.OTHER.label
+    );
+  };
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<ICustomer>[]
   >([
@@ -115,30 +152,66 @@ export default function HRMCustomers() {
         ),
     },
     {
-      key: 'email',
-      title: 'Email',
-      sortField: 'cus_email',
+      key: 'contactChannel',
+      title: 'Kênh liên hệ',
+      sortField: 'cus_contactChannel',
       visible: true,
+      filterField: 'contactChannel',
+      options: Object.values(CUSTOMER.CONTACT_CHANNEL),
       render: (customer: ICustomer) =>
-        customer.cus_email ? (
-          <Link
-            to={`mailto:${customer.cus_email}`}
-            className='text-blue-600 hover:underline truncate'
-            onClick={(e) => e.stopPropagation()}
-          >
-            {customer.cus_email}
-          </Link>
-        ) : (
-          'Chưa có email'
-        ),
+        getContactChannelLabel(customer.cus_contactChannel),
+    },
+    {
+      key: 'source',
+      title: 'Nguồn khách hàng',
+      sortField: 'cus_source',
+      visible: true,
+      filterField: 'source',
+      options: Object.values(CUSTOMER.SOURCE),
+      render: (customer: ICustomer) => getSourceLabel(customer.cus_source),
     },
     {
       key: 'address',
       title: 'Địa chỉ',
-      sortField: 'cus_address',
+      sortField: 'cus_address.district',
       visible: true,
+      render: (customer: ICustomer) => toAddressString(customer.cus_address),
+    },
+    {
+      key: 'province',
+      title: 'Tỉnh/Thành phố',
+      sortField: 'cus_address.province',
+      visible: false,
+      filterField: 'province',
+      options: provinces.map((p) => ({
+        value: p.slug,
+        label: p.name,
+      })),
       render: (customer: ICustomer) =>
-        customer.cus_address || 'Chưa có địa chỉ',
+        getProvinceBySlug(customer.cus_address.province)?.name,
+    },
+    {
+      key: 'district',
+      title: 'Quận/Huyện',
+      sortField: 'cus_address.district',
+      visible: false,
+      filterField: 'district',
+      options: districts.map((p) => ({
+        value: p.slug,
+        label: p.name,
+      })),
+      render: (customer: ICustomer) =>
+        getDistrictBySlug(districts, customer.cus_address.district)?.name,
+    },
+    {
+      key: 'createdAt',
+      title: 'Ngày tạo',
+      sortField: 'cus_createdAt',
+      visible: true,
+      filterField: 'createdAt',
+      dateFilterable: true,
+      render: (customer: ICustomer) =>
+        formatDate(customer.cus_createdAt, 'HH:mm - DD/MM/YYYY'),
     },
     {
       key: 'action',
@@ -259,14 +332,7 @@ export const action = async ({
 
         const url = new URL(request.url);
         const fileData = await exportCustomers(
-          {
-            search: url.searchParams.get('search') || '',
-          },
-          {
-            sortBy: url.searchParams.get('sortBy') || 'createdAt',
-            sortOrder:
-              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-          },
+          url.searchParams,
           fileType as 'xlsx',
           session,
         );

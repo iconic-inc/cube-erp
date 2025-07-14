@@ -34,10 +34,7 @@ const checkOut = async (data: IAttendanceCreate, request: ISessionUser) => {
 };
 
 // attendance list for employee
-const getAttendancesForEmployee = async (
-  userId: string,
-  request: ISessionUser,
-) => {
+const getAttendancesForEmployee = async (request: ISessionUser) => {
   const response = await fetcher<IAttendanceBrief[]>(
     `/employees/me/attendance/stats`,
     {

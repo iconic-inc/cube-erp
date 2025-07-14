@@ -33,31 +33,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
-
   return {
-    employeesPromise: getEmployees({ ...query }, options, user!).catch((e) => {
+    employeesPromise: getEmployees(url.searchParams, user!).catch((e) => {
       console.error(e);
       return {
         data: [],
@@ -127,6 +104,10 @@ export default function HRMEmployees() {
       key: 'department',
       visible: true,
       sortField: 'emp_department',
+      filterField: 'department',
+      options: (item) => {
+        return { label: item.emp_department, value: item.emp_department };
+      },
       render: (item) => (
         <Badge variant='secondary' className='text-sm'>
           {item.emp_department || 'Chưa có phòng ban'}
@@ -138,6 +119,10 @@ export default function HRMEmployees() {
       key: 'position',
       visible: true,
       sortField: 'emp_position',
+      filterField: 'position',
+      options: (item) => {
+        return { label: item.emp_position, value: item.emp_position };
+      },
       render: (item) => (
         <Badge variant='outline' className='text-sm'>
           {item.emp_position || 'Chưa có chức vụ'}
@@ -273,14 +258,7 @@ export const action = async ({
 
         const url = new URL(request.url);
         const fileData = await exportEmployees(
-          {
-            search: url.searchParams.get('search') || '',
-          },
-          {
-            sortBy: url.searchParams.get('sortBy') || 'createdAt',
-            sortOrder:
-              (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-          },
+          url.searchParams,
           fileType as 'xlsx',
           session,
         );

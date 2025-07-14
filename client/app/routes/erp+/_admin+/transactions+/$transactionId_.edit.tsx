@@ -39,13 +39,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const limit = Number(url.searchParams.get('limit')) || 100;
 
   const customersPromise = getCustomers(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'date',
-      sortOrder: 'desc',
-    },
+    new URLSearchParams([
+      ['page', page.toString()],
+      ['limit', limit.toString()],
+      ['sortBy', 'createdAt'],
+      ['sortOrder', 'desc'],
+    ]),
     auth!,
   ).catch((e) => {
     console.error('Error fetching customers:', e);
@@ -55,13 +54,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     };
   });
   const caseServicesPromise = getCaseServices(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'date',
-      sortOrder: 'desc',
-    },
+    new URLSearchParams([
+      ['page', page.toString()],
+      ['limit', limit.toString()],
+      ['sortBy', 'createdAt'],
+      ['sortOrder', 'desc'],
+    ]),
     auth!,
   ).catch((e) => {
     console.error('Error fetching case services:', e);

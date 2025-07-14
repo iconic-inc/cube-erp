@@ -1,15 +1,9 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
-import { fetcher } from '.';
-import { IListResponse } from '~/interfaces/response.interface';
-import { IEmployee } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import { IAttendance } from '~/interfaces/attendance.interface';
-import { getEmployeesPerformance, getMyTasks } from './task.server';
+import { getEmployeesPerformance, getMyTasks, getTasks } from './task.server';
 import { getEmployees } from './employee.server';
-import {
-  getTodayAttendance,
-  getTodayAttendanceStats,
-} from './attendance.server';
+import { getTodayAttendanceStats } from './attendance.server';
 
 export interface IDashboardStats {
   totalEmployees: number;
@@ -49,15 +43,20 @@ const getDashboardStats = async (
 ): Promise<IDashboardStats> => {
   try {
     // Lấy số lượng nhân viên
-    const employeesResponse = await getEmployees({}, { limit: 1 }, request);
+    const employeesResponse = await getEmployees(
+      new URLSearchParams([['limit', '1']]),
+      request,
+    );
 
     // Lấy thống kê công việc
-    const tasksResponse = await getMyTasks({}, { limit: 1 }, request);
+    const tasksResponse = await getMyTasks(
+      new URLSearchParams([['limit', '1']]),
+      request,
+    );
 
     // Lấy dữ liệu hiệu suất công việc
     const performanceResponse = await getEmployeesPerformance(
-      {},
-      { limit: 1 },
+      new URLSearchParams([['limit', '1']]),
       request,
     );
 
@@ -116,15 +115,23 @@ const getDashboardOverview = async (
       attendanceResponse,
     ] = await Promise.allSettled([
       getDashboardStats(request),
-      fetcher<IListResponse<ITask>>(
-        '/tasks?limit=5&sortBy=createdAt&sortOrder=desc',
-        { request },
+      getTasks(
+        new URLSearchParams({
+          limit: '5',
+          sortBy: 'performanceScore',
+          sortOrder: 'desc',
+        }),
+        request,
       ),
-      fetcher(
-        '/tasks/performance?limit=5&sortBy=performanceScore&sortOrder=desc',
-        { request },
+      getEmployeesPerformance(
+        new URLSearchParams({
+          limit: '5',
+          sortBy: 'performanceScore',
+          sortOrder: 'desc',
+        }),
+        request,
       ),
-      fetcher<IAttendance[]>('/attendance/stats/today', { request }),
+      getTodayAttendanceStats(request),
     ]);
 
     return {

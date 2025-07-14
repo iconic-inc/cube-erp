@@ -395,8 +395,8 @@ export default function TaskDetailForm({
           </div>
 
           {/* Priority, Status, Dates */}
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
-            <div>
+          <div className='grid grid-cols-2 md:grid-cols-12 gap-6'>
+            <div className='md:col-span-2'>
               <Label
                 htmlFor='priority'
                 className='text-gray-700 font-semibold mb-2 block'
@@ -423,7 +423,7 @@ export default function TaskDetailForm({
               </Select>
             </div>
 
-            <div>
+            <div className='md:col-span-2'>
               <Label
                 htmlFor='status'
                 className='text-gray-700 font-semibold mb-2 block'
@@ -450,7 +450,7 @@ export default function TaskDetailForm({
               </Select>
             </div>
 
-            <div>
+            <div className='md:col-span-4'>
               <Label
                 htmlFor='startDate'
                 className='text-gray-700 font-semibold mb-2 block'
@@ -459,18 +459,14 @@ export default function TaskDetailForm({
               </Label>
               <DatePicker
                 name='startDate'
+                type='datetime-local'
                 id='startDate'
                 initialDate={startDate}
                 onChange={(date) => setStartDate(date)}
               />
-              <input
-                type='hidden'
-                name='startDate'
-                value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-              />
             </div>
 
-            <div>
+            <div className='md:col-span-4'>
               <Label
                 htmlFor='endDate'
                 className='text-gray-700 font-semibold mb-2 block'
@@ -480,14 +476,11 @@ export default function TaskDetailForm({
               <DatePicker
                 id='endDate'
                 name='endDate'
+                type='datetime-local'
                 initialDate={endDate}
                 onChange={(date) => setEndDate(date)}
               />
-              <input
-                type='hidden'
-                name='endDate'
-                value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-              />
+
               {errors.endDate && (
                 <p className='text-red-500 text-sm mt-1'>{errors.endDate}</p>
               )}

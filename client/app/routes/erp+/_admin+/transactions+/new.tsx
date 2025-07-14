@@ -39,13 +39,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Lấy danh sách khách hàng
   const customersPromise = getCustomers(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    },
+    new URLSearchParams([
+      ['page', page.toString()],
+      ['limit', limit.toString()],
+      ['sortBy', 'createdAt'],
+      ['sortOrder', 'desc'],
+    ]),
     auth!,
   ).catch((e: any) => {
     console.error('Error fetching customers:', e);
@@ -57,13 +56,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Lấy danh sách hồ sơ vụ việc
   const caseServicesPromise = getCaseServices(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    },
+    new URLSearchParams([
+      ['page', page.toString()],
+      ['limit', limit.toString()],
+      ['sortBy', 'createdAt'],
+      ['sortOrder', 'desc'],
+    ]),
     auth!,
   ).catch((e: any) => {
     console.error('Error fetching case services:', e);

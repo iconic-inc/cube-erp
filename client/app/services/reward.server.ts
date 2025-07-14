@@ -1,6 +1,5 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
 import { fetcher } from '.';
-import { IPaginationOptions } from '~/interfaces/request.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import {
   IReward,
@@ -15,27 +14,9 @@ import {
  * Get list of rewards with pagination and query
  */
 const getRewards = async (
-  query: Record<string, any> = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-
-  const searchParams = new URLSearchParams();
-
-  // Add query parameters
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.set(key, String(value));
-    }
-  });
-
-  // Add pagination and sorting options
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   const response = await fetcher<IListResponse<IReward>>(
     `/rewards?${searchParams.toString()}`,
     { request },
@@ -170,19 +151,9 @@ const getRewardStatsForEmployee = async (request: ISessionUser) => {
  * List rewards for employee view (read-only)
  */
 const listRewardsForEmployee = async (
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-
-  const searchParams = new URLSearchParams();
-
-  // Add pagination and sorting options
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   try {
     const response = await fetcher<IListResponse<IReward>>(
       `/employees/me/rewards?${searchParams.toString()}`,

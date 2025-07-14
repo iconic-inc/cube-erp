@@ -29,30 +29,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
   const url = new URL(request.url);
 
-  // Get query parameters
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 20;
-  const sortBy = url.searchParams.get('sortBy') || 'performanceScore';
-  const sortOrder = url.searchParams.get('sortOrder') || 'desc';
-  const search = url.searchParams.get('search') || '';
-  const startDate = url.searchParams.get('startDate') || '';
-  const endDate = url.searchParams.get('endDate') || '';
-
-  // Build query object
-  const query: any = {};
-  if (search) query.search = search;
-  if (startDate) query.startDate = startDate;
-  if (endDate) query.endDate = endDate;
-
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder: sortOrder as 'asc' | 'desc',
-  };
-
   return {
-    performanceData: getEmployeesPerformance(query, options, user!).catch(
+    performanceData: getEmployeesPerformance(url.searchParams, user!).catch(
       (error) => {
         console.error('Error fetching performance data:', error);
         return {

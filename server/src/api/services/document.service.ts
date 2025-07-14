@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import mongoose, { isValidObjectId, Types } from 'mongoose';
 import { BadRequestError, NotFoundError } from '../core/errors';
 import { DocumentModel } from '../models/document.model';
 import { DocumentCaseModel } from '../models/documentCase.model';
@@ -79,6 +79,8 @@ export const getDocuments = async (
       type,
       startDate,
       endDate,
+      isPublic,
+      createdBy,
     } = query;
 
     const employee = await getEmployeeByUserId(userId);
@@ -219,6 +221,16 @@ export const getDocuments = async (
     if (type) {
       pipeline.push({
         $match: { doc_type: type },
+      });
+    }
+    if (isPublic) {
+      pipeline.push({
+        $match: { doc_isPublic: isPublic === 'true' },
+      });
+    }
+    if (createdBy && isValidObjectId(createdBy)) {
+      pipeline.push({
+        $match: { 'doc_createdBy._id': new mongoose.Types.ObjectId(createdBy) },
       });
     }
 
@@ -397,7 +409,7 @@ export const updateDocument = async (
   const isWhileListed =
     document.doc_whiteList.some((id) => id.toString() === employee.id) ||
     document.doc_isPublic;
-  if (!isOwner || !isWhileListed) {
+  if (!isOwner && !isWhileListed) {
     throw new BadRequestError('Bạn không có quyền cập nhật tài liệu này');
   }
 
