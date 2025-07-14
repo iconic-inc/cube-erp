@@ -30,13 +30,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const limit = Number(url.searchParams.get('limit')) || 100;
 
   const employeesPromise = getEmployees(
-    {},
-    {
-      page,
-      limit,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    },
+    new URLSearchParams([
+      ['page', page.toString()],
+      ['limit', limit.toString()],
+      ['sortBy', 'createdAt'],
+      ['sortOrder', 'desc'],
+    ]),
     auth!,
   ).catch((e) => {
     console.error('Error fetching employees:', e);

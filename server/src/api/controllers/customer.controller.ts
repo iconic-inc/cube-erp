@@ -12,10 +12,6 @@ import {
 
 export class CustomerController {
   static async createCustomer(req: Request, res: Response) {
-    console.log(
-      '-----------------------------------------creating customer-----------------------------------------',
-      req.body
-    );
     // Tạo khách hàng mà không có thông tin case service
     const result = await createCustomer(req.body);
     return OK({

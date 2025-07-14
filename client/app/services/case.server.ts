@@ -1,6 +1,5 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
 import { fetcher } from '.';
-import { IPaginationOptions } from '~/interfaces/request.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import {
   ICaseDocument,
@@ -8,23 +7,13 @@ import {
   ICaseServiceCreate,
   ICaseServiceUpdate,
 } from '~/interfaces/case.interface';
-import { ITask, ITaskBrief } from '~/interfaces/task.interface';
-import { IDocument } from '~/interfaces/document.interface';
+import { ITask } from '~/interfaces/task.interface';
 
 // Get list of case services with pagination and query
 const getCaseServices = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-
-  const searchParams = new URLSearchParams(query);
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   const response = await fetcher<IListResponse<ICaseService>>(
     `/case-services?${searchParams.toString()}`,
     { request },
@@ -176,14 +165,9 @@ const importCaseServices = async (file: File, request: ISessionUser) => {
 
 // Export case services to CSV
 const exportCaseServicesToCSV = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const searchParams = new URLSearchParams(query);
-  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
-  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
-
   return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
     `/case-services/export/csv?${searchParams.toString()}`,
     {
@@ -195,14 +179,9 @@ const exportCaseServicesToCSV = async (
 
 // Export case services to XLSX
 const exportCaseServicesToXLSX = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const searchParams = new URLSearchParams(query);
-  if (options.sortBy) searchParams.set('sortBy', options.sortBy);
-  if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder);
-
   return await fetcher<{ fileUrl: string; fileName: string; count: number }>(
     `/case-services/export/xlsx?${searchParams.toString()}`,
     {

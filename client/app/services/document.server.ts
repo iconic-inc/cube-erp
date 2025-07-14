@@ -1,31 +1,19 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
 import { fetcher } from '.';
-import { IPaginationOptions } from '~/interfaces/request.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import {
   IDocument,
-  IDocumentCreate,
   IDocumentUpdate,
   IAccessRightsUpdate,
-  IDocumentFilter,
 } from '~/interfaces/document.interface';
 
 /**
  * Get all documents with pagination and filtering
  */
 const getDocuments = async (
-  query: any = {},
-  options: IPaginationOptions = {},
+  searchParams: URLSearchParams,
   request: ISessionUser,
 ) => {
-  const { page = 1, limit = 10, sortBy, sortOrder } = options;
-
-  const searchParams = new URLSearchParams(query);
-  if (sortBy) searchParams.set('sortBy', sortBy);
-  if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  searchParams.set('page', String(page));
-  searchParams.set('limit', String(limit));
-
   const response = await fetcher<IListResponse<IDocument>>(
     `/documents?${searchParams.toString()}`,
     { request },

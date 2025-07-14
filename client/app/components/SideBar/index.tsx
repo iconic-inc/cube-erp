@@ -80,6 +80,10 @@ const getNavItems = (user: IUser) => {
             title: 'Task',
             url: '/erp/tasks',
           },
+          {
+            title: 'Xếp hạng Nhân viên',
+            url: '/erp/tasks/performance',
+          },
         ],
       },
       {

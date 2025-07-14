@@ -31,6 +31,8 @@ interface IEmployeeQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  position?: string;
+  department?: string;
 }
 
 const createEmployee = async (data: IEmployeeCreate) => {
@@ -125,7 +127,15 @@ const createEmployee = async (data: IEmployeeCreate) => {
 };
 
 const getEmployees = async (query: IEmployeeQuery) => {
-  const { page = 1, limit = 10, search, sortBy, sortOrder } = query;
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sortBy,
+    sortOrder,
+    position,
+    department,
+  } = query;
 
   // Build the aggregation pipeline
   const pipeline: any[] = [];
@@ -181,6 +191,17 @@ const getEmployees = async (query: IEmployeeQuery) => {
           { emp_department: searchRegex },
         ],
       },
+    });
+  }
+
+  if (position) {
+    pipeline.push({
+      $match: { emp_position: position },
+    });
+  }
+  if (department) {
+    pipeline.push({
+      $match: { emp_department: department },
     });
   }
 

@@ -22,12 +22,28 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
+import { toAddressString } from '~/utils/address.util';
+import { CUSTOMER } from '~/constants/customer.constant';
 
 export default function CustomerDetail({
   customerPromise,
 }: {
   customerPromise: ILoaderDataPromise<ICustomer>;
 }) {
+  const getSourceLabel = (source?: string) => {
+    return (
+      Object.values(CUSTOMER.SOURCE).find((src) => src.value === source)
+        ?.label || CUSTOMER.SOURCE.OTHER.label
+    );
+  };
+
+  const getContactChannelLabel = (channel?: string) => {
+    return (
+      Object.values(CUSTOMER.CONTACT_CHANNEL).find((ch) => ch.value === channel)
+        ?.label || CUSTOMER.CONTACT_CHANNEL.OTHER.label
+    );
+  };
+
   return (
     <Defer resolve={customerPromise} fallback={<LoadingCard />}>
       {(customer) => {
@@ -131,7 +147,7 @@ export default function CustomerDetail({
                       <MapPin className='w-4 h-4 text-gray-400' />
                       <span className='text-sm text-gray-500'>Địa chỉ:</span>
                       <span className='text-sm font-medium'>
-                        {customer.cus_address || 'Chưa có địa chỉ'}
+                        {toAddressString(customer.cus_address)}
                       </span>
                     </div>
                   </div>
@@ -151,7 +167,7 @@ export default function CustomerDetail({
                         Kênh liên hệ:
                       </span>
                       <Badge variant='outline' className='text-sm'>
-                        {customer.cus_contactChannel || 'Chưa có thông tin'}
+                        {getContactChannelLabel(customer.cus_contactChannel)}
                       </Badge>
                     </div>
 
@@ -159,7 +175,7 @@ export default function CustomerDetail({
                       <Users className='w-4 h-4 text-gray-400' />
                       <span className='text-sm text-gray-500'>Nguồn:</span>
                       <Badge variant='default' className='text-sm'>
-                        {customer.cus_source || 'Chưa có thông tin'}
+                        {getSourceLabel(customer.cus_source)}
                       </Badge>
                     </div>
 
@@ -167,10 +183,10 @@ export default function CustomerDetail({
                       <Calendar className='w-4 h-4 text-gray-400' />
                       <span className='text-sm text-gray-500'>Ngày tạo:</span>
                       <span className='text-sm font-medium'>
-                        {customer.createdAt
+                        {customer.cus_createdAt
                           ? format(
-                              new Date(customer.createdAt),
-                              'dd/MM/yyyy HH:mm',
+                              new Date(customer.cus_createdAt),
+                              'dd/MM/yyyy',
                               { locale: vi },
                             )
                           : 'Không có thông tin'}
@@ -186,7 +202,7 @@ export default function CustomerDetail({
                         {customer.updatedAt
                           ? format(
                               new Date(customer.updatedAt),
-                              'dd/MM/yyyy HH:mm',
+                              'HH:mm - dd/MM/yyyy',
                               { locale: vi },
                             )
                           : 'Không có thông tin'}

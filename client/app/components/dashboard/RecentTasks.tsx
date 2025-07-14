@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
   Clock,
   ArrowUpRight,
@@ -13,49 +12,15 @@ import {
 import { Link } from '@remix-run/react';
 import { ITask } from '~/interfaces/task.interface';
 import { formatDate } from '~/utils';
-import { TASK } from '~/constants/task.constant';
+import {
+  TASK,
+  TASK_PRIORITY_BADGE_CLASSES,
+  TASK_STATUS_BADGE_CLASSES,
+} from '~/constants/task.constant';
 
 interface RecentTasksProps {
   tasks: ITask[];
 }
-
-const getPriorityColor = (priority: string) => {
-  switch (priority.toLowerCase()) {
-    case 'urgent':
-    case 'khẩn cấp':
-      return 'destructive';
-    case 'high':
-    case 'cao':
-      return 'default';
-    case 'medium':
-    case 'trung bình':
-      return 'secondary';
-    case 'low':
-    case 'thấp':
-      return 'outline';
-    default:
-      return 'secondary';
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'completed':
-    case 'hoàn thành':
-      return 'text-green-600 bg-green-100';
-    case 'in_progress':
-    case 'đang thực hiện':
-      return 'text-red-600 bg-red-100';
-    case 'pending':
-    case 'đang chờ':
-      return 'text-yellow-600 bg-yellow-100';
-    case 'overdue':
-    case 'quá hạn':
-      return 'text-red-600 bg-red-100';
-    default:
-      return 'text-gray-600 bg-gray-100';
-  }
-};
 
 const getStatusIcon = (status: string) => {
   switch (status.toLowerCase()) {
@@ -70,21 +35,6 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-const translatePriority = (priority: string) => {
-  switch (priority.toLowerCase()) {
-    case 'urgent':
-      return 'khẩn cấp';
-    case 'high':
-      return 'cao';
-    case 'medium':
-      return 'trung bình';
-    case 'low':
-      return 'thấp';
-    default:
-      return priority;
-  }
-};
-
 export default function RecentTasks({ tasks }: RecentTasksProps) {
   return (
     <Card className='h-full'>
@@ -95,7 +45,10 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
             Công việc gần đây
           </CardTitle>
           <Button variant='ghost' size='sm' asChild>
-            <Link to='/erp/tasks' className='flex items-center'>
+            <Link
+              to='/erp/tasks?sortBy=createdAt&sortOrder=desc'
+              className='flex items-center'
+            >
               Xem tất cả
               <ArrowUpRight className='w-4 h-4 ml-1' />
             </Link>
@@ -129,19 +82,20 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
 
                     <div className='flex items-center space-x-2 mt-2'>
                       <Badge
-                        variant={getPriorityColor(task.tsk_priority)}
-                        className='text-xs'
+                        className={
+                          TASK_PRIORITY_BADGE_CLASSES[task.tsk_priority]
+                        }
                       >
                         {TASK.PRIORITY[task.tsk_priority]}
                       </Badge>
 
                       <div
-                        className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          task.tsk_status,
-                        )}`}
+                        className={`flex items-center gap-2 text-sm ${
+                          TASK_STATUS_BADGE_CLASSES[task.tsk_status]
+                        }`}
                       >
                         <StatusIcon className='w-3 h-3' />
-                        <span>{TASK.STATUS[task.tsk_status]}</span>
+                        {TASK.STATUS[task.tsk_status]}
                       </div>
                     </div>
                   </div>

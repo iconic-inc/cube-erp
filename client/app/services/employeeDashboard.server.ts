@@ -1,9 +1,5 @@
 import { ISessionUser } from '~/interfaces/auth.interface';
-import { fetcher } from '.';
-import {
-  IAttendance,
-  IAttendanceBrief,
-} from '~/interfaces/attendance.interface';
+import { IAttendanceBrief } from '~/interfaces/attendance.interface';
 import { ITask } from '~/interfaces/task.interface';
 import { getMyTaskPerformance, getMyTasks } from './task.server';
 import {
@@ -34,22 +30,29 @@ const getEmployeeDashboardStats = async (
   request: ISessionUser,
 ): Promise<IEmployeeDashboardStats> => {
   try {
-    // Get my tasks
-    const myTasksResponse = await getMyTasks({}, { limit: 1 }, request);
-
-    // Get my performance stats
-    const myPerformanceResponse = await getMyTaskPerformance(
-      {},
-      { limit: 1 },
-      request,
-    );
-
-    // Get my attendance stats
-    const myAttendanceResponse = await getLast7DaysStatsForEmployee(request);
-
-    // Get today's attendance
-    const todayAttendanceResponse =
-      await getTodayAttendanceForEmployee(request);
+    const [
+      myTasksResponse,
+      myPerformanceResponse,
+      myAttendanceResponse,
+      todayAttendanceResponse,
+    ] = await Promise.all([
+      getMyTasks(
+        new URLSearchParams([
+          ['limit', '1'],
+          ['page', '1'],
+        ]),
+        request,
+      ),
+      getMyTaskPerformance(
+        new URLSearchParams([
+          ['limit', '1'],
+          ['page', '1'],
+        ]),
+        request,
+      ),
+      getLast7DaysStatsForEmployee(request),
+      getTodayAttendanceForEmployee(request),
+    ]);
 
     // Calculate statistics
     const myTasksCount = myTasksResponse.pagination?.total || 0;
@@ -104,7 +107,13 @@ const getEmployeeDashboardOverview = async (
       todayAttendanceResponse,
     ] = await Promise.allSettled([
       getEmployeeDashboardStats(request),
-      getMyTasks({}, { limit: 5, page: 1 }, request).catch((error) => {
+      getMyTasks(
+        new URLSearchParams([
+          ['limit', '5'],
+          ['page', '1'],
+        ]),
+        request,
+      ).catch((error) => {
         console.error('Error fetching my tasks:', error);
         return { data: [], pagination: { total: 0 } };
       }),

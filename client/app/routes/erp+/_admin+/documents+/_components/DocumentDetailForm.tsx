@@ -213,7 +213,7 @@ function DocumentFormContent({
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <Label
                   htmlFor='type'
                   className='text-gray-700 font-semibold mb-2 block'
@@ -228,7 +228,7 @@ function DocumentFormContent({
                   className='w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent'
                   placeholder='Nhập loại tài liệu'
                 />
-              </div>
+              </div> */}
 
               <div className='flex items-center space-x-3'>
                 <Switch

@@ -25,6 +25,7 @@ interface SelectSearchOption {
 interface SelectSearchProps {
   options: SelectSearchOption[];
   defaultValue?: string;
+  value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
   name?: string; // Added name prop
@@ -35,12 +36,12 @@ export function SelectSearch({
   options,
   defaultValue,
   onValueChange,
+  value,
   placeholder = 'Select an option...',
   name, // Destructure name
   id, // Destructure id
 }: SelectSearchProps) {
   const [open, setOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(defaultValue || '');
 
   const handleSelect = (selectedLabel: string) => {
     // Find the actual value based on the selected label
@@ -50,23 +51,10 @@ export function SelectSearch({
     const newValue = selectedOption ? selectedOption.value : '';
 
     // If the new value is the same as the current, clear it, otherwise set the new value
-    const finalValue = newValue === selectedValue ? '' : newValue;
-    setSelectedValue(finalValue);
+    const finalValue = newValue === value ? '' : newValue;
     setOpen(false);
     onValueChange?.(finalValue); // Call the provided onValueChange handler
   };
-
-  useEffect(() => {
-    // If defaultValue is provided, set it as the selected value
-    if (defaultValue) {
-      const option = options.find((option) => option.value === defaultValue);
-      if (option) {
-        setSelectedValue(option.value);
-      } else {
-        setSelectedValue(''); // Reset if defaultValue is not found in options
-      }
-    }
-  }, [defaultValue]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,8 +65,8 @@ export function SelectSearch({
           aria-expanded={open}
           className='w-full justify-between bg-transparent'
         >
-          {selectedValue
-            ? options.find((option) => option.value === selectedValue)?.label
+          {value
+            ? options.find((option) => option.value === value)?.label
             : placeholder}
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
@@ -98,9 +86,7 @@ export function SelectSearch({
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
-                      selectedValue === option.value
-                        ? 'opacity-100'
-                        : 'opacity-0',
+                      value === option.value ? 'opacity-100' : 'opacity-0',
                     )}
                   />
                   {option.label}
@@ -111,7 +97,7 @@ export function SelectSearch({
         </Command>
       </PopoverContent>
       {/* Hidden input to act as the form field */}
-      <input type='hidden' name={name} id={id} value={selectedValue} />
+      <input type='hidden' name={name} id={id} value={value} />
     </Popover>
   );
 }

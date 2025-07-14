@@ -53,7 +53,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   // Load customers and employees for form selection
-  const employeesPromise = getEmployees({}, {}, session!).catch((error) => {
+  const employeesPromise = getEmployees(
+    new URLSearchParams({ limit: '1000' }),
+    session!,
+  ).catch((error) => {
     console.error('Error fetching employees:', error);
     return { success: false, message: 'Có lỗi khi lấy danh sách nhân viên' };
   });

@@ -74,19 +74,28 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           lastName: formData.get('lastName') as string,
           email: formData.get('email') as string,
           msisdn: formData.get('msisdn') as string,
-          address: formData.get('address') as string,
+          province: formData.get('province') as string,
+          district: formData.get('district') as string,
+          street: formData.get('street') as string,
           sex: formData.get('sex') as string,
           birthDate: formData.get('birthDate') as string,
           code: formData.get('code') as string,
           notes: formData.get('notes') as string,
           contactChannel: formData.get('contactChannel') as string,
           source: formData.get('source') as string,
+          createdAt: formData.get('createdAt') as string,
         };
         // Kiểm tra dữ liệu bắt buộc
         if (
-          ['firstName', 'email', 'msisdn', 'code'].some(
-            (field) => !data[field as keyof ICustomerCreate],
-          )
+          [
+            'firstName',
+            'email',
+            'msisdn',
+            'code',
+            'province',
+            'district',
+            'street',
+          ].some((field) => !data[field as keyof ICustomerCreate])
         ) {
           return dataResponse(
             {

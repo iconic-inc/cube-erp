@@ -23,6 +23,12 @@ import { CUSTOMER } from '~/constants/customer.constant';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
 import { DatePicker } from '~/components/ui/date-picker';
+import {
+  getDistrictBySlug,
+  getDistrictsByProvinceCode,
+  getProvinceBySlug,
+  provinces,
+} from '~/utils/address.util';
 
 export default function CustomerDetailForm({
   formId,
@@ -45,18 +51,33 @@ export default function CustomerDetailForm({
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [msisdn, setMsisdn] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [sex, setSex] = useState<string>('');
   const [contactChannel, setContactChannel] = useState<string>('');
   const [source, setSource] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [createdAt, setCreatedAt] = useState<Date | null>(null);
+
+  // address state
+  const [province, setProvince] = useState(provinces[0]);
+  const [districts, setDistricts] = useState(
+    getDistrictsByProvinceCode(province.code),
+  );
+  const [district, setDistrict] = useState(districts[0]);
+  const [street, setStreet] = useState('');
 
   // Control states
   const [customer, setCustomer] = useState<ICustomer | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
+
+  // Handle province changes
+  useEffect(() => {
+    const newDistricts = getDistrictsByProvinceCode(province.code);
+    setDistricts(newDistricts);
+    setDistrict(newDistricts[0] || districts[0]);
+  }, [province]);
 
   // Generate customer code
   const generateCustomerCode = () => {
@@ -94,6 +115,30 @@ export default function CustomerDetailForm({
       validationErrors.msisdn = 'Vui lòng nhập số điện thoại';
     }
 
+    if (!contactChannel.trim()) {
+      validationErrors.contactChannel = 'Vui lòng chọn kênh liên hệ';
+    }
+
+    if (!source.trim()) {
+      validationErrors.source = 'Vui lòng chọn nguồn khách hàng';
+    }
+
+    if (!province.slug) {
+      validationErrors.province = 'Vui lòng chọn tỉnh/thành phố';
+    }
+
+    if (!district.slug) {
+      validationErrors.district = 'Vui lòng chọn quận/huyện';
+    }
+
+    if (!street.trim()) {
+      validationErrors.street = 'Vui lòng nhập địa chỉ chi tiết';
+    }
+
+    if (!createdAt) {
+      validationErrors.createdAt = 'Vui lòng chọn ngày tạo';
+    }
+
     // If there are validation errors, show them and prevent form submission
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -109,9 +154,9 @@ export default function CustomerDetailForm({
 
     // Manually append birthDate if it exists
     if (birthDate) {
-      formData.append('birthDate', format(birthDate, 'yyyy-MM-dd'));
+      formData.set('birthDate', format(birthDate, 'yyyy-MM-dd'));
     } else {
-      formData.append('birthDate', '');
+      formData.set('birthDate', '');
     }
 
     toastIdRef.current = toast.loading('Đang xử lý...');
@@ -132,8 +177,11 @@ export default function CustomerDetailForm({
       lastName ||
       email ||
       msisdn ||
-      address ||
+      province.slug ||
+      district.slug ||
+      street ||
       birthDate ||
+      createdAt ||
       sex ||
       contactChannel ||
       source ||
@@ -146,7 +194,10 @@ export default function CustomerDetailForm({
     lastName,
     email,
     msisdn,
-    address,
+    street,
+    province,
+    district,
+    createdAt,
     birthDate,
     sex,
     contactChannel,
@@ -189,11 +240,42 @@ export default function CustomerDetailForm({
             setLastName(customerData.cus_lastName || '');
             setEmail(customerData.cus_email || '');
             setMsisdn(customerData.cus_msisdn || '');
-            setAddress(customerData.cus_address || '');
+
+            // Handle address object structure
+            if (customerData.cus_address) {
+              const address = customerData.cus_address;
+              if (typeof address === 'object' && address !== null) {
+                // Handle address as object with province, district, street
+                const provinceData =
+                  getProvinceBySlug(address.province) || provinces[0];
+                setProvince(provinceData);
+
+                const districtsData = getDistrictsByProvinceCode(
+                  provinceData.code,
+                );
+                setDistricts(districtsData);
+
+                const districtData =
+                  districtsData.find((d) => d.slug === address.district) ||
+                  districtsData[0];
+                setDistrict(districtData);
+
+                setStreet(address.street || '');
+              } else if (typeof address === 'string') {
+                // Handle address as string (fallback)
+                setStreet(address);
+              }
+            }
+
             setBirthDate(
               customerData.cus_birthDate
                 ? new Date(customerData.cus_birthDate)
                 : null,
+            );
+            setCreatedAt(
+              customerData.cus_createdAt
+                ? new Date(customerData.cus_createdAt)
+                : new Date(),
             );
             setSex(customerData.cus_sex || '');
             setContactChannel(customerData.cus_contactChannel || '');
@@ -272,6 +354,21 @@ export default function CustomerDetailForm({
               {errors.code && (
                 <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
               )}
+            </div>
+
+            <div>
+              <Label
+                htmlFor='customer_birthDate'
+                className='text-gray-700 font-semibold mb-2 block'
+              >
+                Ngày tạo <span className='text-red-500'>*</span>
+              </Label>
+              <DatePicker
+                id='customer_createdAt'
+                name='createdAt'
+                initialDate={createdAt}
+                onChange={(date) => setCreatedAt(date)}
+              />
             </div>
           </div>
 
@@ -363,7 +460,7 @@ export default function CustomerDetailForm({
           </div>
 
           {/* Personal Information */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
             <div>
               <Label
                 htmlFor='customer_birthDate'
@@ -404,35 +501,15 @@ export default function CustomerDetailForm({
                 htmlFor='customer_contactChannel'
                 className='text-gray-700 font-semibold mb-2 block'
               >
-                Kênh liên hệ
+                Kênh liên hệ <span className='text-red-500'>*</span>
               </Label>
-              <Input
+              <SelectSearch
                 id='customer_contactChannel'
                 name='contactChannel'
+                options={Object.values(CUSTOMER.CONTACT_CHANNEL)}
                 value={contactChannel}
-                onChange={(e) => setContactChannel(e.target.value)}
+                onValueChange={(value) => setContactChannel(value)}
                 placeholder='Nhập kênh liên hệ'
-                className='bg-white border-gray-300'
-              />
-            </div>
-          </div>
-
-          {/* Address and Source */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div>
-              <Label
-                htmlFor='customer_address'
-                className='text-gray-700 font-semibold mb-2 block'
-              >
-                Địa chỉ
-              </Label>
-              <Input
-                id='customer_address'
-                name='address'
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder='Nhập địa chỉ khách hàng'
-                className='bg-white border-gray-300'
               />
             </div>
 
@@ -441,16 +518,94 @@ export default function CustomerDetailForm({
                 htmlFor='customer_source'
                 className='text-gray-700 font-semibold mb-2 block'
               >
-                Nguồn khách hàng
+                Nguồn khách hàng <span className='text-red-500'>*</span>
               </Label>
-              <Input
+
+              <SelectSearch
                 id='customer_source'
                 name='source'
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
                 placeholder='Nhập nguồn khách hàng'
-                className='bg-white border-gray-300'
+                value={source}
+                onValueChange={(value) => setSource(value)}
+                options={Object.values(CUSTOMER.SOURCE)}
               />
+            </div>
+          </div>
+
+          {/* Address Fields */}
+          <div className='space-y-4'>
+            <h3 className='text-lg font-semibold text-gray-700'>Địa chỉ</h3>
+
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+              <div>
+                <Label
+                  htmlFor='customer_province'
+                  className='text-gray-700 font-semibold mb-2 block'
+                >
+                  Tỉnh/Thành phố <span className='text-red-500'>*</span>
+                </Label>
+                <SelectSearch
+                  options={provinces.map((p) => ({
+                    value: p.slug,
+                    label: p.name,
+                  }))}
+                  value={province.slug}
+                  onValueChange={(value) => {
+                    const selectedProvince =
+                      getProvinceBySlug(value) || provinces[0];
+                    setProvince(selectedProvince);
+                    const newDistricts = getDistrictsByProvinceCode(
+                      selectedProvince.code,
+                    );
+                    setDistricts(newDistricts);
+                    setDistrict(newDistricts[0]);
+                  }}
+                  placeholder='Chọn tỉnh/thành phố'
+                  name='province'
+                  id='customer_province'
+                />
+              </div>
+
+              <div>
+                <Label
+                  htmlFor='customer_district'
+                  className='text-gray-700 font-semibold mb-2 block'
+                >
+                  Quận/Huyện <span className='text-red-500'>*</span>
+                </Label>
+                <SelectSearch
+                  options={districts.map((d) => ({
+                    value: d.slug,
+                    label: d.name,
+                  }))}
+                  value={district.slug}
+                  onValueChange={(value) => {
+                    const selectedDistrict =
+                      getDistrictBySlug(districts, value) || districts[0];
+                    setDistrict(selectedDistrict);
+                  }}
+                  placeholder='Chọn quận/huyện'
+                  name='district'
+                  id='customer_district'
+                />
+              </div>
+
+              <div>
+                <Label
+                  htmlFor='customer_street'
+                  className='text-gray-700 font-semibold mb-2 block'
+                >
+                  Địa chỉ chi tiết <span className='text-red-500'>*</span>
+                </Label>
+                <Input
+                  id='customer_street'
+                  name='street'
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder='Nhập địa chỉ chi tiết'
+                  className='bg-white border-gray-300'
+                />
+              </div>
             </div>
           </div>
 

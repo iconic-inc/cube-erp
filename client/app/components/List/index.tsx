@@ -6,6 +6,7 @@ import ListToolbar from './ListToolbar';
 import ListConfirmModal from './ListConfirmModal';
 import ItemList from './ItemList';
 import { useState } from 'react';
+import Defer from '../Defer';
 
 export default function List<T>({
   itemsPromise,
@@ -35,12 +36,19 @@ export default function List<T>({
     <Card>
       {/* Item Toolbar */}
       {showToolbar && (
-        <ListToolbar
-          name={name}
-          exportable={exportable}
-          visibleColumns={visibleColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
+        <Defer resolve={itemsPromise}>
+          {(items) => {
+            return (
+              <ListToolbar<T>
+                name={name}
+                exportable={exportable}
+                visibleColumns={visibleColumns}
+                setVisibleColumns={setVisibleColumns}
+                items={items}
+              />
+            );
+          }}
+        </Defer>
       )}
 
       {/* Bulk Action Bar (Visible when rows selected) */}

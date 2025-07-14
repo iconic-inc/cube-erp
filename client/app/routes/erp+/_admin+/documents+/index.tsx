@@ -19,6 +19,9 @@ import List from '~/components/List';
 import { toast } from 'react-toastify';
 import { Badge } from '~/components/ui/badge';
 import { canAccessDocumentManagement } from '~/utils/permission';
+import { getEmployees } from '~/services/employee.server';
+import { isResolveError } from '~/lib';
+import { IEmployeeBrief } from '~/interfaces/employee.interface';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -30,31 +33,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const searchQuery = url.searchParams.get('search') || '';
-
-  const sortBy = url.searchParams.get('sortBy') || 'createdAt';
-  const sortOrder =
-    (url.searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-  // Build a clean query object that matches the expected API format
-  const query: any = {};
-
-  // Search query - used for name, phone, email search
-  if (searchQuery) {
-    query.search = searchQuery;
-  }
-  // Pagination options
-  const options = {
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  };
 
   return {
-    documentsPromise: getDocuments({ ...query }, options, user!).catch((e) => {
+    documentsPromise: getDocuments(url.searchParams, user!).catch((e) => {
       console.error(e);
       return {
         data: [],
@@ -66,11 +47,53 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       } as IListResponse<IDocument>;
     }),
+    employeesPromise: getEmployees(
+      new URLSearchParams([['limit', '1000']]),
+      user!,
+    ).catch((e) => {
+      console.error(e);
+      return {
+        success: false,
+        message: e.message || 'Có lỗi xảy ra khi lấy danh sách nhân viên',
+      };
+    }),
   };
 };
 
 export default function HRMDocuments() {
-  const { documentsPromise } = useLoaderData<typeof loader>();
+  const { documentsPromise, employeesPromise } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    const loadEmployees = async () => {
+      const employeesData = (await employeesPromise) as any;
+      if (isResolveError(employeesData)) {
+        console.error('Error loading employees:', employeesData.message);
+        return;
+      }
+      setVisibleColumns((prevColumns) =>
+        prevColumns.map((col) => {
+          if (col.key === 'doc_createdBy') {
+            return {
+              ...col,
+              options: employeesData.data.length
+                ? employeesData.data.map((emp: IEmployeeBrief) => ({
+                    value: emp.id,
+                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
+                  }))
+                : [
+                    {
+                      value: '',
+                      label: 'Không có nhân viên',
+                    },
+                  ],
+            };
+          }
+          return col;
+        }),
+      ); // Trigger re-render to update options
+    };
+    loadEmployees();
+  }, [employeesPromise]);
 
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IDocument>[]
@@ -110,6 +133,8 @@ export default function HRMDocuments() {
       title: 'Người tạo',
       visible: true,
       sortField: 'doc_createdBy',
+      filterField: 'createdBy',
+      options: [],
       render: (item: IDocument) => {
         if (typeof item.doc_createdBy === 'string') {
           return item.doc_createdBy; // Assuming it's just a string ID
@@ -129,6 +154,11 @@ export default function HRMDocuments() {
       key: 'doc_isPublic',
       title: 'Chế độ try cập',
       visible: true,
+      filterField: 'isPublic',
+      options: [
+        { value: 'true', label: 'Công khai' },
+        { value: 'false', label: 'Hạn chế' },
+      ],
       render: (item: IDocument) => {
         if (typeof item.doc_whiteList === 'string') {
           return item.doc_whiteList; // Assuming it's just a string ID

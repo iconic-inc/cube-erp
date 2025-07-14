@@ -143,9 +143,13 @@ export default function TaskDetail({
                       </span>
                       <span className='text-sm font-medium'>
                         {task.tsk_startDate
-                          ? format(new Date(task.tsk_startDate), 'dd/MM/yyyy', {
-                              locale: vi,
-                            })
+                          ? format(
+                              new Date(task.tsk_startDate),
+                              'HH:mm - dd/MM/yyyy',
+                              {
+                                locale: vi,
+                              },
+                            )
                           : 'Chưa có thông tin'}
                       </span>
                     </div>
@@ -157,9 +161,13 @@ export default function TaskDetail({
                       </span>
                       <span className='text-sm font-medium'>
                         {task.tsk_endDate
-                          ? format(new Date(task.tsk_endDate), 'dd/MM/yyyy', {
-                              locale: vi,
-                            })
+                          ? format(
+                              new Date(task.tsk_endDate),
+                              'HH:mm - dd/MM/yyyy',
+                              {
+                                locale: vi,
+                              },
+                            )
                           : 'Chưa kết thúc'}
                       </span>
                     </div>

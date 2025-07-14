@@ -35,8 +35,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   );
   const customerCaseServicesPromise = getCaseServices(
-    { customerId },
-    { page: 1, limit: 100 },
+    new URLSearchParams([
+      ['customerId', customerId],
+      ['limit', '100'],
+      ['page', '1'],
+    ]),
     session!,
   ).catch((error) => {
     console.error('Error fetching customer case services:', error);
@@ -46,8 +49,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     };
   });
   const customerTransactionsPromise = getTransactions(
-    { customerId },
-    { page: 1, limit: 100 },
+    new URLSearchParams({ customerId, page: '1', limit: '100' }),
     session!,
   ).catch((error) => {
     console.error('Error fetching customer transactions:', error);

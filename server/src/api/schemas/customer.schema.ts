@@ -32,7 +32,9 @@ const customerBaseSchema = {
     .refine(isValidPhoneNumber, {
       message: 'Số điện thoại không hợp lệ',
     }),
-  address: z.string().trim().optional(),
+  province: z.string().trim().min(1, 'Tỉnh/Thành phố là bắt buộc'),
+  district: z.string().trim().min(1, 'Quận/Huyện là bắt buộc'),
+  street: z.string().trim().optional(),
   sex: z.enum(Object.values(CUSTOMER.SEX) as [string, ...string[]], {
     message: 'Giới tính không hợp lệ',
   }),
