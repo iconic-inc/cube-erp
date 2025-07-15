@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from '@remix-run/node';
+import { LoaderFunctionArgs, redirect } from '@remix-run/node';
 
 import { getTaskById } from '~/services/task.server';
 import { useLoaderData, useNavigate } from '@remix-run/react';
@@ -9,6 +9,7 @@ import { Pencil } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
+
   // Fetch task details from the API
   const taskId = params.taskId as string;
   const task = getTaskById(taskId, user!).catch((error) => {

@@ -24,6 +24,7 @@ import { TaskTemplateModel } from '@models/taskTemplate.model';
 import { TaskModel } from '@models/task.model';
 import '@utils/date.util'; // Ensure date utilities are loaded
 import { getTasks } from './task.service';
+import { sendTaskNotificationEmail } from './email.service';
 
 // Import modules for export functionality
 import * as XLSX from 'xlsx';
@@ -363,6 +364,67 @@ const createCaseService = async (caseServiceData: ICaseServiceCreate) => {
       );
       if (!task) {
         throw new BadRequestError('Không thể tạo công việc');
+      }
+
+      // Get the created task with populated data for email notification
+      const populatedTask = await TaskModel.findById(task._id)
+        .populate({
+          path: 'tsk_assignees',
+          select: 'emp_code emp_position emp_department emp_user',
+          populate: {
+            path: 'emp_user',
+            select:
+              'usr_firstName usr_lastName usr_email usr_avatar usr_username',
+          },
+        })
+        .populate({
+          path: 'tsk_caseService',
+          select:
+            'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
+          populate: {
+            path: 'case_customer',
+            select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+          },
+        })
+        .session(session);
+
+      // Send email notifications to assignees
+      if (populatedTask && populatedTask.tsk_assignees) {
+        const emailPromises = populatedTask.tsk_assignees.map(
+          async (assignee: any) => {
+            if (assignee.emp_user?.usr_email) {
+              try {
+                await sendTaskNotificationEmail(assignee.emp_user.usr_email, {
+                  taskId: populatedTask._id.toString(),
+                  taskName: populatedTask.tsk_name,
+                  taskDescription:
+                    populatedTask.tsk_description || 'Không có mô tả',
+                  priority: populatedTask.tsk_priority,
+                  startDate: new Date(
+                    populatedTask.tsk_startDate
+                  ).toLocaleString('vi-VN'),
+                  endDate: new Date(populatedTask.tsk_endDate).toLocaleString(
+                    'vi-VN'
+                  ),
+                  employeeName: `${assignee.emp_user.usr_firstName || ''} ${
+                    assignee.emp_user.usr_lastName || ''
+                  }`.trim(),
+                });
+              } catch (emailError) {
+                console.error(
+                  `Failed to send email to ${assignee.emp_user.usr_email}:`,
+                  emailError
+                );
+                // Don't throw error to prevent transaction rollback due to email failures
+              }
+            }
+          }
+        );
+
+        // Execute email notifications (but don't wait for them to complete to avoid blocking the transaction)
+        Promise.allSettled(emailPromises).catch((error) => {
+          console.error('Error sending some task notification emails:', error);
+        });
       }
     }
     await session.commitTransaction();

@@ -120,7 +120,7 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": ["src/**/*.ts", "*.ts"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "dist", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }

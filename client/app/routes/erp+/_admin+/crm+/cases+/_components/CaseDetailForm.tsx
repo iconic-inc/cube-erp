@@ -13,7 +13,7 @@ import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ICaseService } from '~/interfaces/case.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
-import { Plus, XCircle } from 'lucide-react';
+import { Plus, XCircle, RotateCcw } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
@@ -81,6 +81,13 @@ export default function CaseDetailForm({
   const [employeeToRemove, setEmployeeToRemove] =
     useState<IEmployeeBrief | null>(null);
   const [employeesToAdd, setEmployeesToAdd] = useState<IEmployeeBrief[]>([]);
+
+  // Generate case code function
+  const generateCaseCode = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const codeGenerated = `HS${timestamp}`;
+    setCode(codeGenerated);
+  };
 
   const handleRemoveAssignee = (employee: IEmployeeBrief) => {
     setEmployeeToRemove(employee);
@@ -303,14 +310,26 @@ export default function CaseDetailForm({
             >
               Mã Hồ sơ vụ việc <span className='text-red-500'>*</span>
             </Label>
-            <Input
-              id='case_code'
-              name='code'
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder='Nhập mã Hồ sơ vụ việc...'
-              className='bg-white border-gray-300'
-            />
+            <div className='flex items-center gap-2'>
+              <Input
+                id='case_code'
+                name='code'
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder='Ví dụ: HS123456'
+                className='bg-white border-gray-300'
+              />
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={generateCaseCode}
+                className='whitespace-nowrap'
+              >
+                <RotateCcw className='h-4 w-4 mr-1' />
+                Tự động tạo
+              </Button>
+            </div>
             {errors.code && (
               <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
             )}
