@@ -40,7 +40,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function IndexHRM() {
   const { dashboardOverview, user } = useLoaderData<typeof loader>();
 
-  console.log(dashboardOverview);
   const roleDisplayName = getRoleDisplayName(user?.user?.usr_role);
 
   return (

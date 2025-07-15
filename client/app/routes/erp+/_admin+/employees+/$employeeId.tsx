@@ -7,7 +7,7 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import EmployeeDetail from './_components/EmployeeDetail';
 import EmployeeAttendanceList from './_components/EmployeeAttendanceList';
-import { Pen } from 'lucide-react';
+import { Edit, Pen } from 'lucide-react';
 import { canAccessEmployeeManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -60,13 +60,14 @@ export default function EmployeeDetails() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       <ContentHeader
         title='Chi tiết Nhân viên'
         actionContent={
           <>
-            <Pen className='w-4 h-4 mr-1' />
-            Chỉnh sửa Nhân viên
+            <Edit className='w-4 h-4' />
+            <span className='hidden sm:inline'>Chỉnh sửa Nhân viên</span>
+            <span className='sm:hidden'>Chỉnh sửa</span>
           </>
         }
         actionHandler={() => {

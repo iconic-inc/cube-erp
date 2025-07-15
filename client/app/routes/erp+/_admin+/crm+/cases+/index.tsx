@@ -135,7 +135,11 @@ export default function CRMCaseService() {
           to={`/erp/crm/cases/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
-          {item.case_code}
+          <div className='flex flex-col'>
+            <span className='font-medium text-sm sm:text-base truncate'>
+              {item.case_code}
+            </span>
+          </div>
         </Link>
       ),
     },
@@ -149,9 +153,11 @@ export default function CRMCaseService() {
       render: (item) => (
         <Link
           to={`/erp/crm/customers/${item.case_customer.id}`}
-          className='text-blue-600 hover:underline block w-full h-full truncate'
+          className='text-blue-600 hover:underline block w-full h-full'
         >
-          {item.case_customer.cus_firstName} {item.case_customer.cus_lastName}
+          <span className='text-sm sm:text-base truncate block max-w-[150px] sm:max-w-none'>
+            {item.case_customer.cus_firstName} {item.case_customer.cus_lastName}
+          </span>
         </Link>
       ),
     },
@@ -166,7 +172,9 @@ export default function CRMCaseService() {
         label: CASE_SERVICE.STATUS[key as keyof typeof CASE_SERVICE.STATUS],
       })),
       render: (item) => (
-        <span className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]}`}>
+        <span
+          className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]} text-xs sm:text-sm whitespace-nowrap`}
+        >
           {CASE_SERVICE.STATUS[item.case_status] || '-'}
         </span>
       ),
@@ -184,11 +192,13 @@ export default function CRMCaseService() {
             to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
             className='text-blue-600 hover:underline block w-full h-full'
           >
-            {item.case_leadAttorney.emp_user.usr_firstName}{' '}
-            {item.case_leadAttorney.emp_user.usr_lastName}
+            <span className='text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
+              {item.case_leadAttorney.emp_user.usr_firstName}{' '}
+              {item.case_leadAttorney.emp_user.usr_lastName}
+            </span>
           </Link>
         ) : (
-          'N/A'
+          <span className='text-gray-500 text-sm sm:text-base'>N/A</span>
         ),
     },
     {
@@ -198,7 +208,11 @@ export default function CRMCaseService() {
       sortField: 'case_startDate',
       filterField: 'startDate',
       dateFilterable: true,
-      render: (item) => formatDate(item.case_startDate, 'DD/MM/YYYY'),
+      render: (item) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+          {formatDate(item.case_startDate, 'DD/MM/YYYY')}
+        </span>
+      ),
     },
     {
       title: 'Ngày kết thúc',
@@ -207,22 +221,28 @@ export default function CRMCaseService() {
       sortField: 'case_endDate',
       filterField: 'endDate',
       dateFilterable: true,
-      render: (item) =>
-        item.case_endDate ? formatDate(item.case_endDate, 'DD/MM/YYYY') : '-',
+      render: (item) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+          {item.case_endDate
+            ? formatDate(item.case_endDate, 'DD/MM/YYYY')
+            : '-'}
+        </span>
+      ),
     },
   ]);
 
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách Hồ sơ vụ việc'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
-            Thêm Hồ sơ vụ việc
+            <Plus className='w-4 h-4' />
+            <span className='hidden sm:inline'>Thêm Hồ sơ vụ việc</span>
+            <span className='sm:hidden'>Thêm</span>
           </>
         }
         actionHandler={() => navigate('/erp/crm/cases/new')}

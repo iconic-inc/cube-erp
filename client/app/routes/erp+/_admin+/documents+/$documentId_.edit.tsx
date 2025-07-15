@@ -254,8 +254,9 @@ export default function DocumentDetailPage() {
         title='Chỉnh sửa tài liệu'
         actionContent={
           <>
-            <Save />
-            Lưu tài liệu
+            <Save className='w-4 h-4 sm:w-5 sm:h-5' />
+            <span className='hidden sm:inline'>Lưu tài liệu</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {
@@ -271,12 +272,12 @@ export default function DocumentDetailPage() {
 
       <fetcher.Form id={formId} method='POST' onSubmit={handleSubmit}>
         <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-          <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-            <CardTitle className='text-white text-3xl font-bold flex items-center justify-between'>
-              {name || 'Tài liệu'}
+          <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-xl'>
+            <CardTitle className='text-white text-xl sm:text-2xl md:text-3xl font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0'>
+              <span className='break-words'>{name || 'Tài liệu'}</span>
               <Badge
                 variant={isPublic ? 'default' : 'secondary'}
-                className={`ml-3 text-sm px-3 py-1 rounded-full ${
+                className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto ${
                   isPublic
                     ? 'bg-green-500 text-white'
                     : 'bg-yellow-500 text-white'
@@ -285,18 +286,18 @@ export default function DocumentDetailPage() {
                 {isPublic ? 'Công khai' : 'Hạn chế'}
               </Badge>
             </CardTitle>
-            <CardDescription className='text-purple-100 mt-2'>
+            <CardDescription className='text-purple-100 mt-2 text-sm sm:text-base'>
               <span>ID: {document.id}</span>
             </CardDescription>
           </CardHeader>
 
-          <CardContent className='p-6 space-y-6'>
+          <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
             {/* Document Name and Type */}
-            <div className='grid grid-cols-1 gap-6'>
+            <div className='grid grid-cols-1 gap-4 sm:gap-6'>
               <div>
                 <Label
                   htmlFor='name'
-                  className='text-gray-700 font-semibold mb-2 block'
+                  className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                 >
                   Tên tài liệu <span className='text-red-500'>*</span>
                 </Label>
@@ -305,12 +306,14 @@ export default function DocumentDetailPage() {
                   name='name'
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className='bg-white border-gray-300'
+                  className='bg-white border-gray-300 text-sm sm:text-base'
                   placeholder='Nhập tên tài liệu'
                   required
                 />
                 {errors.name && (
-                  <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+                  <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    {errors.name}
+                  </p>
                 )}
               </div>
 
@@ -340,11 +343,11 @@ export default function DocumentDetailPage() {
             <div>
               <Label
                 htmlFor='docDescription'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Mô tả
               </Label>
-              <div className='h-80'>
+              <div className='h-60 sm:h-80'>
                 <Hydrated>
                   {() => (
                     <TextEditor
@@ -360,30 +363,33 @@ export default function DocumentDetailPage() {
 
             {/* Document Creator */}
             {document.doc_createdBy && (
-              <div className='border-t border-gray-200 pt-6'>
-                <h4 className='text-xl font-bold text-gray-800 mb-4 flex items-center'>
-                  <span className='text-purple-600 mr-2'>ℹ️</span> Người tạo
+              <div className='border-t border-gray-200 pt-4 sm:pt-6'>
+                <h4 className='text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center'>
+                  <span className='text-purple-600 mr-2 text-base sm:text-lg'>
+                    ℹ️
+                  </span>
+                  <span className='text-sm sm:text-xl'>Người tạo</span>
                 </h4>
-                <div className='flex items-center space-x-4 p-4 w-full md:w-1/2 lg:w-1/3 bg-purple-50 rounded-lg shadow-sm border border-purple-200'>
-                  <Avatar className='h-14 w-14 border-2 border-purple-400'>
+                <div className='flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 w-full bg-purple-50 rounded-lg shadow-sm border border-purple-200'>
+                  <Avatar className='h-12 w-12 sm:h-14 sm:w-14 border-2 border-purple-400'>
                     <AvatarImage
                       src={document.doc_createdBy.emp_user.usr_avatar?.img_url}
                       alt={`${document.doc_createdBy.emp_user.usr_firstName} ${document.doc_createdBy.emp_user.usr_lastName} Avatar`}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className='text-sm sm:text-base'>
                       {`${document.doc_createdBy.emp_user.usr_firstName[0]}${document.doc_createdBy.emp_user.usr_lastName[0]}`}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className='text-lg font-semibold text-gray-900'>
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-base sm:text-lg font-semibold text-gray-900 break-words'>
                       {document.doc_createdBy.emp_user.usr_firstName}{' '}
                       {document.doc_createdBy.emp_user.usr_lastName}
                     </p>
-                    <p className='text-sm text-gray-600'>
+                    <p className='text-xs sm:text-sm text-gray-600 break-words'>
                       @{document.doc_createdBy.emp_user.usr_username} (
                       {document.doc_createdBy.emp_position})
                     </p>
-                    <p className='text-sm text-gray-500'>
+                    <p className='text-xs sm:text-sm text-gray-500 break-all'>
                       {document.doc_createdBy.emp_user.usr_email}
                     </p>
                   </div>
@@ -392,15 +398,15 @@ export default function DocumentDetailPage() {
             )}
 
             {/* Access Control */}
-            <div className='border-t border-gray-200 pt-6'>
-              <div className='flex items-center justify-between mb-4'>
+            <div className='border-t border-gray-200 pt-4 sm:pt-6'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-3 sm:gap-0'>
                 <Label
                   htmlFor='isPublic'
-                  className='text-gray-700 font-semibold'
+                  className='text-gray-700 font-semibold text-sm sm:text-base'
                 >
                   Chế độ truy cập
                 </Label>
-                <div className='flex items-center space-x-4'>
+                <div className='flex items-center space-x-3 sm:space-x-4'>
                   <Switch
                     id='isPublic'
                     name='isPublic'
@@ -410,7 +416,7 @@ export default function DocumentDetailPage() {
                   />
                   <Badge
                     variant={isPublic ? 'default' : 'secondary'}
-                    className={`text-sm px-3 py-1 rounded-full ${
+                    className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full ${
                       isPublic
                         ? 'bg-green-500 text-white'
                         : 'bg-yellow-500 text-white'
@@ -423,14 +429,18 @@ export default function DocumentDetailPage() {
 
               {/* Employee Access List */}
               <div>
-                <h4 className='text-xl font-bold text-gray-800 mb-4 flex items-center'>
-                  <span className='text-indigo-600 mr-2'>🔒</span> Danh sách
-                  nhân viên được phép truy cập
+                <h4 className='text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center'>
+                  <span className='text-indigo-600 mr-2 text-base sm:text-lg'>
+                    🔒
+                  </span>
+                  <span className='text-sm sm:text-xl'>
+                    Danh sách nhân viên được phép truy cập
+                  </span>
                 </h4>
 
                 {isPublic ? (
-                  <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                    <p className='text-gray-600'>
+                  <div className='p-3 sm:p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                    <p className='text-gray-600 text-sm sm:text-base'>
                       Tài liệu này đang ở chế độ công khai. Tất cả nhân viên
                       trong hệ thống đều có thể truy cập tài liệu này.
                     </p>
@@ -438,7 +448,7 @@ export default function DocumentDetailPage() {
                 ) : (
                   <>
                     {whiteList.length > 0 && (
-                      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4'>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4'>
                         {whiteList.map((employee) => (
                           <BriefEmployeeCard
                             key={employee.id}
@@ -451,25 +461,28 @@ export default function DocumentDetailPage() {
 
                     <Defer resolve={employeesPromise}>
                       {(employeeData) => (
-                        <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                        <div className='p-3 sm:p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
                           {!!selectedEmployees.length && (
-                            <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg'>
+                            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-3 sm:mb-4 rounded-lg gap-3 sm:gap-0'>
                               <div>
-                                <span className='font-semibold text-sm'>
+                                <span className='font-semibold text-xs sm:text-sm'>
                                   Đã chọn {selectedEmployees.length} nhân viên
                                   để thêm
                                 </span>
                               </div>
-                              <div className='flex flex-wrap items-center gap-2'>
+                              <div className='flex flex-wrap items-center gap-2 w-full sm:w-auto'>
                                 <Button
                                   variant='ghost'
                                   size='sm'
                                   type='button'
                                   onClick={() => setSelectedItems([])}
-                                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
+                                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
                                 >
-                                  <XCircle className='h-4 w-4' />
-                                  <span>Bỏ chọn tất cả</span>
+                                  <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
+                                  <span className='hidden sm:inline'>
+                                    Bỏ chọn tất cả
+                                  </span>
+                                  <span className='sm:hidden'>Bỏ chọn</span>
                                 </Button>
                                 <Button
                                   size='sm'
@@ -477,10 +490,13 @@ export default function DocumentDetailPage() {
                                   onClick={() =>
                                     handleAddEmployees(selectedEmployees)
                                   }
-                                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
+                                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
                                 >
-                                  <Plus className='h-4 w-4' />
-                                  <span>Thêm đã chọn</span>
+                                  <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
+                                  <span className='hidden sm:inline'>
+                                    Thêm đã chọn
+                                  </span>
+                                  <span className='sm:hidden'>Thêm</span>
                                 </Button>
                               </div>
                             </div>
@@ -531,7 +547,7 @@ export default function DocumentDetailPage() {
                                   return (
                                     <Button
                                       variant='default'
-                                      className={`bg-blue-500 hover:bg-blue-400 ${
+                                      className={`bg-blue-500 hover:bg-blue-400 text-xs sm:text-sm ${
                                         isAdded
                                           ? 'opacity-50 cursor-not-allowed'
                                           : ''
@@ -558,18 +574,19 @@ export default function DocumentDetailPage() {
             </div>
           </CardContent>
 
-          <CardFooter className='bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200'>
+          <CardFooter className='bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-t border-gray-200 gap-3 sm:gap-0'>
             <Link
               to='/erp/documents'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
-              <span className='material-symbols-outlined text-sm mr-1'>
+              <span className='material-symbols-outlined text-xs sm:text-sm mr-1'>
                 keyboard_return
               </span>
-              Trở về Danh sách
+              <span className='hidden sm:inline'>Trở về Danh sách</span>
+              <span className='sm:hidden'>Trở về</span>
             </Link>
 
-            <div className='flex space-x-2'>
+            <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 order-1 sm:order-2 w-full sm:w-auto'>
               <Button
                 variant='destructive'
                 type='button'
@@ -588,25 +605,30 @@ export default function DocumentDetailPage() {
                     );
                   }
                 }}
+                className='text-xs sm:text-sm w-full sm:w-auto'
               >
-                Xóa tài liệu
+                <span className='hidden sm:inline'>Xóa tài liệu</span>
+                <span className='sm:hidden'>Xóa</span>
               </Button>
 
               <Button
                 type='submit'
                 disabled={!isChanged || fetcher.state === 'submitting'}
+                className='text-xs sm:text-sm w-full sm:w-auto'
               >
                 {fetcher.state === 'submitting' ? (
                   <>
                     <span className='animate-spin mr-2'>⏳</span>
-                    <span>Đang lưu...</span>
+                    <span className='hidden sm:inline'>Đang lưu...</span>
+                    <span className='sm:hidden'>Lưu...</span>
                   </>
                 ) : (
                   <>
-                    <span className='material-symbols-outlined text-sm mr-1'>
+                    <span className='material-symbols-outlined text-xs sm:text-sm mr-1'>
                       save
                     </span>
-                    Lưu thay đổi
+                    <span className='hidden sm:inline'>Lưu thay đổi</span>
+                    <span className='sm:hidden'>Lưu</span>
                   </>
                 )}
               </Button>

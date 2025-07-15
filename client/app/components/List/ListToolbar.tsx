@@ -247,142 +247,163 @@ export default function ListToolbar<T>({
   };
 
   return (
-    <div className='p-4 border-b border-gray-200 flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center justify-between'>
-      <Form
-        method='GET'
-        onSubmit={handleSearch}
-        className='relative w-full md:flex-grow md:max-w-md'
-      >
-        <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined'>
-          search
-        </span>
-        <input
-          type='text'
-          placeholder='Tìm kiếm...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-        />
-      </Form>
-      {/* <div></div> */}
+    <div className='p-3 sm:p-4 bg-gray-50 sm:bg-white space-y-3 sm:space-y-4'>
+      {/* Search and Actions Row */}
+      <div className='flex flex-col sm:flex-row gap-3 sm:gap-4'>
+        {/* Search Form */}
+        <Form
+          method='GET'
+          onSubmit={handleSearch}
+          className='relative flex-1 max-w-none sm:max-w-md'
+        >
+          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-sm sm:text-base'>
+            search
+          </span>
+          <input
+            type='text'
+            placeholder='Tìm kiếm...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='w-full pl-8 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          />
+        </Form>
 
-      <div className='flex items-center gap-3 w-full md:w-auto mt-3 md:mt-0'>
-        {exportable && (
-          <exportFetcher.Form
-            method='POST'
-            className='flex gap-3'
-            onSubmitCapture={(e) => {
-              setIsExporting(true);
-              toastIdRef.current = toast.loading(
-                `Đang xuất dữ liệu ${name}...`,
-              );
-            }}
-          >
-            <button
-              className='px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm flex items-center gap-1'
-              name='fileType'
-              value='xlsx'
+        {/* Actions */}
+        <div className='flex-1 flex items-center justify-end gap-2 sm:gap-3 flex-wrap'>
+          {exportable && (
+            <exportFetcher.Form
+              method='POST'
+              className='flex-shrink-0'
+              onSubmitCapture={(e) => {
+                setIsExporting(true);
+                toastIdRef.current = toast.loading(
+                  `Đang xuất dữ liệu ${name}...`,
+                );
+              }}
             >
-              {isExporting ? (
-                <>
-                  <LoaderCircle className='animate-spin text-blue-500' />
-                  Đang xuất dữ liệu...
-                </>
-              ) : (
-                <>
-                  <span className='material-symbols-outlined text-sm'>
-                    download
-                  </span>
-                  Xuất Excel
-                </>
-              )}
-            </button>
-          </exportFetcher.Form>
-        )}
+              <button
+                className='px-3 py-2 text-xs sm:text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap'
+                name='fileType'
+                value='xlsx'
+              >
+                {isExporting ? (
+                  <>
+                    <LoaderCircle className='animate-spin text-blue-500 w-4 h-4' />
+                    <span className='hidden sm:inline'>
+                      Đang xuất dữ liệu...
+                    </span>
+                    <span className='sm:hidden'>Đang xuất...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className='material-symbols-outlined text-sm'>
+                      download
+                    </span>
+                    <span className='hidden sm:inline'>Xuất Excel</span>
+                    <span className='sm:hidden'>Xuất</span>
+                  </>
+                )}
+              </button>
+            </exportFetcher.Form>
+          )}
 
-        {/* Select attributes to display */}
-        <details className='relative'>
-          <summary className='px-3 py-2 bg-white border border-gray-300 rounded-md cursor-pointer flex items-center gap-2 hover:bg-gray-50 transition'>
-            <span className='material-symbols-outlined text-sm'>
-              view_column
-            </span>
-            <span>Cột</span>
-          </summary>
-          <div className='absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10'>
-            <div className='p-3 space-y-2'>
-              {visibleColumns.map(({ key, visible, title }) => (
-                <label key={key} className='flex items-center gap-2'>
-                  <input
-                    type='checkbox'
-                    checked={visible}
-                    onChange={() => handleColumnVisibilityChange(key)}
-                    className='rounded text-blue-500'
-                  />
-                  <span>{title}</span>
-                </label>
-              ))}
+          {/* Column Visibility Toggle */}
+          <details className='relative flex-shrink-0'>
+            <summary className='px-3 py-2 bg-white border border-gray-300 rounded-md cursor-pointer flex items-center gap-1 sm:gap-2 hover:bg-gray-50 transition text-xs sm:text-sm whitespace-nowrap'>
+              <span className='material-symbols-outlined text-sm'>
+                view_column
+              </span>
+              <span className='hidden sm:inline'>Cột</span>
+            </summary>
+            <div className='absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10'>
+              <div className='p-3 space-y-2 max-h-64 overflow-y-auto'>
+                {visibleColumns.map(({ key, visible, title }) => (
+                  <label key={key} className='flex items-center gap-2 text-sm'>
+                    <input
+                      type='checkbox'
+                      checked={visible}
+                      onChange={() => handleColumnVisibilityChange(key)}
+                      className='rounded text-blue-500'
+                    />
+                    <span className='truncate'>{title}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-        </details>
+          </details>
+        </div>
       </div>
 
       {/* Filter Section */}
       {(filterableColumns.length > 0 || dateFilterableColumns.length > 0) && (
-        <div className='w-full'>
-          <div className='flex flex-wrap gap-2 items-center'>
-            <span className='text-sm font-medium text-gray-700'>Bộ lọc:</span>
+        <div className='w-full border-t border-gray-200 pt-3 sm:pt-4 mt-3 sm:mt-4'>
+          <div className='flex flex-wrap gap-2 sm:gap-3 items-start sm:items-center'>
+            <span className='text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap'>
+              Bộ lọc:
+            </span>
 
-            {filterableColumns.map((column) => (
-              <div key={column.key} className='relative min-w-48'>
-                <SelectSearch
-                  options={[
-                    { label: `Tất cả ${column.title}`, value: '' },
-                    ...getFilterOptions(column),
-                  ]}
-                  value={activeFilters[column.filterField!] || ''}
-                  onValueChange={(value) =>
-                    handleFilterChange(column.filterField!, value)
-                  }
-                  placeholder={`Chọn ${column.title}...`}
-                />
-              </div>
-            ))}
-
-            {dateFilterableColumns.map((column) => (
-              <div
-                key={`${column.key}-date`}
-                className='flex items-center gap-2 border border-gray-300 rounded-md p-2 bg-white'
-              >
-                <span className='text-sm text-gray-600 whitespace-nowrap'>
-                  {column.title}:
-                </span>
-                <div className='flex items-center gap-2'>
-                  <DatePicker
-                    initialDate={activeDateFilters[column.filterField!]?.from}
-                    onChange={(date) =>
-                      handleDateFilterChange(column.filterField!, 'from', date)
+            <div className='flex flex-wrap gap-2 flex-1'>
+              {filterableColumns.map((column) => (
+                <div
+                  key={column.key}
+                  className='min-w-0 w-full sm:w-auto sm:min-w-48'
+                >
+                  <SelectSearch
+                    options={[
+                      { label: `Tất cả ${column.title}`, value: '' },
+                      ...getFilterOptions(column),
+                    ]}
+                    value={activeFilters[column.filterField!] || ''}
+                    onValueChange={(value) =>
+                      handleFilterChange(column.filterField!, value)
                     }
-                  />
-                  <span className='text-sm text-gray-500'>đến</span>
-                  <DatePicker
-                    initialDate={activeDateFilters[column.filterField!]?.to}
-                    onChange={(date) =>
-                      handleDateFilterChange(column.filterField!, 'to', date)
-                    }
+                    placeholder={`Chọn ${column.title}...`}
                   />
                 </div>
-              </div>
-            ))}
+              ))}
+
+              {dateFilterableColumns.map((column) => (
+                <div
+                  key={`${column.key}-date`}
+                  className='flex flex-col sm:flex-row items-start sm:items-center gap-2 border border-gray-300 rounded-md p-2 bg-white w-full sm:w-auto'
+                >
+                  <span className='text-xs sm:text-sm text-gray-600 whitespace-nowrap'>
+                    {column.title}:
+                  </span>
+                  <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto'>
+                    <DatePicker
+                      initialDate={activeDateFilters[column.filterField!]?.from}
+                      onChange={(date) =>
+                        handleDateFilterChange(
+                          column.filterField!,
+                          'from',
+                          date,
+                        )
+                      }
+                    />
+                    <span className='text-xs sm:text-sm text-gray-500 self-center'>
+                      đến
+                    </span>
+                    <DatePicker
+                      initialDate={activeDateFilters[column.filterField!]?.to}
+                      onChange={(date) =>
+                        handleDateFilterChange(column.filterField!, 'to', date)
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {(Object.keys(activeFilters).length > 0 ||
               Object.keys(activeDateFilters).length > 0) && (
               <Button
                 variant='outline'
-                className='px-2 py-1 text-xs text-red-600 hover:text-red-800 border border-red-300 rounded hover:bg-red-50 transition-colors'
+                className='px-2 py-1 text-xs text-red-600 hover:text-red-800 border border-red-300 rounded hover:bg-red-50 transition-colors whitespace-nowrap flex-shrink-0'
                 onClick={handleClearAllFilters}
               >
-                <X />
-                Xóa bộ lọc
+                <X className='w-3 h-3 sm:w-4 sm:h-4' />
+                <span className='hidden sm:inline ml-1'>Xóa bộ lọc</span>
               </Button>
             )}
           </div>

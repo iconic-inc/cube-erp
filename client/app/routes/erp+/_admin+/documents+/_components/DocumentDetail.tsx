@@ -84,34 +84,36 @@ export default function DocumentDetail({
 
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-            <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-              <div className='flex items-center space-x-4'>
-                <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
-                  <FileText className='w-8 h-8 text-white' />
+            <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white p-3 sm:p-6 rounded-t-xl'>
+              <div className='flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4'>
+                <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0'>
+                  <FileText className='w-6 h-6 sm:w-8 sm:h-8 text-white' />
                 </div>
-                <div className='flex-1'>
-                  <CardTitle className='text-white text-3xl font-bold'>
+                <div className='flex-1 text-center sm:text-left'>
+                  <CardTitle className='text-white text-xl sm:text-3xl font-bold break-words'>
                     {document.doc_name}
                   </CardTitle>
-                  <div className='flex items-center space-x-3 mt-2'>
-                    <p className='text-amber-100 text-lg'>ID: {document.id}</p>
+                  <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2'>
+                    <p className='text-amber-100 text-base sm:text-lg'>
+                      ID: {document.id}
+                    </p>
                     <Badge
                       variant={document.doc_isPublic ? 'default' : 'secondary'}
-                      className={`text-sm px-3 py-1 rounded-full ${
+                      className={`text-sm sm:text-sm px-2 sm:px-3 py-1 rounded-full ${
                         document.doc_isPublic
                           ? 'bg-green-500 text-white'
-                          : 'bg-red-500 text-white'
+                          : 'bg-yellow-500 text-white'
                       }`}
                     >
                       {document.doc_isPublic ? (
                         <>
                           <Globe className='w-3 h-3 mr-1' />
-                          Công khai
+                          <span className=''>Công khai</span>
                         </>
                       ) : (
                         <>
                           <Lock className='w-3 h-3 mr-1' />
-                          Hạn chế
+                          <span className=''>Hạn chế</span>
                         </>
                       )}
                     </Badge>
@@ -120,68 +122,71 @@ export default function DocumentDetail({
               </div>
             </CardHeader>
 
-            <CardContent className='p-6 space-y-6'>
+            <CardContent className='p-3 sm:p-6 space-y-4 sm:space-y-6'>
               {/* Basic Information */}
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                    <FileText className='w-5 h-5 mr-2' />
-                    Thông tin cơ bản
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+                <div className='space-y-3 sm:space-y-4'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                    <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+                    <span className='hidden sm:inline'>Thông tin cơ bản</span>
+                    <span className='sm:hidden'>Thông tin</span>
                   </h3>
 
-                  <div className='space-y-3'>
-                    {/* <div className='flex items-center space-x-3'>
-                      <FileText className='w-4 h-4 text-gray-400' />
-                      <span className='text-sm text-gray-500'>
-                        Loại tài liệu:
-                      </span>
-                      <span className='text-sm font-medium'>
-                        {document.doc_type || 'Chưa phân loại'}
-                      </span>
-                    </div> */}
-
-                    <div className='flex items-center space-x-3'>
-                      <Globe className='w-4 h-4 text-gray-400' />
-                      <span className='text-sm text-gray-500'>Trạng thái:</span>
+                  <div className='space-y-2 sm:space-y-3'>
+                    <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3'>
+                      <div className='flex items-center space-x-2'>
+                        <Globe className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                        <span className='text-sm sm:text-sm text-gray-500'>
+                          Trạng thái:
+                        </span>
+                      </div>
                       <Badge
                         variant={
-                          document.doc_isPublic ? 'default' : 'secondary'
+                          document.doc_isPublic ? 'default' : 'destructive'
                         }
-                        className='text-sm'
+                        className={`${document.doc_isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'} hover:bg-unset text-sm w-fit`}
                       >
-                        {document.doc_isPublic
-                          ? 'Công khai'
-                          : 'Hạn chế truy cập'}
+                        <span className=''>
+                          {document.doc_isPublic
+                            ? 'Công khai'
+                            : 'Hạn chế truy cập'}
+                        </span>
                       </Badge>
                     </div>
 
-                    <div className='flex items-center space-x-3'>
-                      <ExternalLink className='w-4 h-4 text-gray-400' />
-                      <span className='text-sm text-gray-500'>Đường dẫn:</span>
-                      <div className='flex items-center space-x-2 flex-1 truncate'>
-                        <span className='text-sm font-medium text-blue-600 truncate flex-1'>
+                    <div className='flex flex-col space-y-2'>
+                      <div className='flex items-center space-x-2'>
+                        <ExternalLink className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                        <span className='text-sm sm:text-sm text-gray-500'>
+                          Đường dẫn:
+                        </span>
+                      </div>
+                      <div className='flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2'>
+                        <span className='text-sm sm:text-sm font-medium text-blue-600 break-all flex-1'>
                           {document.doc_url}
                         </span>
                         <Button
                           size='sm'
                           onClick={() => handleDownload(document)}
-                          className='bg-green-600 hover:bg-green-700 text-white'
+                          className='bg-green-600 hover:bg-green-700 text-white text-sm sm:text-sm w-full sm:w-auto'
                         >
-                          <Download />
+                          <Download className='w-4 h-4 sm:w-4 sm:h-4 mr-1' />
                           {downloaded ? 'Đã tải!' : 'Tải'}
                         </Button>
                       </div>
                     </div>
 
                     {doc_createdBy && (
-                      <div className='flex items-center space-x-3'>
-                        <User className='w-4 h-4 text-gray-400' />
-                        <span className='text-sm text-gray-500'>
-                          Người tạo:
-                        </span>
+                      <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3'>
+                        <div className='flex items-center space-x-2'>
+                          <User className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                          <span className='text-sm sm:text-sm text-gray-500'>
+                            <span className=''>Người tạo:</span>
+                          </span>
+                        </div>
                         <Link
                           to={`/erp/employees/${doc_createdBy.id}`}
-                          className='text-sm font-medium text-blue-600 hover:underline'
+                          className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {doc_createdBy.emp_user.usr_firstName}{' '}
                           {doc_createdBy.emp_user.usr_lastName}
@@ -192,17 +197,24 @@ export default function DocumentDetail({
                 </div>
 
                 {/* Document Metadata */}
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                    <Calendar className='w-5 h-5 mr-2' />
-                    Thông tin thời gian
+                <div className='space-y-3 sm:space-y-4'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                    <Calendar className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+                    <span className='hidden sm:inline'>
+                      Thông tin thời gian
+                    </span>
+                    <span className='sm:hidden'>Thời gian</span>
                   </h3>
 
-                  <div className='space-y-3'>
-                    <div className='flex items-center space-x-3'>
-                      <Calendar className='w-4 h-4 text-gray-400' />
-                      <span className='text-sm text-gray-500'>Ngày tạo:</span>
-                      <span className='text-sm font-medium'>
+                  <div className='space-y-2 sm:space-y-3'>
+                    <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3'>
+                      <div className='flex items-center space-x-2'>
+                        <Calendar className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                        <span className='text-sm sm:text-sm text-gray-500'>
+                          <span className=''>Ngày tạo:</span>
+                        </span>
+                      </div>
+                      <span className='text-sm sm:text-sm font-medium'>
                         {document.createdAt
                           ? format(
                               new Date(document.createdAt),
@@ -213,12 +225,14 @@ export default function DocumentDetail({
                       </span>
                     </div>
 
-                    <div className='flex items-center space-x-3'>
-                      <Calendar className='w-4 h-4 text-gray-400' />
-                      <span className='text-sm text-gray-500'>
-                        Cập nhật lúc:
-                      </span>
-                      <span className='text-sm font-medium'>
+                    <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3'>
+                      <div className='flex items-center space-x-2'>
+                        <Calendar className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                        <span className='text-sm sm:text-sm text-gray-500'>
+                          <span className=''>Cập nhật lúc:</span>
+                        </span>
+                      </div>
+                      <span className='text-sm sm:text-sm font-medium'>
                         {document.updatedAt
                           ? format(
                               new Date(document.updatedAt),
@@ -234,12 +248,13 @@ export default function DocumentDetail({
 
               {/* Description */}
               {document.doc_description && (
-                <div className='space-y-3'>
-                  <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                    <FileText className='w-5 h-5 mr-2' />
-                    Mô tả tài liệu
+                <div className='space-y-2 sm:space-y-3'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                    <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+                    <span className='hidden sm:inline'>Mô tả tài liệu</span>
+                    <span className='sm:hidden'>Mô tả</span>
                   </h3>
-                  <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                  <div className='bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200'>
                     <TextRenderer content={document.doc_description} />
                   </div>
                 </div>
@@ -247,26 +262,34 @@ export default function DocumentDetail({
 
               {/* Access Control */}
               {doc_whiteList && doc_whiteList.length > 0 && (
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                    <Users className='w-5 h-5 mr-2' />
-                    Quyền truy cập
+                <div className='space-y-3 sm:space-y-4'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                    <Users className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+                    <span className=''>Quyền truy cập</span>
                   </h3>
                   {document.doc_isPublic ? (
-                    <div className='bg-green-50 rounded-lg p-4 border border-green-200'>
+                    <div className='bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200'>
                       <div className='flex items-center space-x-2'>
-                        <Globe className='w-5 h-5 text-green-600' />
-                        <p className='text-green-800 font-medium'>
-                          Tài liệu công khai
+                        <Globe className='w-4 h-4 sm:w-5 sm:h-5 text-green-600' />
+                        <p className='text-green-800 font-medium text-base sm:text-base'>
+                          <span className='hidden sm:inline'>
+                            Tài liệu công khai
+                          </span>
+                          <span className='sm:hidden'>Công khai</span>
                         </p>
                       </div>
-                      <p className='text-green-700 text-sm mt-2'>
-                        Tất cả nhân viên trong hệ thống đều có thể truy cập tài
-                        liệu này.
+                      <p className='text-green-700 text-sm sm:text-sm mt-2'>
+                        <span className='hidden sm:inline'>
+                          Tất cả nhân viên trong hệ thống đều có thể truy cập
+                          tài liệu này.
+                        </span>
+                        <span className='sm:hidden'>
+                          Tất cả nhân viên có thể truy cập.
+                        </span>
                       </p>
                     </div>
                   ) : (
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4'>
                       {doc_whiteList.map((employee) => (
                         <BriefEmployeeCard
                           employee={employee}
@@ -279,26 +302,46 @@ export default function DocumentDetail({
               )}
 
               {/* Actions */}
-              <div className='flex flex-wrap gap-3 pt-4 border-t border-gray-200'>
-                <Button asChild variant={'primary'}>
+              <div className='flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200'>
+                <Button
+                  asChild
+                  variant={'primary'}
+                  className='w-full sm:w-auto text-sm sm:text-sm'
+                >
                   <Link to='./edit'>
-                    <Edit className='w-4 h-4 mr-2' />
-                    Chỉnh sửa tài liệu
+                    <Edit className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+                    <span className='hidden sm:inline'>Chỉnh sửa tài liệu</span>
+                    <span className='sm:hidden'>Chỉnh sửa</span>
                   </Link>
                 </Button>
 
                 <Button
                   onClick={() => handleDownload(document)}
-                  className='inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+                  className='inline-flex items-center justify-center w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
                 >
-                  <Download />
-                  {downloaded ? 'Đã tải xuống!' : 'Tải xuống'}
+                  <Download className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+                  {downloaded ? (
+                    <>
+                      <span className='hidden sm:inline'>Đã tải xuống!</span>
+                      <span className='sm:hidden'>Đã tải!</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className='hidden sm:inline'>Tải xuống</span>
+                      <span className='sm:hidden'>Tải</span>
+                    </>
+                  )}
                 </Button>
 
-                <Button asChild variant={'secondary'}>
+                <Button
+                  asChild
+                  variant={'secondary'}
+                  className='w-full sm:w-auto text-sm sm:text-sm'
+                >
                   <Link to='/erp/documents'>
-                    <ArrowLeft />
-                    Quay lại danh sách
+                    <ArrowLeft className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+                    <span className='hidden sm:inline'>Quay lại danh sách</span>
+                    <span className='sm:hidden'>Quay lại</span>
                   </Link>
                 </Button>
               </div>

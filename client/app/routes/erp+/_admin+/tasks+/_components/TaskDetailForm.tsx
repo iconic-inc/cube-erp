@@ -13,7 +13,7 @@ import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
-import { Plus, XCircle } from 'lucide-react';
+import { Plus, Save, XCircle } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
@@ -311,15 +311,15 @@ export default function TaskDetailForm({
       onSubmit={handleSubmit}
     >
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <CardTitle className='text-white text-3xl font-bold'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl'>
+          <CardTitle className='text-white text-xl sm:text-2xl lg:text-3xl font-bold'>
             {type === 'create'
               ? 'Tạo Task mới'
               : `Task: ${name || 'Chưa có tên'}`}
           </CardTitle>
         </CardHeader>
 
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Case Service Brief */}
           {caseService && (
             <div className='mb-6'>
@@ -329,11 +329,11 @@ export default function TaskDetailForm({
           )}
 
           {/* Task Name and Order */}
-          <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
-            <div className='md:col-span-8'>
+          <div className='grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6'>
+            <div className='lg:col-span-8'>
               <Label
                 htmlFor='name'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Tên Task <span className='text-red-500'>*</span>
               </Label>
@@ -342,19 +342,21 @@ export default function TaskDetailForm({
                 name='name'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
                 placeholder='Nhập tên Task'
                 required
               />
               {errors.name && (
-                <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.name}
+                </p>
               )}
             </div>
 
-            <div className='md:col-span-4'>
+            <div className='lg:col-span-4'>
               <Label
                 htmlFor='caseOrder'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Thứ tự
               </Label>
@@ -364,7 +366,7 @@ export default function TaskDetailForm({
                 type='number'
                 value={caseOrder}
                 onChange={(e) => setCaseOrder(Number(e.target.value))}
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
                 placeholder='Nhập thứ tự'
                 required
               />
@@ -375,13 +377,13 @@ export default function TaskDetailForm({
           <div>
             <Label
               htmlFor='description'
-              className='text-gray-700 font-semibold mb-2 block'
+              className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
             >
               Mô tả
             </Label>
             <Hydrated>
               {() => (
-                <div className='h-[200px]'>
+                <div className='h-[250px] sm:h-[200px]'>
                   <TextEditor
                     name='description'
                     value={description}
@@ -395,11 +397,11 @@ export default function TaskDetailForm({
           </div>
 
           {/* Priority, Status, Dates */}
-          <div className='grid grid-cols-2 md:grid-cols-12 gap-6'>
-            <div className='md:col-span-2'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6'>
+            <div className='lg:col-span-2'>
               <Label
                 htmlFor='priority'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Độ ưu tiên
               </Label>
@@ -410,7 +412,7 @@ export default function TaskDetailForm({
                   setPriority(value as keyof typeof TASK.PRIORITY)
                 }
               >
-                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
+                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base'>
                   <SelectValue placeholder='Chọn độ ưu tiên' />
                 </SelectTrigger>
                 <SelectContent>
@@ -423,10 +425,10 @@ export default function TaskDetailForm({
               </Select>
             </div>
 
-            <div className='md:col-span-2'>
+            <div className='lg:col-span-2'>
               <Label
                 htmlFor='status'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Trạng thái
               </Label>
@@ -437,7 +439,7 @@ export default function TaskDetailForm({
                   setStatus(value as keyof typeof TASK.STATUS)
                 }
               >
-                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500'>
+                <SelectTrigger className='w-full focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base'>
                   <SelectValue placeholder='Chọn trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
@@ -450,10 +452,10 @@ export default function TaskDetailForm({
               </Select>
             </div>
 
-            <div className='md:col-span-4'>
+            <div className='lg:col-span-4'>
               <Label
                 htmlFor='startDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày bắt đầu
               </Label>
@@ -466,10 +468,10 @@ export default function TaskDetailForm({
               />
             </div>
 
-            <div className='md:col-span-4'>
+            <div className='lg:col-span-4'>
               <Label
                 htmlFor='endDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày kết thúc <span className='text-red-500'>*</span>
               </Label>
@@ -482,15 +484,22 @@ export default function TaskDetailForm({
               />
 
               {errors.endDate && (
-                <p className='text-red-500 text-sm mt-1'>{errors.endDate}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.endDate}
+                </p>
               )}
             </div>
           </div>
 
           {/* Case Service Selection */}
           {!caseService && type === 'create' && (
-            <div className='flex items-center justify-center py-6 border-t border-gray-200'>
-              <Button variant='primary' type='button' asChild>
+            <div className='flex items-center justify-center py-4 sm:py-6 border-t border-gray-200'>
+              <Button
+                variant='primary'
+                type='button'
+                asChild
+                className='text-sm sm:text-base'
+              >
                 <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>
               </Button>
             </div>
@@ -498,7 +507,7 @@ export default function TaskDetailForm({
 
           {/* Assignees */}
           <div className='space-y-4'>
-            <Label className='text-gray-700 font-semibold block flex items-center'>
+            <Label className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'>
               <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
               {assignees.length === 0 && (
                 <span className='text-red-500 ml-1'>*</span>
@@ -506,7 +515,7 @@ export default function TaskDetailForm({
             </Label>
 
             {assignees.length > 0 && (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4'>
                 {assignees.map((assignee) => (
                   <BriefEmployeeCard
                     key={assignee.id}
@@ -518,16 +527,18 @@ export default function TaskDetailForm({
             )}
 
             {errors.assignees && (
-              <p className='text-red-500 text-sm'>{errors.assignees}</p>
+              <p className='text-red-500 text-xs sm:text-sm'>
+                {errors.assignees}
+              </p>
             )}
 
             <Defer resolve={employees}>
               {(employeeData) => (
-                <div className='p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+                <div className='sm:p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
                   {!!selected.length && (
-                    <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg'>
+                    <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg gap-2 sm:gap-0'>
                       <div>
-                        <span className='font-semibold text-sm'>
+                        <span className='font-semibold text-xs sm:text-sm'>
                           Đã chọn {selected.length} nhân viên để thêm
                         </span>
                       </div>
@@ -537,18 +548,18 @@ export default function TaskDetailForm({
                           size='sm'
                           type='button'
                           onClick={() => setSelectedItems([])}
-                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
+                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
                         >
-                          <XCircle className='h-4 w-4' />
+                          <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
                           <span>Bỏ chọn tất cả</span>
                         </Button>
                         <Button
                           size='sm'
                           onClick={() => handleAddAssignees(selected)}
                           type='button'
-                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
+                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
                         >
-                          <Plus className='h-4 w-4' />
+                          <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
                           <span>Thêm đã chọn</span>
                         </Button>
                       </div>
@@ -603,7 +614,7 @@ export default function TaskDetailForm({
                           return (
                             <Button
                               variant='default'
-                              className={`bg-blue-500 hover:bg-blue-400 ${
+                              className={`bg-blue-500 hover:bg-blue-400 text-xs sm:text-sm ${
                                 isAdded ? 'opacity-50 cursor-not-allowed' : ''
                               }`}
                               type='button'
@@ -625,10 +636,10 @@ export default function TaskDetailForm({
           </div>
         </CardContent>
 
-        <CardFooter className='px-6 py-4 flex justify-between items-center border-t border-gray-200'>
+        <CardFooter className='px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center border-t border-gray-200 gap-3 sm:gap-0'>
           <Link
             to='/erp/tasks'
-            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
           >
             <span className='material-symbols-outlined text-sm mr-1'>
               keyboard_return
@@ -640,6 +651,7 @@ export default function TaskDetailForm({
             variant='primary'
             type='submit'
             disabled={!isChanged || fetcher.state === 'submitting'}
+            className='text-xs sm:text-sm w-full sm:w-auto'
           >
             {fetcher.state === 'submitting' ? (
               <>
@@ -648,9 +660,7 @@ export default function TaskDetailForm({
               </>
             ) : (
               <>
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  save
-                </span>
+                <Save className='h-4 w-4' />
                 {type === 'create' ? 'Lưu Task' : 'Cập nhật Task'}
               </>
             )}

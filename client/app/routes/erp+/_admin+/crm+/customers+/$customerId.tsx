@@ -8,7 +8,7 @@ import ContentHeader from '~/components/ContentHeader';
 import CustomerDetail from './_components/CustomerDetail';
 import CustomerCaseServiceList from './_components/CustomerCaseServiceList';
 import CustomerTransactionList from './_components/CustomerTransactionList';
-import { Pen } from 'lucide-react';
+import { Edit, Pen } from 'lucide-react';
 import { canAccessCustomerManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -76,18 +76,20 @@ export default function CustomerDetails() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       <ContentHeader
         title='Chi tiết Khách hàng'
         actionContent={
           <>
-            <Pen className='w-4 h-4 mr-1' />
-            Chỉnh sửa Khách hàng
+            <Edit className='w-4 h-4' />
+            <span className='hidden sm:inline'>Chỉnh sửa Khách hàng</span>
+            <span className='sm:hidden'>Chỉnh sửa</span>
           </>
         }
         actionHandler={() => {
           navigate(`./edit`);
         }}
+        backHandler={() => navigate('/erp/crm/customers')}
       />
 
       {/* Customer Details Card */}

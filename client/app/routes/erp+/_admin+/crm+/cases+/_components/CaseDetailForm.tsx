@@ -13,7 +13,7 @@ import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ICaseService } from '~/interfaces/case.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
-import { Plus, XCircle, RotateCcw } from 'lucide-react';
+import { Plus, XCircle, RotateCcw, Save, ArrowLeft } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
@@ -293,12 +293,12 @@ export default function CaseDetailForm({
       onSubmit={handleSubmit}
     >
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <CardTitle className='text-white text-3xl font-bold'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl'>
+          <CardTitle className='text-white text-xl sm:text-2xl lg:text-3xl font-bold truncate'>
             {code || 'Mã Hồ sơ vụ việc'}
           </CardTitle>
         </CardHeader>
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           <Defer resolve={customerPromise}>
             {(customer) => <CustomerBrief customer={customer} />}
           </Defer>
@@ -306,38 +306,41 @@ export default function CaseDetailForm({
           <div>
             <Label
               htmlFor='case_code'
-              className='text-gray-700 font-semibold mb-2 block'
+              className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
             >
               Mã Hồ sơ vụ việc <span className='text-red-500'>*</span>
             </Label>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2'>
               <Input
                 id='case_code'
                 name='code'
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder='Ví dụ: HS123456'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               <Button
                 type='button'
                 variant='outline'
                 size='sm'
                 onClick={generateCaseCode}
-                className='whitespace-nowrap'
+                className='whitespace-nowrap justify-center sm:justify-start'
               >
                 <RotateCcw className='h-4 w-4 mr-1' />
-                Tự động tạo
+                <span className='hidden sm:inline'>Tự động tạo</span>
+                <span className='sm:hidden'>Tạo</span>
               </Button>
             </div>
             {errors.code && (
-              <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
+              <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                {errors.code}
+              </p>
             )}
           </div>
 
           {/* Case Notes */}
           <div>
-            <Label className='text-gray-700 font-semibold mb-2 block'>
+            <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
               Ghi chú
             </Label>
 
@@ -348,7 +351,7 @@ export default function CaseDetailForm({
                   value={notes}
                   isReady={isContentReady}
                   onChange={setNotes}
-                  className='min-h-40'
+                  className='min-h-48 sm:min-h-40'
                   placeholder='Nhập ghi chú cho dịch vụ vụ việc này...'
                 />
               )}
@@ -356,9 +359,9 @@ export default function CaseDetailForm({
           </div>
 
           {/* Start Date, End Date */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
             <div>
-              <Label className='text-gray-700 font-semibold mb-2 block'>
+              <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
                 Trạng thái
               </Label>
               <Select
@@ -368,7 +371,7 @@ export default function CaseDetailForm({
                   setStatus(value as keyof typeof CASE_SERVICE.STATUS)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className='text-sm sm:text-base'>
                   <SelectValue placeholder='Chọn trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
@@ -388,7 +391,7 @@ export default function CaseDetailForm({
             <div>
               <Label
                 htmlFor='case_startDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày bắt đầu <span className='text-red-500'>*</span>
               </Label>
@@ -404,7 +407,7 @@ export default function CaseDetailForm({
             <div>
               <Label
                 htmlFor='case_endDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày kết thúc (Tùy chọn)
               </Label>
@@ -416,20 +419,22 @@ export default function CaseDetailForm({
             </div>
           </div>
 
-          <div className='border-t border-gray-200 pt-6'>
+          <div className='border-t border-gray-200 pt-4 sm:pt-6'>
             <Label
               htmlFor='assignees'
-              className='text-gray-700 font-semibold block flex items-center'
+              className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'
             >
               <span className='text-teal-600 mr-2'>
                 &#128100; Người thực hiện
               </span>
             </Label>
             {errors.assignees && (
-              <p className='text-red-500 text-sm mt-4'>{errors.assignees}</p>
+              <p className='text-red-500 text-xs sm:text-sm mt-2 sm:mt-4'>
+                {errors.assignees}
+              </p>
             )}
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-6'>
               {assignees.map((assignee, i) => (
                 <BriefEmployeeCard
                   key={i}
@@ -472,22 +477,22 @@ export default function CaseDetailForm({
               </AlertDialogContent>
             </AlertDialog>
 
-            <div className='mt-4 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
+            <div className='mt-3 sm:mt-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
               {!!selected.length && (
-                <div className='flex items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800'>
+                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 gap-2 sm:gap-0'>
                   <div className=''>
-                    <span className='font-semibold text-sm'>{`Đã chọn ${selected.length} Nhân viên để thêm`}</span>
+                    <span className='font-semibold text-xs sm:text-sm'>{`Đã chọn ${selected.length} Nhân viên để thêm`}</span>
                   </div>
 
-                  <div className='flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0'>
+                  <div className='flex flex-wrap items-center gap-2 w-full sm:w-auto'>
                     <Button
                       variant='ghost'
                       size='sm'
                       type='button'
                       onClick={() => setSelectedItems([])} // Clear selection
-                      className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1'
+                      className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
                     >
-                      <XCircle className='h-4 w-4' />
+                      <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
                       <span>Bỏ chọn tất cả</span>
                     </Button>
 
@@ -497,9 +502,9 @@ export default function CaseDetailForm({
                         handleAddAssignees(selected);
                       }}
                       type='button'
-                      className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1'
+                      className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
                     >
-                      <Plus className='h-4 w-4' />
+                      <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
                       <span>Thêm đã chọn</span>
                     </Button>
                   </div>
@@ -597,34 +602,33 @@ export default function CaseDetailForm({
                 ]}
                 selectedItems={selected}
                 setSelectedItems={setSelectedItems}
+                showPagination={false}
               />
             </div>
           </div>
         </CardContent>
 
-        <CardFooter>
-          <div className='w-full flex justify-between items-center'>
+        <CardFooter className='p-4 sm:p-6'>
+          <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
               to='/erp/crm/customers'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
             >
-              <span className='material-symbols-outlined text-sm mr-1'>
-                keyboard_return
-              </span>
-              Trở về Danh sách
+              <ArrowLeft className='h-4 w-4' />
+              <span className='hidden sm:inline'>Trở về Danh sách</span>
+              <span className='sm:hidden'>Trở về</span>
             </Link>
 
-            <div className='flex space-x-2'>
+            <div className='flex space-x-2 w-full sm:w-auto'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}
               >
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  save
-                </span>
-                Lưu Hồ sơ
+                <Save className='h-4 w-4' />
+                <span className='hidden sm:inline'>Lưu Hồ sơ</span>
+                <span className='sm:hidden'>Lưu</span>
               </Button>
             </div>
           </div>

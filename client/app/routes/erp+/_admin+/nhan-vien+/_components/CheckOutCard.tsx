@@ -22,41 +22,57 @@ export default function CheckOutCard({
   }, [loading, attendance?.checkInTime, attendance?.checkOutTime]);
 
   return (
-    <div className='w-full md:w-1/2 max-w-xs mt-4 md:mt-0'>
+    <div className='w-full sm:w-1/2 max-w-xs mx-auto mt-4 sm:mt-0'>
       <div
-        className={`bg-orange-50 rounded-lg p-6 md:p-8 text-center border border-orange-100 group
-  ${isDisabled ? 'scale-90' : 'scale-110 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer'} 
+        className={`bg-orange-50 rounded-lg p-4 sm:p-6 md:p-8 text-center border border-orange-100 group transition-all duration-300
+  ${isDisabled ? 'scale-90 opacity-75' : 'scale-100 sm:scale-110 hover:shadow-md transform hover:-translate-y-1 cursor-pointer'} 
   `}
       >
-        <div className='w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-all'>
-          <span className='material-symbols-outlined text-3xl text-orange-500'>
+        <div className='w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-orange-200 transition-all'>
+          <span className='material-symbols-outlined text-2xl sm:text-3xl text-orange-500'>
             logout
           </span>
         </div>
-        <h3 className='text-xl font-semibold mb-2'>Kết thúc</h3>
-        <p className='text-sm text-gray-500 mb-4'>Kết thúc ngày làm việc</p>
+        <h3 className='text-lg sm:text-xl font-semibold mb-2'>
+          <span className='sm:inline'>Kết thúc</span>
+        </h3>
+        <p className='text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4'>
+          <span className='sm:inline'>Kết thúc ngày làm việc</span>
+        </p>
 
         <Button
-          className='w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white'
+          className='w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white text-sm sm:text-base'
           disabled={isDisabled}
           type='submit'
           name='type'
           value='check-out'
         >
-          {loading && <LoaderCircle className='animate-spin mr-2' />}
-          Kết thúc
+          {loading && <LoaderCircle className='animate-spin mr-2 w-4 h-4' />}
+          <span className='sm:inline'>Kết thúc</span>
         </Button>
 
         {!attendance?.checkInTime && (
-          <p className='text-xs text-red-500 mt-4'>
-            Không thể kết thúc trước khi vào làm
+          <p className='text-xs text-red-500 mt-3 sm:mt-4'>
+            <span className='hidden sm:inline'>
+              Không thể kết thúc trước khi vào làm
+            </span>
+            <span className='sm:hidden'>Chưa vào làm</span>
           </p>
         )}
 
         {attendance?.checkOutTime && (
-          <p className='text-xs text-red-500 mt-4'>
-            Đã kết thúc vào lúc{' '}
-            {new Date(attendance.checkOutTime).toLocaleTimeString()}
+          <p className='text-xs text-red-500 mt-3 sm:mt-4'>
+            <span className='hidden sm:inline'>
+              Đã kết thúc vào lúc{' '}
+              {new Date(attendance.checkOutTime).toLocaleTimeString()}
+            </span>
+            <span className='sm:hidden'>
+              Đã ra:{' '}
+              {new Date(attendance.checkOutTime).toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
           </p>
         )}
       </div>

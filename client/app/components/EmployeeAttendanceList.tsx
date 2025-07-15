@@ -1,5 +1,5 @@
 import { Link } from '@remix-run/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import List from '~/components/List';
@@ -14,6 +14,19 @@ export default function EmployeeAttendanceList({
 }: {
   attendanceStats: IAttendance[];
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IAttendance>[]
   >([
@@ -27,26 +40,26 @@ export default function EmployeeAttendanceList({
           to={`/erp/employees/${item.employee.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
-          <div className='flex items-center space-x-3'>
-            <div className='flex-shrink-0 h-8 w-8'>
+          <div className='flex items-center space-x-2 md:space-x-3'>
+            <div className='flex-shrink-0 h-6 w-6 md:h-8 md:w-8'>
               {item.employee.emp_user.usr_avatar?.img_url ? (
                 <img
-                  className='h-8 w-8 rounded-full object-cover'
+                  className='h-6 w-6 md:h-8 md:w-8 rounded-full object-cover'
                   src={item.employee.emp_user.usr_avatar.img_url}
                   alt=''
                 />
               ) : (
-                <div className='h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center'>
-                  <User className='h-4 w-4 text-gray-400' />
+                <div className='h-6 w-6 md:h-8 md:w-8 rounded-full bg-gray-200 flex items-center justify-center'>
+                  <User className='h-3 w-3 md:h-4 md:w-4 text-gray-400' />
                 </div>
               )}
             </div>
-            <div>
-              <div className='text-sm font-medium'>
+            <div className='min-w-0 flex-1'>
+              <div className='text-xs md:text-sm font-medium truncate'>
                 {item.employee.emp_user.usr_firstName}{' '}
                 {item.employee.emp_user.usr_lastName}
               </div>
-              <div className='text-xs text-gray-500'>
+              <div className='text-xs text-gray-500 truncate'>
                 {item.employee.emp_code || 'Chưa có mã'}
               </div>
             </div>
@@ -57,12 +70,12 @@ export default function EmployeeAttendanceList({
     {
       title: 'Ngày',
       key: 'date',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       sortField: 'date',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <Calendar className='w-4 h-4 text-gray-400' />
-          <span className='text-sm text-gray-600'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <Calendar className='w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-600 truncate'>
             {new Date(item.date).toLocaleDateString('vi-VN')}
           </span>
         </div>
@@ -74,9 +87,9 @@ export default function EmployeeAttendanceList({
       visible: true,
       sortField: 'checkInTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <CheckCircle className='w-4 h-4 text-green-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <CheckCircle className='w-3 h-3 md:w-4 md:h-4 text-green-500 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-900 truncate'>
             {item.checkInTime
               ? new Date(item.checkInTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -90,12 +103,12 @@ export default function EmployeeAttendanceList({
     {
       title: 'Giờ ra',
       key: 'checkOut',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       sortField: 'checkOutTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <XCircle className='w-4 h-4 text-red-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <XCircle className='w-3 h-3 md:w-4 md:h-4 text-red-500 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-900 truncate'>
             {item.checkOutTime
               ? new Date(item.checkOutTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -112,13 +125,13 @@ export default function EmployeeAttendanceList({
       visible: true,
       sortField: 'totalHours',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <Clock className='w-4 h-4 text-blue-500' />
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <Clock className='w-3 h-3 md:w-4 md:h-4 text-blue-500 flex-shrink-0' />
           <Badge
             variant={
               item.checkInTime && item.checkOutTime ? 'default' : 'secondary'
             }
-            className='text-sm'
+            className='text-xs truncate max-w-full'
           >
             {item.checkInTime && item.checkOutTime
               ? `${calHourDiff(item.checkInTime, item.checkOutTime)} giờ`
@@ -132,21 +145,35 @@ export default function EmployeeAttendanceList({
       key: 'actions',
       visible: true,
       render: (item) => (
-        <Button variant={'primary'} asChild>
+        <Button variant={'primary'} asChild size='sm' className='text-xs'>
           <Link to={`/erp/attendance/detail?employeeId=${item.employee.id}`}>
-            Xem chi tiết
+            <span className='hidden sm:inline'>Xem chi tiết</span>
+            <span className='sm:hidden'>Chi tiết</span>
           </Link>
         </Button>
       ),
     },
   ]);
 
+  // Update column visibility when isMobile changes
+  useEffect(() => {
+    setVisibleColumns((prev) =>
+      prev.map((col) => {
+        if (col.key === 'date' || col.key === 'checkOut') {
+          return { ...col, visible: !isMobile };
+        }
+        return col;
+      }),
+    );
+  }, [isMobile]);
+
   return (
-    <Card className='col-span-2 rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
-        <CardTitle className='text-white text-xl font-bold flex items-center'>
-          <Clock className='w-5 h-5 mr-2' />
-          Chấm công hôm nay
+    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-3 md:py-4'>
+        <CardTitle className='text-white text-lg md:text-xl font-bold flex items-center'>
+          <Clock className='w-4 h-4 md:w-5 md:h-5 mr-2' />
+          <span className='hidden sm:inline'>Chấm công hôm nay</span>
+          <span className='sm:hidden'>Chấm công</span>
         </CardTitle>
       </CardHeader>
       <CardContent className='p-0'>

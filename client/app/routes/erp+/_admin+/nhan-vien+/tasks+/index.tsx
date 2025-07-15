@@ -189,7 +189,7 @@ export default function HRMTasks() {
         title='Danh sách Task'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
+            <Plus className='w-4 h-4' />
             Thêm Task
           </>
         }

@@ -29,23 +29,25 @@ export default function BriefEmployeeCard({
       )}
       onClick={() => onClick && onClick(employee)}
     >
-      <CardContent className='flex items-center p-4 space-x-3'>
-        <Avatar className='h-10 w-10 border-2 border-indigo-300'>
+      <CardContent className='flex items-center p-2 sm:p-3 md:p-4 space-x-2 sm:space-x-3 w-full'>
+        <Avatar className='h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 border-2 border-indigo-300 flex-shrink-0'>
           {/* <AvatarImage
             src={employee.emp_user.usr_avatar?.img_url}
             alt={`${employee.emp_user.usr_firstName} ${employee.emp_user.usr_lastName} Avatar`}
           /> */}
 
-          <AvatarFallback>{`${employee.emp_user.usr_firstName[0]}${employee.emp_user.usr_lastName[0]}`}</AvatarFallback>
+          <AvatarFallback className='text-xs sm:text-sm'>{`${employee.emp_user.usr_firstName[0]}${employee.emp_user.usr_lastName[0]}`}</AvatarFallback>
         </Avatar>
-        <div>
-          <p className='text-base font-semibold text-gray-900'>
+        <div className='min-w-0 flex-1'>
+          <p className='text-xs sm:text-sm md:text-base font-semibold text-gray-900 truncate'>
             {employee.emp_user.usr_firstName} {employee.emp_user.usr_lastName}
           </p>
-          <p className='text-xs text-gray-600'>
+          <p className='text-xs sm:text-xs text-gray-600 truncate'>
             @{employee.emp_user.usr_username} ({employee.emp_position})
           </p>
-          <p className='text-xs text-gray-500'>{employee.emp_user.usr_email}</p>
+          <p className='text-xs text-gray-500 truncate break-all'>
+            {employee.emp_user.usr_email}
+          </p>
         </div>
       </CardContent>
 
@@ -57,14 +59,15 @@ export default function BriefEmployeeCard({
             e.stopPropagation();
             handleRemoveEmployee(employee);
           }}
-          className='px-3 py-2 h-auto text-xs bg-red-500 hover:bg-red-600 mr-4'
+          className='px-2 sm:px-3 py-1 sm:py-2 h-fit text-xs sm:text-sm bg-red-500 hover:bg-red-600 mr-2 sm:mr-3 flex-shrink-0'
         >
-          Bỏ chọn
+          <span className='hidden sm:inline'>Bỏ chọn</span>
+          <span className='sm:hidden'>Bỏ</span>
         </Button>
       )}
 
       {highlighted && (
-        <div className='absolute bottom-full left-1 bg-indigo-500 rounded-tl-lg rounded-tr-lg px-2'>
+        <div className='absolute -top-5 sm:-top-6 left-1 bg-indigo-500 rounded-tl-lg rounded-tr-lg px-1 sm:px-2'>
           <span className='text-white text-xs font-semibold'>
             {highlightText}
           </span>

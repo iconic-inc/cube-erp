@@ -66,7 +66,7 @@ export default function () {
         title='Chi tiết Hồ sơ Dịch vụ'
         actionContent={
           <>
-            <Save className='w-4 h-4 mr-1' />
+            <Save className='w-4 h-4' />
             Lưu Hồ sơ
           </>
         }

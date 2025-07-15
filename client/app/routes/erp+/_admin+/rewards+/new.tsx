@@ -155,8 +155,9 @@ export default function NewReward() {
         title='Tạo quỹ thưởng mới'
         actionContent={
           <>
-            <Save className='h-4 w-4 mr-2' />
-            Lưu quỹ thưởng
+            <Save className='h-4 w-4' />
+            <span className='hidden sm:inline'>Lưu quỹ thưởng</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {

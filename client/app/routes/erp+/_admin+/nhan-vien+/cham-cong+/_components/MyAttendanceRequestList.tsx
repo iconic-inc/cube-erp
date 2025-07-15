@@ -47,19 +47,24 @@ export default function EmployeeAttendanceRequestList({
           to={`../attendance-requests/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
-          <div className='flex items-center space-x-3'>
-            <div className='flex-shrink-0 h-8 w-8'>
-              <div className='h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center'>
-                <User className='h-4 w-4 text-gray-400' />
+          <div className='flex items-center space-x-2 sm:space-x-3'>
+            <div className='flex-shrink-0 h-6 w-6 sm:h-8 sm:w-8'>
+              <div className='h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gray-200 flex items-center justify-center'>
+                <User className='h-3 w-3 sm:h-4 sm:w-4 text-gray-400' />
               </div>
             </div>
-            <div>
-              <div className='text-sm font-medium'>
+            <div className='min-w-0 flex-1'>
+              <div className='text-xs sm:text-sm font-medium truncate'>
                 {item.employee.emp_user.usr_firstName}{' '}
                 {item.employee.emp_user.usr_lastName}
               </div>
-              <div className='text-xs text-gray-500'>
-                {item.employee.emp_code || 'Chưa có mã'}
+              <div className='text-xs text-gray-500 truncate'>
+                <span className='hidden sm:inline'>
+                  {item.employee.emp_code || 'Chưa có mã'}
+                </span>
+                <span className='sm:hidden'>
+                  {item.employee.emp_code || 'N/A'}
+                </span>
               </div>
             </div>
           </div>
@@ -72,9 +77,9 @@ export default function EmployeeAttendanceRequestList({
       visible: true,
       sortField: 'date',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <Calendar className='w-4 h-4 text-gray-400' />
-          <span className='text-sm text-gray-600'>
+        <div className='flex items-center space-x-1 sm:space-x-2'>
+          <Calendar className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0' />
+          <span className='text-xs sm:text-sm text-gray-600 truncate'>
             {item.date
               ? new Date(item.date).toLocaleDateString('vi-VN')
               : 'N/A'}
@@ -88,9 +93,9 @@ export default function EmployeeAttendanceRequestList({
       visible: true,
       sortField: 'checkInTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <CheckCircle className='w-4 h-4 text-green-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 sm:space-x-2'>
+          <CheckCircle className='w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0' />
+          <span className='text-xs sm:text-sm text-gray-900 truncate'>
             {item.checkInTime
               ? new Date(item.checkInTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -107,9 +112,9 @@ export default function EmployeeAttendanceRequestList({
       visible: true,
       sortField: 'checkOutTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <XCircle className='w-4 h-4 text-red-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 sm:space-x-2'>
+          <XCircle className='w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0' />
+          <span className='text-xs sm:text-sm text-gray-900 truncate'>
             {item.checkOutTime
               ? new Date(item.checkOutTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -127,21 +132,25 @@ export default function EmployeeAttendanceRequestList({
       sortField: 'message',
       render: (item) => (
         <AlertDialog>
-          <AlertDialogTrigger className='text-left w-full truncate hover:underline'>
-            {item.message || 'Không có lý do'}
+          <AlertDialogTrigger className='text-left w-full truncate hover:underline text-xs sm:text-sm'>
+            <span className='block truncate max-w-[120px] sm:max-w-none'>
+              {item.message || 'Không có lý do'}
+            </span>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className='max-w-[95vw] sm:max-w-md'>
             <AlertDialogHeader className='overflow-hidden'>
-              <AlertDialogTitle>
+              <AlertDialogTitle className='text-sm sm:text-base'>
                 Nhân viên:{' '}
                 {`${item.employee?.emp_user?.usr_firstName} ${item.employee?.emp_user?.usr_lastName}`}
               </AlertDialogTitle>
-              <AlertDialogDescription className='text-pretty truncate'>
+              <AlertDialogDescription className='text-pretty break-words text-xs sm:text-sm'>
                 {item.message || 'Không có lý do'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Đóng</AlertDialogCancel>
+              <AlertDialogCancel className='text-xs sm:text-sm'>
+                Đóng
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -152,19 +161,24 @@ export default function EmployeeAttendanceRequestList({
       key: 'status',
       visible: true,
       render: () => (
-        <Badge variant='outline' className='text-yellow-600 bg-yellow-50'>
-          Chờ duyệt
+        <Badge
+          variant='outline'
+          className='text-yellow-600 bg-yellow-50 text-xs'
+        >
+          <span className='hidden sm:inline'>Chờ duyệt</span>
+          <span className='sm:hidden'>Chờ</span>
         </Badge>
       ),
     },
   ]);
 
   return (
-    <Card className='col-span-2 rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
-        <CardTitle className='text-white text-xl font-bold flex items-center'>
-          <FileText className='w-5 h-5 mr-2' />
-          Yêu cầu chấm công
+    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white p-3 sm:p-4'>
+        <CardTitle className='text-white text-lg sm:text-xl font-bold flex items-center'>
+          <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0' />
+          <span className='hidden sm:inline'>Yêu cầu chấm công</span>
+          <span className='sm:hidden'>Yêu cầu</span>
         </CardTitle>
       </CardHeader>
       <CardContent className='p-0'>

@@ -159,14 +159,15 @@ export default function CustomerEditPage() {
   const formId = useMemo(() => generateFormId('customer-edit-form'), []);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa khách hàng'
         actionContent={
           <>
-            <Save className='inline mr-2' />
-            Cập nhật Khách hàng
+            <Save className='w-4 h-4 sm:w-3 sm:h-3' />
+            <span className='hidden sm:inline'>Cập nhật Khách hàng</span>
+            <span className='sm:hidden'>Cập nhật</span>
           </>
         }
         actionHandler={() => {
@@ -178,7 +179,7 @@ export default function CustomerEditPage() {
       />
 
       {/* Customer Edit Form */}
-      <div className='mt-8'>
+      <div className='mt-4 sm:mt-8'>
         <CustomerDetailForm
           formId={formId}
           type='update'

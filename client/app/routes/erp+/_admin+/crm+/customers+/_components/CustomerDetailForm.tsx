@@ -8,7 +8,7 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { ICustomer } from '~/interfaces/customer.interface';
 import {
   Card,
@@ -315,19 +315,19 @@ export default function CustomerDetailForm({
       onSubmit={handleSubmit}
     >
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <CardTitle className='text-white text-3xl font-bold'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl'>
+          <CardTitle className='text-white text-xl sm:text-2xl lg:text-3xl font-bold text-center sm:text-left'>
             {code || 'Mã khách hàng'}
           </CardTitle>
         </CardHeader>
 
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Customer Code */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='customer_code'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Mã khách hàng <span className='text-red-500'>*</span>
               </Label>
@@ -338,17 +338,18 @@ export default function CustomerDetailForm({
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder='Ví dụ: KH123456'
-                  className='bg-white border-gray-300'
+                  className='bg-white border-gray-300 text-sm sm:text-base'
                 />
                 <Button
                   type='button'
                   variant='outline'
                   size='sm'
                   onClick={generateCustomerCode}
-                  className='whitespace-nowrap'
+                  className='whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3'
                 >
-                  <RotateCcw className='h-4 w-4 mr-1' />
-                  Tự động tạo
+                  <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+                  <span className='hidden sm:inline'>Tự động tạo</span>
+                  <span className='sm:hidden'>Tạo</span>
                 </Button>
               </div>
               {errors.code && (
@@ -359,7 +360,7 @@ export default function CustomerDetailForm({
             <div>
               <Label
                 htmlFor='customer_birthDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày tạo <span className='text-red-500'>*</span>
               </Label>
@@ -373,11 +374,11 @@ export default function CustomerDetailForm({
           </div>
 
           {/* Name Fields */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='customer_firstName'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Tên <span className='text-red-500'>*</span>
               </Label>
@@ -387,17 +388,19 @@ export default function CustomerDetailForm({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder='Nhập tên khách hàng'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.firstName && (
-                <p className='text-red-500 text-sm mt-1'>{errors.firstName}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.firstName}
+                </p>
               )}
             </div>
 
             <div>
               <Label
                 htmlFor='customer_lastName'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Họ <span className='text-red-500'>*</span>
               </Label>
@@ -407,20 +410,22 @@ export default function CustomerDetailForm({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder='Nhập họ khách hàng'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.lastName && (
-                <p className='text-red-500 text-sm mt-1'>{errors.lastName}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.lastName}
+                </p>
               )}
             </div>
           </div>
 
           {/* Contact Information */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='customer_email'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Email <span className='text-red-500'>*</span>
               </Label>
@@ -431,17 +436,19 @@ export default function CustomerDetailForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder='Nhập email khách hàng'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.email && (
-                <p className='text-red-500 text-sm mt-1'>{errors.email}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.email}
+                </p>
               )}
             </div>
 
             <div>
               <Label
                 htmlFor='customer_msisdn'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Số điện thoại <span className='text-red-500'>*</span>
               </Label>
@@ -451,20 +458,22 @@ export default function CustomerDetailForm({
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value)}
                 placeholder='Nhập số điện thoại khách hàng'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.msisdn && (
-                <p className='text-red-500 text-sm mt-1'>{errors.msisdn}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.msisdn}
+                </p>
               )}
             </div>
           </div>
 
           {/* Personal Information */}
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='customer_birthDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày sinh
               </Label>
@@ -479,7 +488,7 @@ export default function CustomerDetailForm({
             <div>
               <Label
                 htmlFor='customer_sex'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Giới tính
               </Label>
@@ -499,7 +508,7 @@ export default function CustomerDetailForm({
             <div>
               <Label
                 htmlFor='customer_contactChannel'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Kênh liên hệ <span className='text-red-500'>*</span>
               </Label>
@@ -516,7 +525,7 @@ export default function CustomerDetailForm({
             <div>
               <Label
                 htmlFor='customer_source'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Nguồn khách hàng <span className='text-red-500'>*</span>
               </Label>
@@ -533,14 +542,16 @@ export default function CustomerDetailForm({
           </div>
 
           {/* Address Fields */}
-          <div className='space-y-4'>
-            <h3 className='text-lg font-semibold text-gray-700'>Địa chỉ</h3>
+          <div className='space-y-3 sm:space-y-4'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-700'>
+              Địa chỉ
+            </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
               <div>
                 <Label
                   htmlFor='customer_province'
-                  className='text-gray-700 font-semibold mb-2 block'
+                  className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                 >
                   Tỉnh/Thành phố <span className='text-red-500'>*</span>
                 </Label>
@@ -603,7 +614,7 @@ export default function CustomerDetailForm({
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
                   placeholder='Nhập địa chỉ chi tiết'
-                  className='bg-white border-gray-300'
+                  className='bg-white border-gray-300 text-sm sm:text-base'
                 />
               </div>
             </div>
@@ -611,7 +622,7 @@ export default function CustomerDetailForm({
 
           {/* Notes */}
           <div>
-            <Label className='text-gray-700 font-semibold mb-2 block'>
+            <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
               Ghi chú
             </Label>
 
@@ -622,7 +633,7 @@ export default function CustomerDetailForm({
                   value={notes}
                   isReady={isContentReady}
                   onChange={setNotes}
-                  className='min-h-40'
+                  className='min-h-48 sm:min-h-40'
                   placeholder='Nhập ghi chú về khách hàng...'
                 />
               )}
@@ -630,29 +641,31 @@ export default function CustomerDetailForm({
           </div>
         </CardContent>
 
-        <CardFooter>
-          <div className='w-full flex justify-between items-center'>
+        <CardFooter className='p-4 sm:p-6'>
+          <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
               to='/erp/crm/customers'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
             >
-              <span className='material-symbols-outlined text-sm mr-1'>
-                keyboard_return
-              </span>
-              Trở về Danh sách
+              <ArrowLeft className='h-4 w-4' />
+              <span className='hidden sm:inline'>Trở về Danh sách</span>
+              <span className='sm:hidden'>Trở về</span>
             </Link>
 
-            <div className='flex space-x-2'>
+            <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}
               >
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  save
+                <Save className='h-4 w-4' />
+                <span className='hidden sm:inline'>
+                  {type === 'create' ? 'Tạo khách hàng' : 'Cập nhật khách hàng'}
                 </span>
-                {type === 'create' ? 'Tạo khách hàng' : 'Cập nhật khách hàng'}
+                <span className='sm:hidden'>
+                  {type === 'create' ? 'Tạo' : 'Cập nhật'}
+                </span>
               </Button>
             </div>
           </div>

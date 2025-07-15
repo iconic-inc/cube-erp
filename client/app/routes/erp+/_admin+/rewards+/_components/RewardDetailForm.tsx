@@ -6,7 +6,7 @@ import { action } from '~/routes/erp+/_admin+/rewards+/new';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { IReward, IRewardCreate } from '~/interfaces/reward.interface';
 import {
   Card,
@@ -17,20 +17,9 @@ import {
 } from '~/components/ui/card';
 import LoadingCard from '~/components/LoadingCard';
 import { NumericFormat } from 'react-number-format';
-import { SelectSearch } from '~/components/ui/SelectSearch';
 import { DatePicker } from '~/components/ui/date-picker';
 import TextEditor from '~/components/TextEditor/index.client';
 import Hydrated from '~/components/Hydrated';
-
-const eventTypeOptions = [
-  { value: 'holiday', label: 'Ngày lễ' },
-  { value: 'new_year', label: 'Năm mới' },
-  { value: 'monthly', label: 'Hàng tháng' },
-  { value: 'quarterly', label: 'Hàng quý' },
-  { value: 'achievement', label: 'Thành tích' },
-  { value: 'special', label: 'Đặc biệt' },
-  { value: 'other', label: 'Khác' },
-];
 
 interface RewardDetailFormProps {
   formId: string;
@@ -223,22 +212,23 @@ export default function RewardDetailForm({
       id={formId}
       method={type === 'create' ? 'POST' : 'PUT'}
       onSubmit={handleSubmit}
+      className='p-2 sm:p-0'
     >
-      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <CardTitle className='text-white text-3xl font-bold'>
+      <Card className='rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg border border-gray-200'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-lg sm:rounded-t-xl'>
+          <CardTitle className='text-white text-lg sm:text-2xl lg:text-3xl font-bold break-words'>
             {name || 'Quỹ thưởng mới'}
           </CardTitle>
         </CardHeader>
 
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Event Type and Amount */}
-          <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6'>
             {/* Reward Name */}
-            <div className='md:col-span-8'>
+            <div className='lg:col-span-8'>
               <Label
                 htmlFor='name'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Tên quỹ thưởng <span className='text-red-500'>*</span>
               </Label>
@@ -248,22 +238,24 @@ export default function RewardDetailForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder='VD: Thưởng Tết Nguyên Đán 2025'
-                className='bg-white border-gray-300'
+                className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.name && (
-                <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.name}
+                </p>
               )}
             </div>
 
-            <div className='md:col-span-4'>
+            <div className='lg:col-span-4'>
               <Label
                 htmlFor='currentAmount'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Số tiền ban đầu <span className='text-red-500'>*</span>
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -280,14 +272,14 @@ export default function RewardDetailForm({
                   allowNegative={false}
                   allowLeadingZeros={false}
                   customInput={Input}
-                  className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium'
+                  className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
                   VNĐ
                 </span>
               </div>
               {errors.currentAmount && (
-                <p className='text-red-500 text-sm mt-1'>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
                   {errors.currentAmount}
                 </p>
               )}
@@ -295,11 +287,11 @@ export default function RewardDetailForm({
           </div>
 
           {/* Date Range */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='startDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày bắt đầu <span className='text-red-500'>*</span>
               </Label>
@@ -310,14 +302,16 @@ export default function RewardDetailForm({
                 onChange={(date) => setStartDate(date)}
               />
               {errors.startDate && (
-                <p className='text-red-500 text-sm mt-1'>{errors.startDate}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.startDate}
+                </p>
               )}
             </div>
 
             <div>
               <Label
                 htmlFor='endDate'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày kết thúc (tùy chọn)
               </Label>
@@ -332,7 +326,7 @@ export default function RewardDetailForm({
 
           {/* Description */}
           <div>
-            <Label className='text-gray-700 font-semibold mb-2 block'>
+            <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
               Mô tả
             </Label>
 
@@ -351,29 +345,31 @@ export default function RewardDetailForm({
           </div>
         </CardContent>
 
-        <CardFooter>
-          <div className='w-full flex justify-between items-center'>
+        <CardFooter className='p-4 sm:p-6 pt-3 sm:pt-4 border-t border-gray-200'>
+          <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0'>
             <Link
               to='/erp/rewards'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
-              <span className='material-symbols-outlined text-sm mr-1'>
-                keyboard_return
-              </span>
-              Trở về Danh sách
+              <ArrowLeft className='h-4 w-4' />
+              <span className='hidden sm:inline'>Trở về Danh sách</span>
+              <span className='sm:hidden'>Trở về</span>
             </Link>
 
-            <div className='flex space-x-2'>
+            <div className='flex space-x-2 order-1 sm:order-2'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}
               >
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  save
+                <Save className='h-4 w-4' />
+                <span className='hidden sm:inline'>
+                  {type === 'create' ? 'Tạo quỹ thưởng' : 'Cập nhật quỹ thưởng'}
                 </span>
-                {type === 'create' ? 'Tạo quỹ thưởng' : 'Cập nhật quỹ thưởng'}
+                <span className='sm:hidden'>
+                  {type === 'create' ? 'Tạo' : 'Cập nhật'}
+                </span>
               </Button>
             </div>
           </div>

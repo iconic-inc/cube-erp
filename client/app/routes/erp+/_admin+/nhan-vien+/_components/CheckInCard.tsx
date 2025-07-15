@@ -22,37 +22,43 @@ export default function CheckInCard({
   }, [loading, attendance?.checkInTime]);
 
   return (
-    <div className='w-full md:w-1/2 max-w-xs'>
+    <div className='w-full sm:w-1/2 max-w-xs mx-auto'>
       <div
-        className={`bg-green-50 rounded-lg p-6 md:p-8 text-center border border-green-100 group
-  ${isDisabled ? 'scale-90' : 'scale-110 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer'} 
+        className={`bg-green-50 rounded-lg p-4 sm:p-6 md:p-8 text-center border border-green-100 group transition-all duration-300
+  ${isDisabled ? 'scale-90 opacity-75' : 'scale-100 sm:scale-110 hover:shadow-md transform hover:-translate-y-1 cursor-pointer'} 
   `}
       >
-        <div className='w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-all'>
-          <span className='material-symbols-outlined text-3xl text-green-500'>
+        <div className='w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-green-200 transition-all'>
+          <span className='material-symbols-outlined text-2xl sm:text-3xl text-green-500'>
             login
           </span>
         </div>
 
-        <h3 className='text-xl font-semibold mb-2'>Điểm danh</h3>
+        <h3 className='text-lg sm:text-xl font-semibold mb-2'>
+          <span className='sm:inline'>Điểm danh</span>
+        </h3>
 
-        <p className='text-sm text-gray-500 mb-4'>Bắt đầu ngày làm việc</p>
+        <p className='text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4'>
+          <span className='sm:inline'>Bắt đầu ngày làm việc</span>
+        </p>
 
         <Button
-          className='w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white'
+          className='w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white text-sm sm:text-base'
           disabled={isDisabled}
           type='submit'
           name='type'
           value='check-in'
         >
-          {loading && <LoaderCircle className='animate-spin mr-2' />}
-          Điểm danh
+          {loading && <LoaderCircle className='animate-spin mr-2 w-4 h-4' />}
+          <span className='sm:inline'>Điểm danh</span>
         </Button>
 
         {attendance?.checkInTime && (
-          <p className='text-xs text-red-500 mt-4'>
-            Đã điểm danh vào làm lúc{' '}
-            {new Date(attendance.checkInTime).toLocaleTimeString()}
+          <p className='text-xs text-red-500 mt-3 sm:mt-4'>
+            <span className='sm:inline'>
+              Đã điểm danh vào làm lúc{' '}
+              {new Date(attendance.checkInTime).toLocaleTimeString()}
+            </span>
           </p>
         )}
       </div>
