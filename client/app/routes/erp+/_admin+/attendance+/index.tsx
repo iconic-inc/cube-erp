@@ -54,16 +54,23 @@ export default function IndexAttendance() {
         title='Chấm công'
         actionContent={
           <Link to='../attendance-requests'>
-            <Button variant='outline' className='flex items-center gap-2'>
-              <FileText className='h-4 w-4' />
-              Quản lý yêu cầu chấm công
+            <Button
+              variant='outline'
+              className='flex items-center gap-2 text-xs md:text-sm'
+            >
+              <FileText className='h-3 w-3 md:h-4 md:w-4' />
+              <span className='hidden sm:inline'>
+                Quản lý yêu cầu chấm công
+              </span>
+              <span className='sm:hidden'>Yêu cầu</span>
             </Button>
           </Link>
         }
       />
 
       {/* QR Code and Network Management */}
-      <div className='grid grid-cols-2 gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6'>
+        {/* Top row - Network and QR side by side on larger screens */}
         <Defer resolve={officeIPs}>
           {(data) => <ManageNetwork officeIps={data} />}
         </Defer>
@@ -72,15 +79,20 @@ export default function IndexAttendance() {
           {(data) => <ManageQRCode qrcode={data} />}
         </Defer>
 
-        <Defer resolve={attendanceStats}>
-          {(data) => <EmployeeAttendanceList attendanceStats={data} />}
-        </Defer>
+        {/* Bottom section - Full width lists */}
+        <div className='lg:col-span-2'>
+          <Defer resolve={attendanceStats}>
+            {(data) => <EmployeeAttendanceList attendanceStats={data} />}
+          </Defer>
+        </div>
 
-        <Defer resolve={attendanceRequests}>
-          {(data) => (
-            <EmployeeAttendanceRequestList attendanceRequests={data} />
-          )}
-        </Defer>
+        <div className='lg:col-span-2'>
+          <Defer resolve={attendanceRequests}>
+            {(data) => (
+              <EmployeeAttendanceRequestList attendanceRequests={data} />
+            )}
+          </Defer>
+        </div>
       </div>
     </div>
   );

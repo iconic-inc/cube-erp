@@ -208,14 +208,15 @@ export default function HRMProfile() {
   }, [fetcher.data]);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
         title='Hồ sơ cá nhân'
         actionContent={
           <>
-            <Save className='w-4 h-4 mr-2' />
-            Lưu thay đổi
+            <Save className='w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+            <span className='hidden sm:inline'>Lưu thay đổi</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {
@@ -231,24 +232,28 @@ export default function HRMProfile() {
       {/* Form Container */}
       <fetcher.Form id={formId} method='PUT' onSubmit={handleSubmit}>
         <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-          <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-            <CardTitle className='text-white text-3xl font-bold'>
-              {employee?.emp_code || 'Hồ sơ cá nhân'}
+          <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white p-3 sm:p-6 rounded-t-xl'>
+            <CardTitle className='text-white text-xl sm:text-3xl font-bold'>
+              <span className='hidden sm:inline'>
+                {employee?.emp_code || 'Hồ sơ cá nhân'}
+              </span>
+              <span className='sm:hidden'>{employee?.emp_code || 'Hồ sơ'}</span>
             </CardTitle>
           </CardHeader>
 
-          <CardContent className='p-6 space-y-6'>
+          <CardContent className='p-3 sm:p-6 space-y-4 sm:space-y-6'>
             {/* Personal Information */}
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
-                Thông tin cá nhân
+            <div className='space-y-3 sm:space-y-4'>
+              <h3 className='text-base sm:text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                <span className='hidden sm:inline'>Thông tin cá nhân</span>
+                <span className='sm:hidden'>Thông tin</span>
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                 <div>
                   <Label
                     htmlFor='firstName'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Tên <span className='text-red-500'>*</span>
                   </Label>
@@ -259,10 +264,10 @@ export default function HRMProfile() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder='Nhập tên'
-                    className={errors.firstName ? 'border-red-500' : ''}
+                    className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                   />
                   {errors.firstName && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
                       {errors.firstName}
                     </p>
                   )}
@@ -271,7 +276,7 @@ export default function HRMProfile() {
                 <div>
                   <Label
                     htmlFor='lastName'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Họ <span className='text-red-500'>*</span>
                   </Label>
@@ -282,10 +287,10 @@ export default function HRMProfile() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder='Nhập họ'
-                    className={errors.lastName ? 'border-red-500' : ''}
+                    className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                   />
                   {errors.lastName && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
                       {errors.lastName}
                     </p>
                   )}
@@ -294,7 +299,7 @@ export default function HRMProfile() {
                 <div>
                   <Label
                     htmlFor='email'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Email <span className='text-red-500'>*</span>
                   </Label>
@@ -305,19 +310,23 @@ export default function HRMProfile() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder='Nhập email'
-                    className={errors.email ? 'border-red-500' : ''}
+                    className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                   />
                   {errors.email && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.email}</p>
+                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                      {errors.email}
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <Label
                     htmlFor='msisdn'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
-                    Số điện thoại <span className='text-red-500'>*</span>
+                    <span className='hidden sm:inline'>Số điện thoại</span>
+                    <span className='sm:hidden'>SĐT</span>{' '}
+                    <span className='text-red-500'>*</span>
                   </Label>
                   <Input
                     id='msisdn'
@@ -326,17 +335,19 @@ export default function HRMProfile() {
                     value={msisdn}
                     onChange={(e) => setMsisdn(e.target.value)}
                     placeholder='Nhập số điện thoại'
-                    className={errors.msisdn ? 'border-red-500' : ''}
+                    className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                   />
                   {errors.msisdn && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.msisdn}</p>
+                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                      {errors.msisdn}
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <Label
                     htmlFor='birthdate'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Ngày sinh
                   </Label>
@@ -351,12 +362,12 @@ export default function HRMProfile() {
                 <div>
                   <Label
                     htmlFor='sex'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Giới tính
                   </Label>
                   <Select value={sex} onValueChange={setSex}>
-                    <SelectTrigger>
+                    <SelectTrigger className='text-sm sm:text-base'>
                       <SelectValue placeholder='Chọn giới tính' />
                     </SelectTrigger>
                     <SelectContent>
@@ -364,6 +375,7 @@ export default function HRMProfile() {
                         <SelectItem
                           key={sexOption.value}
                           value={sexOption.value}
+                          className='text-sm sm:text-base'
                         >
                           {sexOption.label}
                         </SelectItem>
@@ -372,10 +384,10 @@ export default function HRMProfile() {
                   </Select>
                 </div>
 
-                <div className='col-span-2'>
+                <div className='sm:col-span-2'>
                   <Label
                     htmlFor='address'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
                     Địa chỉ
                   </Label>
@@ -386,15 +398,18 @@ export default function HRMProfile() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder='Nhập địa chỉ'
+                    className='text-sm sm:text-base'
                   />
                 </div>
 
                 <div>
                   <Label
                     htmlFor='username'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
-                    Tên đăng nhập <span className='text-red-500'>*</span>
+                    <span className='hidden sm:inline'>Tên đăng nhập</span>
+                    <span className='sm:hidden'>Username</span>{' '}
+                    <span className='text-red-500'>*</span>
                   </Label>
                   <Input
                     id='username'
@@ -403,10 +418,10 @@ export default function HRMProfile() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder='Nhập tên đăng nhập'
-                    className={errors.username ? 'border-red-500' : ''}
+                    className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                   />
                   {errors.username && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
                       {errors.username}
                     </p>
                   )}
@@ -415,9 +430,10 @@ export default function HRMProfile() {
                 <div>
                   <Label
                     htmlFor='password'
-                    className='text-gray-700 font-semibold mb-2 block'
+                    className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                   >
-                    Mật khẩu mới
+                    <span className='hidden sm:inline'>Mật khẩu mới</span>
+                    <span className='sm:hidden'>Mật khẩu</span>
                   </Label>
                   <Input
                     id='password'
@@ -426,53 +442,56 @@ export default function HRMProfile() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder='Để trống nếu không thay đổi'
+                    className='text-sm sm:text-base'
                   />
                 </div>
               </div>
             </div>
 
             {/* Employee Information (Read-only) */}
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
-                Thông tin nhân viên
+            <div className='space-y-3 sm:space-y-4'>
+              <h3 className='text-base sm:text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                <span className='hidden sm:inline'>Thông tin nhân viên</span>
+                <span className='sm:hidden'>Nhân viên</span>
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                 <div>
-                  <Label className='text-gray-700 font-semibold mb-2 block'>
-                    Mã nhân viên
+                  <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
+                    <span className='hidden sm:inline'>Mã nhân viên</span>
+                    <span className='sm:hidden'>Mã NV</span>
                   </Label>
                   <Input
                     value={employee?.emp_code || ''}
                     readOnly
-                    className='bg-gray-100 cursor-not-allowed'
+                    className='bg-gray-100 cursor-not-allowed text-sm sm:text-base'
                   />
                 </div>
 
                 <div>
-                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                  <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
                     Phòng ban
                   </Label>
                   <Input
                     value={employee?.emp_department || ''}
                     readOnly
-                    className='bg-gray-100 cursor-not-allowed'
+                    className='bg-gray-100 cursor-not-allowed text-sm sm:text-base'
                   />
                 </div>
 
                 <div>
-                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                  <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
                     Chức vụ
                   </Label>
                   <Input
                     value={employee?.emp_position || ''}
                     readOnly
-                    className='bg-gray-100 cursor-not-allowed'
+                    className='bg-gray-100 cursor-not-allowed text-sm sm:text-base'
                   />
                 </div>
 
                 <div>
-                  <Label className='text-gray-700 font-semibold mb-2 block'>
+                  <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
                     Trạng thái
                   </Label>
                   <Input
@@ -480,7 +499,7 @@ export default function HRMProfile() {
                       status === 'active' ? 'Hoạt động' : 'Không hoạt động'
                     }
                     readOnly
-                    className='bg-gray-100 cursor-not-allowed'
+                    className='bg-gray-100 cursor-not-allowed text-sm sm:text-base'
                   />
                 </div>
               </div>
@@ -514,26 +533,28 @@ export default function HRMProfile() {
             </div> */}
           </CardContent>
 
-          <CardFooter>
-            <div className='w-full flex justify-between items-center'>
+          <CardFooter className='p-3 sm:p-6'>
+            <div className='w-full flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0'>
               <Link
                 to='/erp'
-                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
               >
                 <span className='material-symbols-outlined text-sm mr-1'>
                   keyboard_return
                 </span>
-                Trở về Trang chủ
+                <span className='hidden sm:inline'>Trở về Trang chủ</span>
+                <span className='sm:hidden'>Trang chủ</span>
               </Link>
 
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}
               >
-                <Save className='w-4 h-4 mr-2' />
-                Cập nhật hồ sơ
+                <Save className='w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+                <span className='hidden sm:inline'>Cập nhật hồ sơ</span>
+                <span className='sm:hidden'>Cập nhật</span>
               </Button>
             </div>
           </CardFooter>

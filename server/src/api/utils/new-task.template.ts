@@ -1,5 +1,5 @@
-export const passwordEmailTemplate = () => {
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+export const newTaskTemplate = () => `
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
   dir="ltr"
   xmlns="http://www.w3.org/1999/xhtml"
@@ -13,7 +13,7 @@ export const passwordEmailTemplate = () => {
     <meta name="x-apple-disable-message-reformatting" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta content="telephone=no" name="format-detection" />
-    <title>New email template 2024-08-03</title>
+    <title>Thông báo công việc mới</title>
     <!--[if (mso 16)]>
       <style type="text/css">
         a {
@@ -66,6 +66,40 @@ export const passwordEmailTemplate = () => {
         max-height: 0;
         line-height: 0;
         mso-hide: all;
+      }
+      .task-priority-high {
+        background: #ff4757;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 14px;
+      }
+      .task-priority-medium {
+        background: #ffa502;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 14px;
+      }
+      .task-priority-low {
+        background: #2ed573;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 14px;
+      }
+      .task-info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #7f1d1d;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
       }
       @media only screen and (max-width: 600px) {
         p,
@@ -349,94 +383,7 @@ export const passwordEmailTemplate = () => {
                         style="
                           padding: 0;
                           margin: 0;
-                          padding-top: 40px;
-                          padding-left: 40px;
-                          padding-right: 40px;
-                        "
-                      >
-                        <table
-                          cellpadding="0"
-                          cellspacing="0"
-                          width="100%"
-                          role="none"
-                          style="
-                            mso-table-lspace: 0pt;
-                            mso-table-rspace: 0pt;
-                            border-collapse: collapse;
-                            border-spacing: 0px;
-                          "
-                        >
-                          <tr>
-                            <td
-                              align="center"
-                              valign="top"
-                              style="padding: 0; margin: 0; width: 520px"
-                            >
-                              <table
-                                cellpadding="0"
-                                cellspacing="0"
-                                width="100%"
-                                role="presentation"
-                                style="
-                                  mso-table-lspace: 0pt;
-                                  mso-table-rspace: 0pt;
-                                  border-collapse: collapse;
-                                  border-spacing: 0px;
-                                "
-                              >
-                                <tr>
-                                  <td
-                                    align="left"
-                                    class="es-m-txt-c"
-                                    style="
-                                      padding: 0;
-                                      margin: 0;
-                                      font-size: 0px;
-                                    "
-                                  >
-                                    <a
-                                      target="_blank"
-                                      href="https://viewstripo.email"
-                                      style="
-                                        -webkit-text-size-adjust: none;
-                                        -ms-text-size-adjust: none;
-                                        mso-line-height-rule: exactly;
-                                        text-decoration: underline;
-                                        color: #2d3142;
-                                        font-size: 18px;
-                                      "
-                                      ><img
-                                        src="https://foixfha.stripocdn.email/content/guids/CABINET_ee77850a5a9f3068d9355050e69c76d26d58c3ea2927fa145f0d7a894e624758/images/group_4076323.png"
-                                        alt="Confirm email"
-                                        style="
-                                          display: block;
-                                          border: 0;
-                                          outline: none;
-                                          text-decoration: none;
-                                          -ms-interpolation-mode: bicubic;
-                                          border-radius: 100px;
-                                          margin: auto;
-                                        "
-                                        width="100"
-                                        title="Confirm email"
-                                    /></a>
-                                  </td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        align="left"
-                        style="
-                          padding: 0;
-                          margin: 0;
-                          padding-top: 20px;
-                          padding-left: 40px;
-                          padding-right: 40px;
+                          padding: 40px 40px 0;
                         "
                       >
                         <table
@@ -489,7 +436,7 @@ export const passwordEmailTemplate = () => {
                                         color: #2d3142;
                                       "
                                     >
-                                      Xác nhận địa chỉ email
+                                      Bạn có công việc mới!
                                     </h3>
                                     <p
                                       style="
@@ -499,7 +446,6 @@ export const passwordEmailTemplate = () => {
                                         mso-line-height-rule: exactly;
                                         font-family: Imprima, Arial, sans-serif;
                                         line-height: 27px;
-                                        color: #2d3142;
                                         font-size: 18px;
                                       "
                                     >
@@ -507,23 +453,49 @@ export const passwordEmailTemplate = () => {
                                     </p>
                                     <p
                                       style="
-                                        margin: 0;
-                                        -webkit-text-size-adjust: none;
-                                        -ms-text-size-adjust: none;
-                                        mso-line-height-rule: exactly;
-                                        font-family: Imprima, Arial, sans-serif;
-                                        line-height: 27px;
-                                        color: #2d3142;
                                         font-size: 18px;
+                                        color: #2d3142;
+                                        margin: 0 0 15px 0;
                                       "
                                     >
-                                      Đây là mật khẩu tạm thời cho tài khoản của
-                                      bạn. Hãy đổi sau lần đăng nhập đầu tiên.
+                                      Xin chào {{employeeName}}, bạn vừa được
+                                      giao một công việc mới cần hoàn thành.
                                     </p>
-                                    <br /><br />
-                                    <div>Username: {{username}}</div>
-                                    <br />
-                                    <div>Mật khẩu: {{password}}</div>
+
+                                    <!-- Task Details -->
+                                    <div class="task-info-box">
+                                      <h4
+                                        style="
+                                          margin: 0 0 10px 0;
+                                          color: #2d3142;
+                                          font-size: 20px;
+                                        "
+                                      >
+                                        📋 {{taskName}}
+                                      </h4>
+
+                                      <div style="margin-bottom: 10px">
+                                        <strong>Độ ưu tiên:</strong>
+                                        <span class="{{priorityClass}}"
+                                          >{{priority}}</span
+                                        >
+                                      </div>
+
+                                      <div style="margin-bottom: 10px">
+                                        <strong>Ngày bắt đầu:</strong>
+                                        {{startDate}}
+                                      </div>
+
+                                      <div style="margin-bottom: 10px">
+                                        <strong>Ngày kết thúc:</strong>
+                                        {{endDate}}
+                                      </div>
+
+                                      <div style="margin-bottom: 10px">
+                                        <strong>Mô tả:</strong>
+                                        {{taskDescription}}
+                                      </div>
+                                    </div>
                                   </td>
                                 </tr>
                               </table>
@@ -578,7 +550,6 @@ export const passwordEmailTemplate = () => {
                           padding-bottom: 40px;
                           padding-left: 40px;
                           padding-right: 40px;
-                          
                         "
                       >
                         <table
@@ -621,15 +592,15 @@ export const passwordEmailTemplate = () => {
                                       style="
                                         border-style: solid;
                                         border-color: #2cb543;
-                                        background: #7630f3;
+                                        background: #7f1d1d;
                                         border-width: 0px;
                                         display: block;
                                         border-radius: 30px;
                                         width: auto;
                                       "
                                       ><a
-                                        href="{{clientUrl}}"
-                                        class="es-button msohide"
+                                        href="{{taskUrl}}"
+                                        class="es-button"
                                         target="_blank"
                                         style="
                                           mso-style-priority: 100 !important;
@@ -641,7 +612,7 @@ export const passwordEmailTemplate = () => {
                                           font-size: 22px;
                                           padding: 15px 20px 15px 20px;
                                           display: block;
-                                          background: #7630f3;
+                                          background: #7f1d1d;
                                           border-radius: 30px;
                                           font-family: Imprima, Arial,
                                             sans-serif;
@@ -651,12 +622,11 @@ export const passwordEmailTemplate = () => {
                                           width: auto;
                                           text-align: center;
                                           mso-padding-alt: 0;
-                                          mso-border-alt: 10px solid #7630f3;
-                                          mso-hide: all;
+                                          mso-border-alt: 10px solid #7f1d1d;
                                           padding-left: 5px;
                                           padding-right: 5px;
                                         "
-                                        >Đi đến trang web</a
+                                        >Xem chi tiết công việc</a
                                       ></span
                                     >
                                   </td>
@@ -713,21 +683,8 @@ export const passwordEmailTemplate = () => {
                                     align="left"
                                     style="padding: 0; margin: 0"
                                   >
-                                    <p
-                                      style="
-                                        margin: 0;
-                                        -webkit-text-size-adjust: none;
-                                        -ms-text-size-adjust: none;
-                                        mso-line-height-rule: exactly;
-                                        font-family: Imprima, Arial, sans-serif;
-                                        line-height: 27px;
-                                        color: #2d3142;
-                                        font-size: 18px;
-                                      "
-                                    >
-                                      Trân trọng,
-                                      <br />
-                                      Phan
+                                    <p style="font-size: 18px">
+                                      Chúc bạn làm việc hiệu quả!
                                     </p>
                                   </td>
                                 </tr>
@@ -835,110 +792,26 @@ export const passwordEmailTemplate = () => {
                                       cellspacing="0"
                                       class="es-table-not-adapt es-social"
                                       role="presentation"
-                                      style="
-                                        mso-table-lspace: 0pt;
-                                        mso-table-rspace: 0pt;
-                                        border-collapse: collapse;
-                                        border-spacing: 0px;
-                                        width: 100%;
-                                      "
+                                      style="width: 100%"
                                     >
                                       <tr>
                                         <td
                                           align="center"
-                                          valign="top"
                                           style="padding: 0; margin: 0"
                                         >
-                                          <img
-                                            src="https://foixfha.stripocdn.email/content/assets/img/social-icons/logo-black/twitter-logo-black.png"
-                                            alt="Tw"
-                                            title="Twitter"
-                                            height="40"
+                                          <p
                                             style="
-                                              display: block;
-                                              border: 0;
-                                              outline: none;
-                                              text-decoration: none;
-                                              -ms-interpolation-mode: bicubic;
+                                              font-size: 14px;
+                                              color: #666;
+                                              margin: 0;
                                             "
-                                          />
-                                        </td>
-                                        <td
-                                          align="center"
-                                          valign="top"
-                                          style="padding: 0; margin: 0"
-                                        >
-                                          <img
-                                            src="https://foixfha.stripocdn.email/content/assets/img/social-icons/logo-black/facebook-logo-black.png"
-                                            alt="Fb"
-                                            title="Facebook"
-                                            height="40"
-                                            style="
-                                              display: block;
-                                              border: 0;
-                                              outline: none;
-                                              text-decoration: none;
-                                              -ms-interpolation-mode: bicubic;
-                                            "
-                                          />
-                                        </td>
-                                        <td
-                                          align="center"
-                                          valign="top"
-                                          style="padding: 0; margin: 0"
-                                        >
-                                          <img
-                                            src="https://foixfha.stripocdn.email/content/assets/img/social-icons/logo-black/linkedin-logo-black.png"
-                                            alt="In"
-                                            title="Linkedin"
-                                            height="40"
-                                            style="
-                                              display: block;
-                                              border: 0;
-                                              outline: none;
-                                              text-decoration: none;
-                                              -ms-interpolation-mode: bicubic;
-                                            "
-                                          />
+                                          >
+                                            📧 Email này được gửi tự động từ hệ
+                                            thống quản lý công việc
+                                          </p>
                                         </td>
                                       </tr>
                                     </table>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td
-                                    align="center"
-                                    style="
-                                      padding: 0;
-                                      margin: 0;
-                                      padding-top: 20px;
-                                    "
-                                  >
-                                    <p
-                                      style="
-                                        margin: 0;
-                                        -webkit-text-size-adjust: none;
-                                        -ms-text-size-adjust: none;
-                                        mso-line-height-rule: exactly;
-                                        font-family: Imprima, Arial, sans-serif;
-                                        line-height: 21px;
-                                        color: #2d3142;
-                                        font-size: 14px;
-                                      "
-                                    >
-                                      <a
-                                        target="_blank"
-                                        href="https://www.iconictalents.vn"
-                                        style="
-                                          -webkit-text-size-adjust: none;
-                                          -ms-text-size-adjust: none;
-                                          mso-line-height-rule: exactly;
-                                          text-decoration: underline;
-                                          color: #2d3142;
-                                          font-size: 14px;
-                                        "
-                                      >Copyright © 2025&nbsp;Iconic Talents</a>
-                                    </p>
                                   </td>
                                 </tr>
                               </table>
@@ -956,5 +829,5 @@ export const passwordEmailTemplate = () => {
       </table>
     </div>
   </body>
-</html>`;
-};
+</html>
+`;

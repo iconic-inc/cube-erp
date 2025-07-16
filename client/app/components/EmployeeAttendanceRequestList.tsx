@@ -74,7 +74,7 @@ function AttendanceRequestActions({
   }, [fetcher.state, fetcher.data]);
 
   return (
-    <fetcher.Form method='post' className='flex gap-2'>
+    <fetcher.Form method='post' className='flex flex-col sm:flex-row gap-2'>
       <input type='hidden' name='requestId' value={request.id} />
 
       <Button
@@ -82,11 +82,12 @@ function AttendanceRequestActions({
         name='action'
         value='accept'
         size='sm'
-        className='bg-green-600 hover:bg-green-700'
+        className='bg-green-600 hover:bg-green-700 text-xs'
         disabled={isSubmitting}
       >
-        <CheckCircle className='h-4 w-4 mr-1' />
-        Chấp nhận
+        <CheckCircle className='h-3 w-3 md:h-4 md:w-4 mr-1' />
+        <span className='hidden sm:inline'>Chấp nhận</span>
+        <span className='sm:hidden'>Chấp nhận</span>
       </Button>
 
       <Button
@@ -95,10 +96,12 @@ function AttendanceRequestActions({
         value='reject'
         size='sm'
         variant='destructive'
+        className='text-xs'
         disabled={isSubmitting}
       >
-        <XCircle className='h-4 w-4 mr-1' />
-        Từ chối
+        <XCircle className='h-3 w-3 md:h-4 md:w-4 mr-1' />
+        <span className='hidden sm:inline'>Từ chối</span>
+        <span className='sm:hidden'>Từ chối</span>
       </Button>
     </fetcher.Form>
   );
@@ -110,6 +113,18 @@ export default function EmployeeAttendanceRequestList({
   attendanceRequests: IListResponse<IAttendanceRequestBrief>;
 }) {
   const { data: requests } = attendanceRequests;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IAttendanceRequestBrief>[]
@@ -124,18 +139,18 @@ export default function EmployeeAttendanceRequestList({
           to={`../attendance-requests/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
-          <div className='flex items-center space-x-3'>
-            <div className='flex-shrink-0 h-8 w-8'>
-              <div className='h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center'>
-                <User className='h-4 w-4 text-gray-400' />
+          <div className='flex items-center space-x-2 md:space-x-3'>
+            <div className='flex-shrink-0 h-6 w-6 md:h-8 md:w-8'>
+              <div className='h-6 w-6 md:h-8 md:w-8 rounded-full bg-gray-200 flex items-center justify-center'>
+                <User className='h-3 w-3 md:h-4 md:w-4 text-gray-400' />
               </div>
             </div>
-            <div>
-              <div className='text-sm font-medium'>
+            <div className='min-w-0 flex-1'>
+              <div className='text-xs md:text-sm font-medium truncate'>
                 {item.employee.emp_user.usr_firstName}{' '}
                 {item.employee.emp_user.usr_lastName}
               </div>
-              <div className='text-xs text-gray-500'>
+              <div className='text-xs text-gray-500 truncate'>
                 {item.employee.emp_code || 'Chưa có mã'}
               </div>
             </div>
@@ -146,12 +161,12 @@ export default function EmployeeAttendanceRequestList({
     {
       title: 'Ngày',
       key: 'date',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       sortField: 'date',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <Calendar className='w-4 h-4 text-gray-400' />
-          <span className='text-sm text-gray-600'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <Calendar className='w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-600 truncate'>
             {item.date
               ? new Date(item.date).toLocaleDateString('vi-VN')
               : 'N/A'}
@@ -162,12 +177,12 @@ export default function EmployeeAttendanceRequestList({
     {
       title: 'Giờ vào',
       key: 'checkIn',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       sortField: 'checkInTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <CheckCircle className='w-4 h-4 text-green-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <CheckCircle className='w-3 h-3 md:w-4 md:h-4 text-green-500 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-900 truncate'>
             {item.checkInTime
               ? new Date(item.checkInTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -181,12 +196,12 @@ export default function EmployeeAttendanceRequestList({
     {
       title: 'Giờ ra',
       key: 'checkOut',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       sortField: 'checkOutTime',
       render: (item) => (
-        <div className='flex items-center space-x-2'>
-          <XCircle className='w-4 h-4 text-red-500' />
-          <span className='text-sm text-gray-900'>
+        <div className='flex items-center space-x-1 md:space-x-2'>
+          <XCircle className='w-3 h-3 md:w-4 md:h-4 text-red-500 flex-shrink-0' />
+          <span className='text-xs md:text-sm text-gray-900 truncate'>
             {item.checkOutTime
               ? new Date(item.checkOutTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -204,7 +219,7 @@ export default function EmployeeAttendanceRequestList({
       sortField: 'message',
       render: (item) => (
         <AlertDialog>
-          <AlertDialogTrigger className='text-left w-full truncate hover:underline'>
+          <AlertDialogTrigger className='text-left w-full truncate hover:underline text-xs md:text-sm max-w-[100px] md:max-w-[200px]'>
             {item.message || 'Không có lý do'}
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -227,10 +242,14 @@ export default function EmployeeAttendanceRequestList({
     {
       title: 'Trạng thái',
       key: 'status',
-      visible: true,
+      visible: !isMobile, // Hide on mobile
       render: () => (
-        <Badge variant='outline' className='text-yellow-600 bg-yellow-50'>
-          Chờ duyệt
+        <Badge
+          variant='outline'
+          className='text-yellow-600 bg-yellow-50 text-xs'
+        >
+          <span className='hidden sm:inline'>Chờ duyệt</span>
+          <span className='sm:hidden'>Chờ</span>
         </Badge>
       ),
     },
@@ -242,12 +261,30 @@ export default function EmployeeAttendanceRequestList({
     },
   ]);
 
+  // Update column visibility when isMobile changes
+  useEffect(() => {
+    setVisibleColumns((prev) =>
+      prev.map((col) => {
+        if (
+          col.key === 'date' ||
+          col.key === 'checkIn' ||
+          col.key === 'checkOut' ||
+          col.key === 'status'
+        ) {
+          return { ...col, visible: !isMobile };
+        }
+        return col;
+      }),
+    );
+  }, [isMobile]);
+
   return (
-    <Card className='col-span-2 rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
-        <CardTitle className='text-white text-xl font-bold flex items-center'>
-          <FileText className='w-5 h-5 mr-2' />
-          Yêu cầu chấm công
+    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-3 md:py-4'>
+        <CardTitle className='text-white text-lg md:text-xl font-bold flex items-center'>
+          <FileText className='w-4 h-4 md:w-5 md:h-5 mr-2' />
+          <span className='hidden sm:inline'>Yêu cầu chấm công</span>
+          <span className='sm:hidden'>Yêu cầu</span>
         </CardTitle>
       </CardHeader>
       <CardContent className='p-0'>

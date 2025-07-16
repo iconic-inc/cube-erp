@@ -160,7 +160,7 @@ export default function () {
         title='Danh sách giao dịch'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
+            <Plus className='w-4 h-4' />
             Thêm giao dịch
           </>
         }

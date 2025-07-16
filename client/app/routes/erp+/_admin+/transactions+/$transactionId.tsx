@@ -5,7 +5,7 @@ import { useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import TransactionDetail from './_components/TransactionDetail';
-import { Pencil } from 'lucide-react';
+import { Edit, Pencil } from 'lucide-react';
 import { canAccessTransactionManagement } from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -44,8 +44,9 @@ export default function TransactionDetailPage() {
         title='Chi tiết Giao dịch'
         actionContent={
           <>
-            <Pencil />
+            <Edit />
             <span className='hidden md:inline'>Sửa Giao dịch</span>
+            <span className='inline md:hidden'>Sửa</span>
           </>
         }
         actionHandler={() => {

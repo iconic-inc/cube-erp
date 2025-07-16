@@ -427,7 +427,7 @@ function DocumentFormContent({
                           }
                           className='w-full bg-green-600 hover:bg-green-700 text-white'
                         >
-                          <Plus className='w-4 h-4 mr-2' />
+                          <Plus className='w-4 h-4' />
                           Thêm {selectedEmployees.length} nhân viên được chọn
                         </Button>
                       )}

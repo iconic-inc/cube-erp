@@ -185,14 +185,15 @@ export default function NewCase() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm Hồ sơ mới'
         actionContent={
           <>
-            <Save className='inline mr-2' />
-            Lưu Hồ sơ
+            <Save className='inline w-4 h-4' />
+            <span className='hidden sm:inline'>Lưu Hồ sơ</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {
@@ -213,28 +214,34 @@ export default function NewCase() {
         />
       ) : (
         <AlertDialog open={true}>
-          <AlertDialogContent>
+          <AlertDialogContent className='max-w-md sm:max-w-lg'>
             <AlertDialogHeader>
-              <AlertDialogTitle>
+              <AlertDialogTitle className='text-base sm:text-lg'>
                 Vui lòng chọn Khách hàng trước khi tạo Hồ sơ
               </AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogDescription className='text-sm sm:text-base'>
                 Bạn cần chọn một Khách hàng để liên kết với Hồ sơ mới. Vui lòng
                 quay lại trang danh sách Khách hàng để thực hiện thao tác này.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className='flex-col sm:flex-row gap-2 sm:gap-0'>
               <AlertDialogCancel
                 type='button'
                 onClick={() => {
                   navigate(-1);
                 }}
+                className='w-full sm:w-auto'
               >
                 Hủy
               </AlertDialogCancel>
 
-              <Button variant={'primary'}>
-                <Link to='/erp/crm/customers'>Chọn Khách hàng</Link>
+              <Button variant={'primary'} className='w-full sm:w-auto'>
+                <Link
+                  to='/erp/crm/customers'
+                  className='flex items-center justify-center'
+                >
+                  Chọn Khách hàng
+                </Link>
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

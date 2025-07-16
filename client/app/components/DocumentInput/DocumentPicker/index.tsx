@@ -120,30 +120,34 @@ export default function DocumentPicker({
   }, [fetcher.state]);
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-8 z-50'>
-      <div className='flex flex-col bg-white gap-4 p-6 rounded-lg shadow-lg w-full h-full overflow-y-auto'>
-        <div className='flex-grow grid grid-cols-12 divide-x divide-zinc-200 gap-4'>
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2 sm:p-4 lg:p-8 z-50'>
+      <div className='flex flex-col bg-white gap-3 sm:gap-4 p-3 sm:p-4 lg:p-6 rounded-lg shadow-lg w-full h-full max-w-7xl max-h-[95vh] overflow-hidden'>
+        <div className='flex-grow grid grid-cols-12 divide-x divide-zinc-200 gap-2 sm:gap-4 overflow-hidden'>
           <div
-            className={`col-span-12 flex-grow w-full h-full divide-y divide-zinc-200 transition-all`}
+            className={`col-span-12 flex-grow w-full h-full divide-y divide-zinc-200 transition-all flex flex-col overflow-hidden`}
           >
-            <div className='w-full flex gap-4 px-4'>
+            <div className='w-full flex gap-2 sm:gap-4 px-2 sm:px-4 flex-shrink-0'>
               <button
-                className={`-mb-[1px] rounded-t px-2 py-1 border-zinc-200 ${
+                className={`-mb-[1px] rounded-t px-2 py-1 border-zinc-200 text-sm sm:text-base ${
                   activeTab === 1 ? 'border border-b-white' : ''
                 }`}
                 onClick={() => setActiveTab(1)}
                 type='button'
               >
-                Tải lên tệp mới
+                <span className='hidden sm:inline'>Tải lên tệp mới</span>
+                <span className='sm:hidden'>Tải lên</span>
               </button>
               <button
-                className={`-mb-[1px] rounded-t px-2 py-1 border-zinc-200 ${
+                className={`-mb-[1px] rounded-t px-2 py-1 border-zinc-200 text-sm sm:text-base ${
                   activeTab === 2 ? 'border border-b-white' : ''
                 }`}
                 onClick={() => setActiveTab(2)}
                 type='button'
               >
-                Chọn từ thư viện tài liệu
+                <span className='hidden sm:inline'>
+                  Chọn từ thư viện tài liệu
+                </span>
+                <span className='sm:hidden'>Thư viện</span>
               </button>
             </div>
 
@@ -165,10 +169,10 @@ export default function DocumentPicker({
             {isLoading && <LoadingCard />}
             {error && <ErrorCard message={error} />}
             {activeTab === 2 && !error && !isLoading && (
-              <>
-                <div className='p-4 border-b border-gray-200 flex flex-col md:flex-row md:flex-wrap gap-3 items-start md:items-center justify-between'>
-                  <div className='relative w-full md:flex-grow md:max-w-md'>
-                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined'>
+              <div className='flex flex-col overflow-hidden flex-grow'>
+                <div className='p-2 sm:p-4 border-b border-gray-200 flex flex-col gap-2 sm:gap-3 flex-shrink-0'>
+                  <div className='relative w-full'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-sm sm:text-base'>
                       search
                     </span>
                     <input
@@ -176,88 +180,106 @@ export default function DocumentPicker({
                       placeholder='Tìm kiếm...'
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      className='w-full pl-8 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base'
                     />
                   </div>
-                  <div></div>
                 </div>
 
-                <ItemList<IDocument>
-                  itemsPromise={{
-                    data: documents.data.filter((doc) =>
-                      doc.doc_name
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()),
-                    ),
-                    pagination: documents.pagination,
-                  }}
-                  addNewHandler={() => setActiveTab(1)}
-                  name='Tài liệu'
-                  selectedItems={selectedDocuments}
-                  setSelectedItems={setSelectedDocuments}
-                  visibleColumns={[
-                    {
-                      key: 'name',
-                      title: 'Tên tài liệu',
-                      visible: true,
-                      render: (doc) => (
-                        <span className='text-sm font-medium text-gray-800'>
-                          {doc.doc_name}
-                        </span>
+                <div className='flex-grow overflow-auto'>
+                  <ItemList<IDocument>
+                    itemsPromise={{
+                      data: documents.data.filter((doc) =>
+                        doc.doc_name
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()),
                       ),
-                    },
-                    {
-                      key: 'createdBy',
-                      title: 'Người tạo',
-                      visible: true,
-                      render: (doc) => (
-                        <span className='text-sm text-gray-600'>
-                          {`${doc.doc_createdBy.emp_user?.usr_firstName} ${doc.doc_createdBy.emp_user?.usr_lastName}`}
-                        </span>
-                      ),
-                    },
-                    {
-                      key: 'isPublic',
-                      title: 'Chế độ truy cập',
-                      visible: true,
-                      render: (doc) => (
-                        <Badge
-                          className={`${doc.doc_isPublic ? 'bg-green-500' : 'bg-yellow-500'} text-white`}
-                        >
-                          {doc.doc_isPublic ? 'Công khai' : 'Hạn chế'}
-                        </Badge>
-                      ),
-                    },
-                    {
-                      key: 'actions',
-                      title: 'Hành động',
-                      visible: true,
-                      render: (doc) => (
-                        <Button
-                          onClick={() => handleDocumentClick(doc.id)}
-                          variant={
-                            selectedDocuments.find((d) => d.id === doc.id)
-                              ? 'destructive'
-                              : 'primary'
-                          }
-                        >
-                          {selectedDocuments.find((d) => d.id === doc.id)
-                            ? 'Bỏ chọn'
-                            : 'Chọn'}
-                        </Button>
-                      ),
-                    },
-                  ]}
-                  showPagination={false}
-                />
-              </>
+                      pagination: documents.pagination,
+                    }}
+                    addNewHandler={() => setActiveTab(1)}
+                    name='Tài liệu'
+                    selectedItems={selectedDocuments}
+                    setSelectedItems={setSelectedDocuments}
+                    visibleColumns={[
+                      {
+                        key: 'name',
+                        title: 'Tên tài liệu',
+                        visible: true,
+                        render: (doc) => (
+                          <span className='text-xs sm:text-sm font-medium text-gray-800 break-words'>
+                            {doc.doc_name}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: 'createdBy',
+                        title: 'Người tạo',
+                        visible: true,
+                        render: (doc) => (
+                          <span className='text-xs sm:text-sm text-gray-600 break-words'>
+                            {`${doc.doc_createdBy.emp_user?.usr_firstName} ${doc.doc_createdBy.emp_user?.usr_lastName}`}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: 'isPublic',
+                        title: 'Chế độ truy cập',
+                        visible: true,
+                        render: (doc) => (
+                          <Badge
+                            className={`${doc.doc_isPublic ? 'bg-green-500' : 'bg-yellow-500'} text-white text-xs`}
+                          >
+                            <span className=''>
+                              {doc.doc_isPublic ? 'Công khai' : 'Hạn chế'}
+                            </span>
+                          </Badge>
+                        ),
+                      },
+                      {
+                        key: 'actions',
+                        title: 'Hành động',
+                        visible: true,
+                        render: (doc) => (
+                          <Button
+                            onClick={() => handleDocumentClick(doc.id)}
+                            variant={
+                              selectedDocuments.find((d) => d.id === doc.id)
+                                ? 'destructive'
+                                : 'primary'
+                            }
+                            size='sm'
+                            className='text-xs sm:text-sm'
+                          >
+                            <span className='hidden sm:inline'>
+                              {selectedDocuments.find((d) => d.id === doc.id)
+                                ? 'Bỏ chọn'
+                                : 'Chọn'}
+                            </span>
+                            <span className='sm:hidden'>
+                              {selectedDocuments.find((d) => d.id === doc.id)
+                                ? 'Bỏ'
+                                : 'Chọn'}
+                            </span>
+                          </Button>
+                        ),
+                      },
+                    ]}
+                    showPagination={false}
+                  />
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        <div className='h-fit flex justify-between'>
-          <div className='flex gap-4'>
-            <Button onClick={onClose} variant='secondary' type='button'>
+        <div className='h-fit flex flex-col sm:flex-row justify-between gap-2 sm:gap-4 flex-shrink-0'>
+          <div className='flex flex-col sm:flex-row gap-2 sm:gap-4'>
+            <Button
+              onClick={onClose}
+              variant='secondary'
+              type='button'
+              size='sm'
+              className='w-full sm:w-auto'
+            >
               Hủy bỏ
             </Button>
 
@@ -279,22 +301,27 @@ export default function DocumentPicker({
                 }}
                 disabled={loading}
                 type='button'
+                size='sm'
+                className='w-full sm:w-auto'
                 title='Xóa tài liệu đã chọn'
                 aria-label='Xóa tài liệu đã chọn'
               >
-                Xóa Tài liệu đã chọn
+                <span className='hidden sm:inline'>Xóa Tài liệu đã chọn</span>
+                <span className='sm:hidden'>Xóa đã chọn</span>
               </Button>
             )}
           </div>
 
-          <button
+          <Button
             onClick={handleConfirm}
             disabled={loading}
-            className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition'
+            variant='primary'
+            size='sm'
+            className='w-full sm:w-auto'
             type='button'
           >
             Xác nhận
-          </button>
+          </Button>
         </div>
       </div>
     </div>

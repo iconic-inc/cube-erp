@@ -218,7 +218,7 @@ export default function AttendanceDetail() {
             visibleColumns={visibleColumns}
             setVisibleColumns={() => {}} // Read-only columns
             name='Chấm công'
-            showToolbar={true}
+            showToolbar={false}
             showPagination={true}
           />
         </CardContent>

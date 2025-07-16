@@ -106,7 +106,8 @@ export default function HRMDocuments() {
       render: (item: IDocument) => (
         <Link
           to={`/erp/documents/${item.id}`}
-          className='text-blue-600 hover:underline'
+          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-none'
+          title={item.doc_name}
         >
           {item.doc_name}
         </Link>
@@ -122,9 +123,11 @@ export default function HRMDocuments() {
           href={item.doc_url}
           target='_blank'
           rel='noopener noreferrer'
-          className='text-blue-600 hover:underline'
+          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
+          title={item.doc_url}
         >
-          {item.doc_url}
+          <span className='hidden sm:inline'>{item.doc_url}</span>
+          <span className='sm:hidden'>Xem</span>
         </a>
       ),
     },
@@ -137,15 +140,23 @@ export default function HRMDocuments() {
       options: [],
       render: (item: IDocument) => {
         if (typeof item.doc_createdBy === 'string') {
-          return item.doc_createdBy; // Assuming it's just a string ID
+          return (
+            <span className='text-xs sm:text-sm'>{item.doc_createdBy}</span>
+          );
         }
         return (
           <Link
             to={`/erp/employees/${item.doc_createdBy.id}`}
-            className='text-blue-600 hover:underline'
+            className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
+            title={`${item.doc_createdBy.emp_user.usr_firstName} ${item.doc_createdBy.emp_user.usr_lastName}`}
           >
-            {item.doc_createdBy.emp_user.usr_firstName}{' '}
-            {item.doc_createdBy.emp_user.usr_lastName}
+            <span className='hidden sm:inline'>
+              {item.doc_createdBy.emp_user.usr_firstName}{' '}
+              {item.doc_createdBy.emp_user.usr_lastName}
+            </span>
+            <span className='sm:hidden'>
+              {item.doc_createdBy.emp_user.usr_firstName}
+            </span>
           </Link>
         );
       },
@@ -161,14 +172,18 @@ export default function HRMDocuments() {
       ],
       render: (item: IDocument) => {
         if (typeof item.doc_whiteList === 'string') {
-          return item.doc_whiteList; // Assuming it's just a string ID
+          return (
+            <span className='text-xs sm:text-sm'>{item.doc_whiteList}</span>
+          );
         }
         return (
           <Badge
             variant={item.doc_isPublic ? 'default' : 'secondary'}
-            className={`${item.doc_isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'} hover:bg-unset`}
+            className={`${item.doc_isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'} hover:bg-unset text-xs`}
           >
-            {item.doc_isPublic ? 'Công khai' : 'Hạn chế'}
+            <span className='sm:inline'>
+              {item.doc_isPublic ? 'Công khai' : 'Hạn chế'}
+            </span>
           </Badge>
         );
       },
@@ -228,14 +243,15 @@ export default function HRMDocuments() {
   }, [uploadFetcher.data]);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen p-2 sm:p-4'>
       {/* Content Header */}
       <ContentHeader
         title='Danh sách tài liệu'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
-            Thêm tài liệu
+            <Plus className='w-3 h-3 sm:w-4 sm:h-4' />
+            <span className='hidden sm:inline'>Thêm tài liệu</span>
+            <span className='sm:hidden'>Thêm</span>
           </>
         }
         actionHandler={() => addNewHandler()}

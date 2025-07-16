@@ -9,7 +9,7 @@ import {
 import { parseAuthCookie } from '~/services/cookie.server';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import ContentHeader from '~/components/ContentHeader';
-import { Pen } from 'lucide-react';
+import { Edit, Pen } from 'lucide-react';
 import CaseDocumentList from './_components/CaseDocumentList';
 import { canAccessCaseServices } from '~/utils/permission';
 
@@ -63,13 +63,14 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       <ContentHeader
         title='Chi tiết Hồ sơ Dịch vụ'
         actionContent={
           <>
-            <Pen className='w-4 h-4 mr-1' />
-            Chỉnh sửa Hồ sơ
+            <Edit className='w-4 h-4' />
+            <span className='hidden sm:inline'>Chỉnh sửa Hồ sơ</span>
+            <span className='sm:hidden'>Chỉnh sửa</span>
           </>
         }
         actionHandler={() => {

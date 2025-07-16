@@ -33,32 +33,36 @@ export default function List<T>({
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
 
   return (
-    <Card>
+    <Card className='overflow-hidden'>
       {/* Item Toolbar */}
       {showToolbar && (
-        <Defer resolve={itemsPromise}>
-          {(items) => {
-            return (
-              <ListToolbar<T>
-                name={name}
-                exportable={exportable}
-                visibleColumns={visibleColumns}
-                setVisibleColumns={setVisibleColumns}
-                items={items}
-              />
-            );
-          }}
-        </Defer>
+        <div className='border-b border-gray-200'>
+          <Defer resolve={itemsPromise}>
+            {(items) => {
+              return (
+                <ListToolbar<T>
+                  name={name}
+                  exportable={exportable}
+                  visibleColumns={visibleColumns}
+                  setVisibleColumns={setVisibleColumns}
+                  items={items}
+                />
+              );
+            }}
+          </Defer>
+        </div>
       )}
 
       {/* Bulk Action Bar (Visible when rows selected) */}
       {selectedItems.length > 0 && (
-        <ListBulkActionBar
-          name={name}
-          selectedItems={selectedItems}
-          setSelectedItems={setSelectedItems}
-          handleConfirmBulkDelete={() => setShowDeleteModal(true)}
-        />
+        <div className='border-b border-gray-200 bg-blue-50'>
+          <ListBulkActionBar
+            name={name}
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+            handleConfirmBulkDelete={() => setShowDeleteModal(true)}
+          />
+        </div>
       )}
 
       {showDeleteModal && selectedItems.length && (
@@ -71,15 +75,17 @@ export default function List<T>({
         />
       )}
 
-      <ItemList<T>
-        name={name}
-        itemsPromise={itemsPromise}
-        selectedItems={selectedItems}
-        setSelectedItems={setSelectedItems}
-        visibleColumns={visibleColumns}
-        addNewHandler={addNewHandler}
-        showPagination={showPagination}
-      />
+      <div className='overflow-x-auto'>
+        <ItemList<T>
+          name={name}
+          itemsPromise={itemsPromise}
+          selectedItems={selectedItems}
+          setSelectedItems={setSelectedItems}
+          visibleColumns={visibleColumns}
+          addNewHandler={addNewHandler}
+          showPagination={showPagination}
+        />
+      </div>
     </Card>
   );
 }

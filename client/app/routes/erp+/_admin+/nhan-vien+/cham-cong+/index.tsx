@@ -227,23 +227,30 @@ export default function EmployeeAttendance() {
     useLoaderData<typeof loader>();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader title='Chấm công' />
 
       {/* Check-in/Check-out Section and Attendance Stats */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
         {/* Check-in/Check-out Form */}
-        <CheckInOutSection todayAttendance={todayAttendance} />
+        <div className='lg:col-span-1'>
+          <CheckInOutSection todayAttendance={todayAttendance} />
+        </div>
 
         {/* Attendance Statistics */}
-        <Defer resolve={attendanceStats}>
-          {(data) => <AttendanceLog attendanceStats={data} />}
-        </Defer>
+        <div className='lg:col-span-1'>
+          <Defer resolve={attendanceStats}>
+            {(data) => <AttendanceLog attendanceStats={data} />}
+          </Defer>
+        </div>
 
-        <Defer resolve={attendanceRequests}>
-          {(data) => <MyAttendanceRequestList attendanceRequests={data} />}
-        </Defer>
+        {/* Attendance Requests - Full width on mobile, spans 2 columns on desktop */}
+        <div className='lg:col-span-2'>
+          <Defer resolve={attendanceRequests}>
+            {(data) => <MyAttendanceRequestList attendanceRequests={data} />}
+          </Defer>
+        </div>
       </div>
     </div>
   );

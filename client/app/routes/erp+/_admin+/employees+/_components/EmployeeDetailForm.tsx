@@ -8,7 +8,7 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Save } from 'lucide-react';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { IRole } from '~/interfaces/role.interface';
 import {
@@ -19,7 +19,6 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import LoadingCard from '~/components/LoadingCard';
-import { SelectSearch } from '~/components/ui/SelectSearch';
 import { DatePicker } from '~/components/ui/date-picker';
 import {
   Select,
@@ -350,19 +349,19 @@ export default function EmployeeDetailForm({
             onSubmit={handleSubmit}
           >
             <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-              <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-                <CardTitle className='text-white text-3xl font-bold'>
+              <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl'>
+                <CardTitle className='text-white text-lg sm:text-2xl lg:text-3xl font-bold text-center sm:text-left'>
                   {code || 'Mã nhân viên'}
                 </CardTitle>
               </CardHeader>
 
-              <CardContent className='p-6 space-y-6'>
+              <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
                 {/* Employee Code */}
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
                   <div>
                     <Label
                       htmlFor='code'
-                      className='text-gray-700 font-semibold mb-2 block'
+                      className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                     >
                       Mã nhân viên <span className='text-red-500'>*</span>
                     </Label>
@@ -373,34 +372,38 @@ export default function EmployeeDetailForm({
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         placeholder='Nhập mã nhân viên'
-                        className={`flex-1 ${errors.code ? 'border-red-500' : ''}`}
+                        className={`flex-1 text-sm sm:text-base ${errors.code ? 'border-red-500' : ''}`}
                       />
                       <Button
                         type='button'
                         variant='outline'
                         onClick={generateEmployeeCode}
-                        className='px-3'
+                        className='px-2 sm:px-3 flex-shrink-0'
+                        size='sm'
                       >
-                        <RotateCcw className='w-4 h-4' />
+                        <RotateCcw className='w-3 h-3 sm:w-4 sm:h-4' />
+                        <span className='hidden sm:inline ml-1'>Tạo mã</span>
                       </Button>
                     </div>
                     {errors.code && (
-                      <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
+                      <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        {errors.code}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {/* Personal Information */}
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                <div className='space-y-3 sm:space-y-4'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
                     Thông tin cá nhân
                   </h3>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                     <div>
                       <Label
                         htmlFor='firstName'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Tên <span className='text-red-500'>*</span>
                       </Label>
@@ -410,10 +413,10 @@ export default function EmployeeDetailForm({
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder='Nhập tên'
-                        className={errors.firstName ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                       />
                       {errors.firstName && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.firstName}
                         </p>
                       )}
@@ -422,7 +425,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='lastName'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Họ <span className='text-red-500'>*</span>
                       </Label>
@@ -432,10 +435,10 @@ export default function EmployeeDetailForm({
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder='Nhập họ'
-                        className={errors.lastName ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                       />
                       {errors.lastName && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.lastName}
                         </p>
                       )}
@@ -444,7 +447,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='email'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Email <span className='text-red-500'>*</span>
                       </Label>
@@ -454,10 +457,10 @@ export default function EmployeeDetailForm({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder='Nhập email'
-                        className={errors.email ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                       />
                       {errors.email && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.email}
                         </p>
                       )}
@@ -466,7 +469,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='msisdn'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Số điện thoại <span className='text-red-500'>*</span>
                       </Label>
@@ -476,10 +479,10 @@ export default function EmployeeDetailForm({
                         value={msisdn}
                         onChange={(e) => setMsisdn(e.target.value)}
                         placeholder='Nhập số điện thoại'
-                        className={errors.msisdn ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                       />
                       {errors.msisdn && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.msisdn}
                         </p>
                       )}
@@ -488,7 +491,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='birthdate'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Ngày sinh
                       </Label>
@@ -504,12 +507,12 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='sex'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Giới tính
                       </Label>
                       <Select value={sex} onValueChange={setSex}>
-                        <SelectTrigger>
+                        <SelectTrigger className='text-sm sm:text-base'>
                           <SelectValue placeholder='Chọn giới tính' />
                         </SelectTrigger>
                         <SelectContent>
@@ -525,10 +528,10 @@ export default function EmployeeDetailForm({
                       </Select>
                     </div>
 
-                    <div className='col-span-2'>
+                    <div className='sm:col-span-2'>
                       <Label
                         htmlFor='address'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Địa chỉ
                       </Label>
@@ -538,13 +541,14 @@ export default function EmployeeDetailForm({
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder='Nhập địa chỉ'
+                        className='text-sm sm:text-base'
                       />
                     </div>
 
                     <div>
                       <Label
                         htmlFor='username'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Tên đăng nhập <span className='text-red-500'>*</span>
                       </Label>
@@ -554,10 +558,10 @@ export default function EmployeeDetailForm({
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder='Nhập tên đăng nhập'
-                        className={errors.username ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                       />
                       {errors.username && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.username}
                         </p>
                       )}
@@ -567,7 +571,7 @@ export default function EmployeeDetailForm({
                       <div>
                         <Label
                           htmlFor='password'
-                          className='text-gray-700 font-semibold mb-2 block'
+                          className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                         >
                           Mật khẩu <span className='text-red-500'>*</span>
                         </Label>
@@ -577,10 +581,10 @@ export default function EmployeeDetailForm({
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder='Nhập mật khẩu (tối thiểu 6 ký tự)'
-                          className={errors.password ? 'border-red-500' : ''}
+                          className={`text-sm sm:text-base ${errors.password ? 'border-red-500' : ''}`}
                         />
                         {errors.password && (
-                          <p className='text-red-500 text-sm mt-1'>
+                          <p className='text-red-500 text-xs sm:text-sm mt-1'>
                             {errors.password}
                           </p>
                         )}
@@ -590,16 +594,16 @@ export default function EmployeeDetailForm({
                 </div>
 
                 {/* Work Information */}
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                <div className='space-y-3 sm:space-y-4'>
+                  <h3 className='text-base sm:text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
                     Thông tin công việc
                   </h3>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                     <div>
                       <Label
                         htmlFor='department'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Phòng ban <span className='text-red-500'>*</span>
                       </Label>
@@ -609,10 +613,10 @@ export default function EmployeeDetailForm({
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                         placeholder='Nhập phòng ban'
-                        className={errors.department ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.department ? 'border-red-500' : ''}`}
                       />
                       {errors.department && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.department}
                         </p>
                       )}
@@ -621,7 +625,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='position'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Chức vụ <span className='text-red-500'>*</span>
                       </Label>
@@ -631,10 +635,10 @@ export default function EmployeeDetailForm({
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
                         placeholder='Nhập chức vụ'
-                        className={errors.position ? 'border-red-500' : ''}
+                        className={`text-sm sm:text-base ${errors.position ? 'border-red-500' : ''}`}
                       />
                       {errors.position && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.position}
                         </p>
                       )}
@@ -643,7 +647,7 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='joinDate'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Ngày vào làm
                       </Label>
@@ -659,13 +663,13 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='roleId'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Vai trò <span className='text-red-500'>*</span>
                       </Label>
                       <Select value={roleId} onValueChange={setRoleId}>
                         <SelectTrigger
-                          className={errors.roleId ? 'border-red-500' : ''}
+                          className={`text-sm sm:text-base ${errors.roleId ? 'border-red-500' : ''}`}
                         >
                           <SelectValue placeholder='Chọn vai trò' />
                         </SelectTrigger>
@@ -678,7 +682,7 @@ export default function EmployeeDetailForm({
                         </SelectContent>
                       </Select>
                       {errors.roleId && (
-                        <p className='text-red-500 text-sm mt-1'>
+                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
                           {errors.roleId}
                         </p>
                       )}
@@ -687,12 +691,12 @@ export default function EmployeeDetailForm({
                     <div>
                       <Label
                         htmlFor='status'
-                        className='text-gray-700 font-semibold mb-2 block'
+                        className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
                       >
                         Trạng thái
                       </Label>
                       <Select value={status} onValueChange={setStatus}>
-                        <SelectTrigger>
+                        <SelectTrigger className='text-sm sm:text-base'>
                           <SelectValue placeholder='Chọn trạng thái' />
                         </SelectTrigger>
                         <SelectContent>
@@ -711,31 +715,35 @@ export default function EmployeeDetailForm({
                 </div>
               </CardContent>
 
-              <CardFooter>
-                <div className='w-full flex justify-between items-center'>
+              <CardFooter className='p-4 sm:p-6'>
+                <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3'>
                   <Link
                     to='/erp/employees'
-                    className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+                    className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
                   >
                     <span className='material-symbols-outlined text-sm mr-1'>
                       keyboard_return
                     </span>
-                    Trở về Danh sách
+                    <span className='hidden sm:inline'>Trở về Danh sách</span>
+                    <span className='sm:hidden'>Trở về</span>
                   </Link>
 
-                  <div className='flex space-x-2'>
+                  <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 order-1 sm:order-2'>
                     <Button
-                      className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                      className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto'
                       type='submit'
                       form={formId}
                       disabled={!isChanged}
                     >
-                      <span className='material-symbols-outlined text-sm mr-1'>
-                        save
+                      <Save />
+                      <span className='hidden sm:inline'>
+                        {type === 'create'
+                          ? 'Tạo Nhân viên'
+                          : 'Cập nhật Nhân viên'}
                       </span>
-                      {type === 'create'
-                        ? 'Tạo Nhân viên'
-                        : 'Cập nhật Nhân viên'}
+                      <span className='sm:hidden'>
+                        {type === 'create' ? 'Tạo' : 'Cập nhật'}
+                      </span>
                     </Button>
                   </div>
                 </div>

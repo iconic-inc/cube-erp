@@ -31,16 +31,22 @@ export default function DocumentUploader({
   }, [fetcher.data]);
 
   return (
-    <div className={`flex gap-4 items-center justify-center h-full`}>
-      <label className='cursor-pointer flex-col w-1/2 items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-6 text-center'>
-        <UploadCloud className='w-6 h-6 text-blue-400 m-auto' />
+    <div
+      className={`flex gap-2 sm:gap-4 items-center justify-center h-full p-2 sm:p-4`}
+    >
+      <label className='cursor-pointer flex flex-col w-full max-w-md items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-4 sm:p-6 text-center hover:border-blue-500 transition-colors'>
+        <UploadCloud className='w-5 h-5 sm:w-6 sm:h-6 text-blue-400 m-auto' />
 
-        <h2 className='text-xl mt-2 font-medium text-gray-700 tracking-wide'>
-          Upload Document
+        <h2 className='text-lg sm:text-xl mt-1 sm:mt-2 font-medium text-gray-700 tracking-wide'>
+          <span className='hidden sm:inline'>Upload Document</span>
+          <span className='sm:hidden'>Tải lên</span>
         </h2>
 
-        <p className='mt-2 text-gray-500 tracking-wide'>
-          Upload your file SVG, PNG, JPG or GIF.
+        <p className='mt-1 sm:mt-2 text-sm sm:text-base text-gray-500 tracking-wide'>
+          <span className='hidden sm:inline'>
+            Upload your file SVG, PNG, JPG or GIF.
+          </span>
+          <span className='sm:hidden'>Chọn tệp để tải lên</span>
         </p>
 
         <input

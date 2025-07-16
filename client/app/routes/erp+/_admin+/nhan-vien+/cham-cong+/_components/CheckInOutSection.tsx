@@ -109,16 +109,17 @@ export default function CheckInOutSection({
 
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6'>
-        <div className='flex items-center space-x-4'>
-          <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
-            <Clock className='w-8 h-8 text-white' />
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white p-3 sm:p-6'>
+        <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4'>
+          <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0'>
+            <Clock className='w-6 h-6 sm:w-8 sm:h-8 text-white' />
           </div>
-          <div className='flex-1'>
-            <CardTitle className='text-white text-2xl font-bold'>
-              Chấm công hôm nay
+          <div className='flex-1 text-center sm:text-left'>
+            <CardTitle className='text-white text-lg sm:text-2xl font-bold'>
+              <span className='hidden sm:inline'>Chấm công hôm nay</span>
+              <span className='sm:hidden'>Chấm công</span>
             </CardTitle>
-            <p className='text-green-100 text-sm mt-1'>
+            <p className='text-green-100 text-xs sm:text-sm mt-1'>
               {new Date().toLocaleDateString('vi', {
                 weekday: 'long',
                 year: 'numeric',
@@ -127,11 +128,13 @@ export default function CheckInOutSection({
               })}
             </p>
           </div>
-          <Timer />
+          <div className='flex-shrink-0'>
+            <Timer />
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className='p-6'>
+      <CardContent className='p-3 sm:p-6'>
         <fetcher.Form
           method='POST'
           className='flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6'

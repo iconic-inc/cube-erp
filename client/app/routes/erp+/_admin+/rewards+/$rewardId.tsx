@@ -17,6 +17,7 @@ import {
   CalendarDays,
   PlusCircle,
   Wallet,
+  Edit,
 } from 'lucide-react';
 
 import { isAuthenticated } from '~/services/auth.server';
@@ -278,14 +279,15 @@ export default function RewardDetail() {
   }, [fetcher.data]);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết Quỹ Thưởng'
         backHandler={() => navigate('/erp/rewards')}
         actionContent={
           <>
-            <Pen className='h-4 w-4 mr-2' />
-            Chỉnh sửa Quỹ thưởng
+            <Edit className='h-4 w-4' />
+            <span className='hidden sm:inline'>Chỉnh sửa Quỹ thưởng</span>
+            <span className='sm:hidden'>Sửa</span>
           </>
         }
         actionHandler={() => {
@@ -294,48 +296,57 @@ export default function RewardDetail() {
       />
 
       {/* Reward Details Card */}
-      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <div className='flex items-center space-x-4'>
-            <div className='w-16 h-16 bg-white/20 rounded-full flex items-center justify-center'>
-              <Coins className='h-8 w-8' />
+      <Card className='rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg border border-gray-200'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-lg sm:rounded-t-xl'>
+          <div className='flex items-center space-x-3 sm:space-x-4'>
+            <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center'>
+              <Coins className='h-6 w-6 sm:h-8 sm:w-8' />
             </div>
-            <div>
-              <CardTitle className='text-white text-3xl font-bold'>
+            <div className='flex-1 min-w-0'>
+              <CardTitle className='text-white text-lg sm:text-2xl lg:text-3xl font-bold break-words'>
                 {reward.rw_name}
               </CardTitle>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Basic Information */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                <FileText className='h-5 w-5 mr-2' />
-                Thông tin cơ bản
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+            <div className='space-y-3 sm:space-y-4'>
+              <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                <span className='text-base sm:text-lg'>Thông tin cơ bản</span>
               </h3>
 
-              <div className='space-y-3'>
-                <div className='flex items-center space-x-3'>
-                  <Tag className='h-4 w-4 text-gray-400' />
-                  <span className='text-sm text-gray-500'>Tên quỹ:</span>
-                  <span className='text-sm font-medium'>{reward.rw_name}</span>
+              <div className='space-y-2 sm:space-y-3'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
+                  <Tag className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                  <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
+                    Tên quỹ:
+                  </span>
+                  <span className='text-sm sm:text-sm font-medium break-words min-w-0'>
+                    {reward.rw_name}
+                  </span>
                 </div>
 
-                <div className='flex items-center space-x-3'>
-                  <Info className='h-4 w-4 text-gray-400' />
-                  <span className='text-sm text-gray-500'>Trạng thái:</span>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
+                  <Info className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                  <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
+                    Trạng thái:
+                  </span>
                   <Badge className={getStatusBadgeClass(reward.rw_status)}>
-                    {getStatusLabel(reward.rw_status)}
+                    <span className='text-sm'>
+                      {getStatusLabel(reward.rw_status)}
+                    </span>
                   </Badge>
                 </div>
 
-                <div className='flex items-center space-x-3'>
-                  <CreditCard className='h-4 w-4 text-gray-400' />
-                  <span className='text-sm text-gray-500'>Tổng tiền:</span>
-                  <span className='text-sm font-bold text-blue-600'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
+                  <CreditCard className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                  <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
+                    Tổng tiền:
+                  </span>
+                  <span className='text-sm sm:text-sm font-bold text-blue-600 break-all min-w-0'>
                     {formatCurrency(reward.rw_currentAmount)}
                   </span>
                 </div>
@@ -343,48 +354,53 @@ export default function RewardDetail() {
             </div>
 
             {/* Timeline Information */}
-            <div className='space-y-4'>
-              <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                <Clock className='h-5 w-5 mr-2' />
-                Thông tin thời gian
+            <div className='space-y-3 sm:space-y-4'>
+              <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                <span className='text-base sm:text-lg'>
+                  Thông tin thời gian
+                </span>
               </h3>
 
-              <div className='space-y-3'>
-                <div className='flex items-center space-x-3'>
-                  <CalendarCheck className='h-4 w-4 text-gray-400' />
-                  <span className='text-sm text-gray-500'>Ngày bắt đầu:</span>
-                  <span className='text-sm font-medium'>
+              <div className='space-y-2 sm:space-y-3'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
+                  <CalendarCheck className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                  <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
+                    Ngày bắt đầu:
+                  </span>
+                  <span className='text-sm sm:text-sm font-medium break-words min-w-0'>
                     {formatDate(reward.rw_startDate)}
                   </span>
                 </div>
 
                 {reward.rw_endDate && (
-                  <div className='flex items-center space-x-3'>
-                    <CalendarX className='h-4 w-4 text-gray-400' />
-                    <span className='text-sm text-gray-500'>
+                  <div className='flex items-center space-x-2 sm:space-x-3'>
+                    <CalendarX className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                    <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
                       Ngày kết thúc:
                     </span>
-                    <span className='text-sm font-medium'>
+                    <span className='text-sm sm:text-sm font-medium break-words min-w-0'>
                       {formatDate(reward.rw_endDate)}
                     </span>
                   </div>
                 )}
                 {reward.rw_cashedOutAt && (
-                  <div className='flex items-center space-x-3'>
-                    <Calendar className='h-4 w-4 text-gray-400' />
-                    <span className='text-sm text-gray-500'>
+                  <div className='flex items-center space-x-2 sm:space-x-3'>
+                    <Calendar className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                    <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
                       Ngày đóng quỹ:
                     </span>
-                    <span className='text-sm font-medium'>
+                    <span className='text-sm sm:text-sm font-medium break-words min-w-0'>
                       {formatDate(reward.rw_cashedOutAt)}
                     </span>
                   </div>
                 )}
 
-                <div className='flex items-center space-x-3'>
-                  <CalendarDays className='h-4 w-4 text-gray-400' />
-                  <span className='text-sm text-gray-500'>Ngày tạo:</span>
-                  <span className='text-sm font-medium'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
+                  <CalendarDays className='h-4 w-4 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0' />
+                  <span className='text-sm sm:text-sm text-gray-500 flex-shrink-0'>
+                    Ngày tạo:
+                  </span>
+                  <span className='text-sm sm:text-sm font-medium break-words min-w-0'>
                     {formatDate(reward.createdAt)}
                   </span>
                 </div>
@@ -394,35 +410,38 @@ export default function RewardDetail() {
 
           {/* Description */}
           {reward.rw_description && (
-            <div className='space-y-3'>
-              <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                <FileText className='h-5 w-5 mr-2' />
-                Mô tả
+            <div className='space-y-2 sm:space-y-3'>
+              <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
+                <span className='text-base sm:text-lg'>Mô tả</span>
               </h3>
-              <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
-                <TextRenderer content={reward.rw_description} />
+              <div className='bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200'>
+                <div className='text-sm sm:text-sm'>
+                  <TextRenderer content={reward.rw_description} />
+                </div>
               </div>
             </div>
           )}
 
           {/* Actions */}
           {reward.rw_status === 'active' && (
-            <div className='flex flex-wrap gap-3 pt-4 border-t border-gray-200'>
+            <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200'>
               <Button
                 onClick={() => setShowDeductModal(true)}
-                className='inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700'
+                className='inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-sm font-medium rounded-md hover:bg-blue-700 w-full sm:w-auto'
               >
-                <PlusCircle className='h-4 w-4 mr-2' />
-                Khấu trừ doanh thu
+                <PlusCircle className='h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-2' />
+                <span className='hidden sm:inline'>Khấu trừ doanh thu</span>
+                <span className='sm:hidden'>Khấu trừ</span>
               </Button>
 
               <Button
                 onClick={() => setShowCashOutModal(true)}
-                className='inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700'
+                className='inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-sm font-medium rounded-md hover:bg-green-700 w-full sm:w-auto'
                 disabled={reward.rw_currentAmount <= 0}
               >
-                <Wallet className='h-4 w-4 mr-2' />
-                Đóng quỹ thưởng
+                <Wallet className='h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-2' />
+                <span className='hidden sm:inline'>Đóng quỹ thưởng</span>
+                <span className='sm:hidden'>Đóng quỹ</span>
               </Button>
             </div>
           )}
@@ -431,18 +450,21 @@ export default function RewardDetail() {
 
       {/* Deduct Modal */}
       <Dialog open={showDeductModal} onOpenChange={setShowDeductModal}>
-        <DialogContent>
+        <DialogContent className='w-[95vw] max-w-md mx-auto'>
           <DialogHeader>
-            <DialogTitle>Khấu trừ doanh thu vào quỹ thưởng</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className='text-lg sm:text-lg'>
+              Khấu trừ doanh thu vào quỹ thưởng
+            </DialogTitle>
+            <DialogDescription className='text-sm sm:text-sm'>
               Nhập số tiền cần khấu trừ từ doanh thu để thêm vào quỹ thưởng
             </DialogDescription>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className='space-y-3 sm:space-y-4'>
             <NumericInput
               label={
                 <>
-                  Số tiền khấu trừ <span className='text-red-500'>*</span>
+                  <span className='text-sm sm:text-sm'>Số tiền khấu trừ</span>{' '}
+                  <span className='text-red-500'>*</span>
                 </>
               }
               value={deductAmount}
@@ -458,13 +480,18 @@ export default function RewardDetail() {
               rows={3}
             />
           </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setShowDeductModal(false)}>
+          <DialogFooter className='flex-col sm:flex-row gap-2 sm:gap-0'>
+            <Button
+              variant='outline'
+              onClick={() => setShowDeductModal(false)}
+              className='w-full sm:w-auto text-sm sm:text-sm'
+            >
               Hủy
             </Button>
             <Button
               onClick={handleDeductSubmit}
               disabled={fetcher.state === 'submitting'}
+              className='w-full sm:w-auto text-sm sm:text-sm'
             >
               {fetcher.state === 'submitting' ? 'Đang xử lý...' : 'Khấu trừ'}
             </Button>
@@ -474,25 +501,29 @@ export default function RewardDetail() {
 
       {/* Cash Out Modal */}
       <Dialog open={showCashOutModal} onOpenChange={setShowCashOutModal}>
-        <DialogContent>
+        <DialogContent className='w-[95vw] max-w-md mx-auto'>
           <DialogHeader>
-            <DialogTitle>Đóng quỹ thưởng</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className='text-lg sm:text-lg'>
+              Đóng quỹ thưởng
+            </DialogTitle>
+            <DialogDescription className='text-sm sm:text-sm'>
               Đánh dấu quỹ thưởng đã đóng. Hành động này sẽ chuyển trạng thái
               quỹ thành "Đã đóng".
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter>
+          <DialogFooter className='flex-col sm:flex-row gap-2 sm:gap-0'>
             <Button
               variant='outline'
               onClick={() => setShowCashOutModal(false)}
+              className='w-full sm:w-auto text-sm sm:text-sm'
             >
               Hủy
             </Button>
             <Button
               onClick={handleCashOutSubmit}
               disabled={fetcher.state === 'submitting'}
+              className='w-full sm:w-auto text-sm sm:text-sm'
             >
               {fetcher.state === 'submitting'
                 ? 'Đang xử lý...'

@@ -140,8 +140,9 @@ export default function NewCustomer() {
         title='Thêm Khách hàng mới'
         actionContent={
           <>
-            <Save className='inline mr-2' />
-            Lưu Khách hàng
+            <Save className='inline' />
+            <span className='hidden sm:inline'>Lưu Khách hàng</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {

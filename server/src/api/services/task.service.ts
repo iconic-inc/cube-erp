@@ -17,6 +17,7 @@ import { CASE_SERVICE } from '@constants/caseService.constant';
 import { EmployeeModel } from '@models/employee.model';
 import { USER } from '@constants/user.constant';
 import { getEmployeeByUserId } from './employee.service';
+import { sendTaskNotificationEmail } from './email.service';
 
 // Create new Task
 const createTask = async (data: ITaskCreate) => {
@@ -44,6 +45,50 @@ const createTask = async (data: ITaskCreate) => {
       status: data.status || TASK.STATUS.NOT_STARTED,
       priority: data.priority || TASK.PRIORITY.MEDIUM,
     });
+
+    // Get the created task with populated data for email notification
+    const populatedTask = await TaskModel.findById(task._id)
+      .populate(taskAssigneesPopulate)
+      .populate(taskCaseServicePopulate);
+
+    // Send email notifications to assignees
+    if (populatedTask && populatedTask.tsk_assignees) {
+      const emailPromises = populatedTask.tsk_assignees.map(
+        async (assignee: any) => {
+          if (assignee.emp_user?.usr_email) {
+            try {
+              await sendTaskNotificationEmail(assignee.emp_user.usr_email, {
+                taskId: populatedTask._id.toString(),
+                taskName: populatedTask.tsk_name,
+                taskDescription:
+                  populatedTask.tsk_description || 'Không có mô tả',
+                priority: populatedTask.tsk_priority,
+                startDate: new Date(populatedTask.tsk_startDate).toLocaleString(
+                  'vi-VN'
+                ),
+                endDate: new Date(populatedTask.tsk_endDate).toLocaleString(
+                  'vi-VN'
+                ),
+                employeeName: `${assignee.emp_user.usr_firstName || ''} ${
+                  assignee.emp_user.usr_lastName || ''
+                }`.trim(),
+              });
+            } catch (emailError) {
+              console.error(
+                `Failed to send email to ${assignee.emp_user.usr_email}:`,
+                emailError
+              );
+              // Don't throw error here to avoid blocking task creation
+            }
+          }
+        }
+      );
+
+      // Execute all email sending promises without blocking
+      Promise.all(emailPromises).catch((error) => {
+        console.error('Some emails failed to send:', error);
+      });
+    }
 
     return getReturnData(task);
   } catch (error) {

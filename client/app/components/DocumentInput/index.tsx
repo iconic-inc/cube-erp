@@ -33,23 +33,23 @@ export default function DocumentInput({
   return (
     <div>
       {label && (
-        <p className='block text-sm font-semibold leading-6 text-black mb-4'>
+        <p className='block text-sm sm:text-sm font-semibold leading-6 text-black mb-2 sm:mb-4'>
           {label}
         </p>
       )}
 
       <div>
         <label
-          className='flex cursor-pointer flex-col w-full items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-6 text-center'
+          className='flex cursor-pointer flex-col w-full items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-4 sm:p-6 text-center hover:border-blue-500 transition-colors'
           onClick={handleOpenPicker}
         >
-          <UploadCloud className='w-6 h-6 text-blue-400' />
+          <UploadCloud className='w-5 h-5 sm:w-6 sm:h-6 text-blue-400' />
 
-          <h2 className='text-xl mt-2 font-medium text-gray-700 tracking-wide'>
+          <h2 className='text-lg sm:text-xl mt-1 sm:mt-2 font-medium text-gray-700 tracking-wide'>
             {label}
           </h2>
 
-          <p className='mt-2 text-gray-500 tracking-wide'>
+          <p className='mt-1 sm:mt-2 text-sm sm:text-sm text-gray-500 tracking-wide'>
             Tải lên các tài liệu của bạn tại đây.
           </p>
         </label>

@@ -8,7 +8,7 @@ import { IListResponse } from '~/interfaces/response.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { ICustomer } from '~/interfaces/customer.interface';
 import { ICaseService } from '~/interfaces/case.interface';
 import { ITransaction } from '~/interfaces/transaction.interface';
@@ -294,53 +294,57 @@ export default function TransactionDetailForm({
       id={formId}
       method={type === 'create' ? 'POST' : 'PUT'}
       onSubmit={handleSubmit}
+      className='px-2 sm:px-0'
     >
-      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-6 rounded-t-xl'>
-          <CardTitle className='text-white text-3xl font-bold'>
+      <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200 mx-2 sm:mx-0'>
+        <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-xl'>
+          <CardTitle className='text-white text-xl sm:text-2xl md:text-3xl font-bold break-words'>
             {code || 'Mã giao dịch'}
           </CardTitle>
         </CardHeader>
 
-        <CardContent className='p-6 space-y-6'>
+        <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Transaction Code */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='code'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Mã giao dịch <span className='text-red-500'>*</span>
               </Label>
-              <div className='flex gap-2'>
+              <div className='flex flex-col sm:flex-row gap-2'>
                 <Input
                   id='code'
                   name='code'
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder='Ví dụ: TN123456'
-                  className='bg-white border-gray-300'
+                  className='bg-white border-gray-300 text-sm sm:text-base'
                 />
                 <Button
                   type='button'
                   variant='outline'
                   size='sm'
                   onClick={generateTransactionCode}
-                  className='whitespace-nowrap'
+                  className='whitespace-nowrap text-xs sm:text-sm'
                 >
-                  <RotateCcw className='h-4 w-4 mr-1' />
-                  Tự động tạo
+                  <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+                  <span className='hidden sm:inline'>Tự động tạo</span>
+                  <span className='sm:hidden'>Tạo mã</span>
                 </Button>
               </div>
               {errors.code && (
-                <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.code}
+                </p>
               )}
             </div>
 
             <div>
               <Label
                 htmlFor='date'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Ngày giao dịch <span className='text-red-500'>*</span>
               </Label>
@@ -358,7 +362,7 @@ export default function TransactionDetailForm({
           <div>
             <Label
               htmlFor='title'
-              className='text-gray-700 font-semibold mb-2 block'
+              className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
             >
               Tiêu đề giao dịch <span className='text-red-500'>*</span>
             </Label>
@@ -368,19 +372,21 @@ export default function TransactionDetailForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder='Nhập tiêu đề giao dịch'
-              className='bg-white border-gray-300'
+              className='bg-white border-gray-300 text-sm sm:text-base'
             />
             {errors.title && (
-              <p className='text-red-500 text-sm mt-1'>{errors.title}</p>
+              <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                {errors.title}
+              </p>
             )}
           </div>
 
           {/* Transaction Type and Category */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='type'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Loại giao dịch <span className='text-red-500'>*</span>
               </Label>
@@ -404,7 +410,7 @@ export default function TransactionDetailForm({
             <div>
               <Label
                 htmlFor='category'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Danh mục <span className='text-red-500'>*</span>
               </Label>
@@ -417,7 +423,9 @@ export default function TransactionDetailForm({
                 id='category'
               />
               {errors.category && (
-                <p className='text-red-500 text-sm mt-1'>{errors.category}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.category}
+                </p>
               )}
             </div>
 
@@ -425,7 +433,7 @@ export default function TransactionDetailForm({
             <div>
               <Label
                 htmlFor='paymentMethod'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Phương thức thanh toán <span className='text-red-500'>*</span>
               </Label>
@@ -438,7 +446,7 @@ export default function TransactionDetailForm({
                 id='paymentMethod'
               />
               {errors.paymentMethod && (
-                <p className='text-red-500 text-sm mt-1'>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
                   {errors.paymentMethod}
                 </p>
               )}
@@ -446,16 +454,16 @@ export default function TransactionDetailForm({
           </div>
 
           {/* Amount and Paid */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='amount'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Số tiền <span className='text-red-500'>*</span>
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -472,26 +480,28 @@ export default function TransactionDetailForm({
                   allowNegative={false}
                   allowLeadingZeros={false}
                   customInput={Input}
-                  className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium'
+                  className='bg-white border-gray-300 pl-6 sm:pl-8 pr-10 sm:pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
                   VNĐ
                 </span>
               </div>
               {errors.amount && (
-                <p className='text-red-500 text-sm mt-1'>{errors.amount}</p>
+                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  {errors.amount}
+                </p>
               )}
             </div>
 
             <div>
               <Label
                 htmlFor='paid'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Đã thanh toán
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -508,15 +518,15 @@ export default function TransactionDetailForm({
                   allowNegative={false}
                   allowLeadingZeros={false}
                   customInput={Input}
-                  className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium'
+                  className='bg-white border-gray-300 pl-6 sm:pl-8 pr-10 sm:pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
                   VNĐ
                 </span>
               </div>
               {amount && parseFloat(amount) > 0 && (
-                <div className='mt-2 p-2 bg-blue-50 rounded-md border border-blue-200'>
-                  <p className='text-sm text-blue-700'>
+                <div className='mt-2 p-2 sm:p-3 bg-blue-50 rounded-md border border-blue-200'>
+                  <p className='text-xs sm:text-sm text-blue-700'>
                     <span className='font-medium'>Còn lại: </span>
                     <span className='font-bold'>
                       <NumericFormat
@@ -536,11 +546,11 @@ export default function TransactionDetailForm({
           </div>
 
           {/* Customer and Case Service */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
             <div>
               <Label
                 htmlFor='customer'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Khách hàng
               </Label>
@@ -560,7 +570,7 @@ export default function TransactionDetailForm({
             <div>
               <Label
                 htmlFor='caseService'
-                className='text-gray-700 font-semibold mb-2 block'
+                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
                 Hồ sơ vụ việc
               </Label>
@@ -582,7 +592,7 @@ export default function TransactionDetailForm({
           <div>
             <Label
               // htmlFor='description'
-              className='text-gray-700 font-semibold mb-2 block'
+              className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
             >
               Mô tả
             </Label>
@@ -595,36 +605,38 @@ export default function TransactionDetailForm({
                   value={description}
                   onChange={setDescription}
                   placeholder='Nhập mô tả chi tiết về giao dịch...'
-                  className='min-h-[200px]'
+                  className='min-h-[250px] sm:min-h-[200px]'
                 />
               )}
             </Hydrated>
           </div>
         </CardContent>
 
-        <CardFooter>
-          <div className='w-full flex justify-between items-center'>
+        <CardFooter className='p-4 sm:p-6'>
+          <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0'>
             <Link
               to='/erp/transactions'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
-              <span className='material-symbols-outlined text-sm mr-1'>
-                keyboard_return
-              </span>
-              Trở về Danh sách
+              <ArrowLeft className='h-4 w-4 sm:h-5' />
+              <span className='hidden sm:inline'>Trở về Danh sách</span>
+              <span className='sm:hidden'>Trở về</span>
             </Link>
 
-            <div className='flex space-x-2'>
+            <div className='flex space-x-2 order-1 sm:order-2'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}
               >
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  save
+                <Save className='h-4 w-4 sm:h-5 sm:w-5' />
+                <span className='hidden sm:inline'>
+                  {type === 'create' ? 'Tạo giao dịch' : 'Cập nhật giao dịch'}
                 </span>
-                {type === 'create' ? 'Tạo giao dịch' : 'Cập nhật giao dịch'}
+                <span className='sm:hidden'>
+                  {type === 'create' ? 'Tạo' : 'Cập nhật'}
+                </span>
               </Button>
             </div>
           </div>
