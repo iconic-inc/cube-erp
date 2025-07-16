@@ -145,7 +145,7 @@ export default function CaseDocumentList({
           Tài liệu
         </CardTitle>
       </CardHeader>
-      <CardContent className='p-6 space-y-4'>
+      <CardContent className='p-2 md:p-6 space-y-4'>
         <div className='flex justify-end gap-4'>
           <Button
             variant='primary'

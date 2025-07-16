@@ -36,13 +36,14 @@ export default function DocumentDetailPage() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen'>
       <ContentHeader
         title='Chi tiết tài liệu'
         actionContent={
           <>
-            <Edit className='w-4 h-4 mr-1' />
-            Sửa tài liệu
+            <Edit className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
+            <span className='hidden sm:inline'>Sửa tài liệu</span>
+            <span className='sm:hidden'>Sửa</span>
           </>
         }
         actionHandler={() => {

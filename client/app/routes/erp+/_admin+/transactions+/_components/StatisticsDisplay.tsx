@@ -95,7 +95,7 @@ export default function StatisticsDisplay({
   );
 
   const monthlyChartData =
-    stats.byDay?.slice(-30).map((day) => ({
+    stats.byDay?.map((day) => ({
       date: day.date,
       income: day.income || 0,
       outcome: day.outcome || 0,
@@ -117,70 +117,76 @@ export default function StatisticsDisplay({
   return (
     <>
       {/* Overview Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8'>
         <Card>
-          <CardContent className='p-6'>
+          <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-medium text-gray-600'>Tổng thu</p>
-                <p className='text-2xl font-bold text-green-600'>
+              <div className='min-w-0 flex-1'>
+                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                  Tổng thu
+                </p>
+                <p className='text-lg sm:text-xl md:text-2xl font-bold text-green-600 break-all'>
                   {formatCurrency(stats.totalIncome || 0)}
                 </p>
               </div>
-              <div className='h-12 w-12 bg-green-100 rounded-full flex items-center justify-center'>
-                <TrendingUp className='h-6 w-6 text-green-600' />
+              <div className='h-10 w-10 sm:h-12 sm:w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 ml-2'>
+                <TrendingUp className='h-5 w-5 sm:h-6 sm:w-6 text-green-600' />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className='p-6'>
+          <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-medium text-gray-600'>Tổng chi</p>
-                <p className='text-2xl font-bold text-red-600'>
+              <div className='min-w-0 flex-1'>
+                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                  Tổng chi
+                </p>
+                <p className='text-lg sm:text-xl md:text-2xl font-bold text-red-600 break-all'>
                   {formatCurrency(stats.totalOutcome || 0)}
                 </p>
               </div>
-              <div className='h-12 w-12 bg-red-100 rounded-full flex items-center justify-center'>
-                <TrendingDown className='h-6 w-6 text-red-600' />
+              <div className='h-10 w-10 sm:h-12 sm:w-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 ml-2'>
+                <TrendingDown className='h-5 w-5 sm:h-6 sm:w-6 text-red-600' />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className='p-6'>
+          <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-medium text-gray-600'>Lợi nhuận</p>
+              <div className='min-w-0 flex-1'>
+                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                  Lợi nhuận
+                </p>
                 <p
-                  className={`text-2xl font-bold ${stats.netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  className={`text-lg sm:text-xl md:text-2xl font-bold break-all ${stats.netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
                   {formatCurrency(stats.netAmount)}
                 </p>
               </div>
-              <div className='h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center'>
-                <DollarSign className='h-6 w-6 text-blue-600' />
+              <div className='h-10 w-10 sm:h-12 sm:w-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 ml-2'>
+                <DollarSign className='h-5 w-5 sm:h-6 sm:w-6 text-blue-600' />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className='p-6'>
+          <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-sm font-medium text-gray-600'>
+              <div className='min-w-0 flex-1'>
+                <p className='text-xs sm:text-sm font-medium text-gray-600'>
                   Tổng giao dịch
                 </p>
-                <p className='text-2xl font-bold text-gray-900'>
+                <p className='text-lg sm:text-xl md:text-2xl font-bold text-gray-900'>
                   {(stats.transactionCount || 0).toLocaleString()}
                 </p>
               </div>
-              <div className='h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center'>
-                <FileText className='h-6 w-6 text-purple-600' />
+              <div className='h-10 w-10 sm:h-12 sm:w-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 ml-2'>
+                <FileText className='h-5 w-5 sm:h-6 sm:w-6 text-purple-600' />
               </div>
             </div>
           </CardContent>
@@ -188,26 +194,30 @@ export default function StatisticsDisplay({
       </div>
 
       {/* Additional Statistics */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8'>
         {/* Payment Statistics */}
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <CreditCard className='h-5 w-5 mr-2' />
-              Thống kê thanh toán
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <CreditCard className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>Thống kê thanh toán</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='space-y-4'>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>Tổng đã thanh toán</span>
-                <span className='font-bold text-green-600'>
+          <CardContent className='p-4 sm:p-6 pt-0'>
+            <div className='space-y-3 sm:space-y-4'>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
+                  Tổng đã thanh toán
+                </span>
+                <span className='font-bold text-green-600 text-xs sm:text-sm break-all'>
                   {formatCurrency(stats.totalPaid || 0)}
                 </span>
               </div>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>Tổng chưa thanh toán</span>
-                <span className='font-bold text-orange-600'>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
+                  Tổng chưa thanh toán
+                </span>
+                <span className='font-bold text-orange-600 text-xs sm:text-sm break-all'>
                   {formatCurrency(stats.totalUnpaid || 0)}
                 </span>
               </div>
@@ -217,31 +227,35 @@ export default function StatisticsDisplay({
 
         {/* Summary Statistics */}
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <PieChartIcon className='h-5 w-5 mr-2' />
-              Thống kê tổng quan
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <PieChartIcon className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>Thống kê tổng quan</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='space-y-4'>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>
+          <CardContent className='p-4 sm:p-6 pt-0'>
+            <div className='space-y-3 sm:space-y-4'>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
                   Số tiền trung bình/giao dịch
                 </span>
-                <span className='font-bold text-blue-600'>
+                <span className='font-bold text-blue-600 text-xs sm:text-sm break-all'>
                   {formatCurrency(stats.averageTransactionAmount || 0)}
                 </span>
               </div>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>Tỷ lệ thanh toán</span>
-                <span className='font-bold text-purple-600'>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
+                  Tỷ lệ thanh toán
+                </span>
+                <span className='font-bold text-purple-600 text-xs sm:text-sm'>
                   {(stats.paymentRatio || 0).toFixed(1)}%
                 </span>
               </div>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>Thu/Chi ratio</span>
-                <span className='font-bold text-indigo-600'>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
+                  Thu/Chi ratio
+                </span>
+                <span className='font-bold text-indigo-600 text-xs sm:text-sm'>
                   {(stats.totalOutcome || 0) > 0
                     ? (
                         (stats.totalIncome || 0) / (stats.totalOutcome || 0)
@@ -249,10 +263,12 @@ export default function StatisticsDisplay({
                     : '∞'}
                 </span>
               </div>
-              <div className='flex justify-between items-center p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium'>Tình trạng tài chính</span>
+              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm'>
+                  Tình trạng tài chính
+                </span>
                 <span
-                  className={`font-bold ${
+                  className={`font-bold text-xs sm:text-sm ${
                     (stats.netAmount || 0) >= 0
                       ? 'text-green-600'
                       : 'text-red-600'
@@ -267,20 +283,22 @@ export default function StatisticsDisplay({
       </div>
 
       {/* Category and Time-based Analytics */}
-      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8'>
+      <div className='grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8'>
         {/* Income By Category Statistics */}
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <BarChart3 className='h-5 w-5 mr-2' />
-              Thống kê thu nhập theo danh mục
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <BarChart3 className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>
+                Thống kê thu nhập theo danh mục
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {incomeByCategory.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='mx-auto aspect-square max-h-[300px]'
+                className='mx-auto aspect-square max-h-[250px] sm:max-h-[300px]'
               >
                 <PieChart>
                   <ChartTooltip
@@ -299,7 +317,7 @@ export default function StatisticsDisplay({
                     nameKey='category'
                     cx='50%'
                     cy='50%'
-                    outerRadius={80}
+                    outerRadius={60}
                   >
                     {incomeByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -308,7 +326,7 @@ export default function StatisticsDisplay({
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu danh mục
               </p>
             )}
@@ -317,17 +335,19 @@ export default function StatisticsDisplay({
 
         {/* Outcome By Category Statistics */}
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <BarChart3 className='h-5 w-5 mr-2' />
-              Thống kê chi tiêu theo danh mục
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <BarChart3 className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>
+                Thống kê chi tiêu theo danh mục
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {outcomeByCategory.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='mx-auto aspect-square max-h-[300px]'
+                className='mx-auto aspect-square max-h-[250px] sm:max-h-[300px]'
               >
                 <PieChart>
                   <ChartTooltip
@@ -346,7 +366,7 @@ export default function StatisticsDisplay({
                     nameKey='category'
                     cx='50%'
                     cy='50%'
-                    outerRadius={80}
+                    outerRadius={60}
                   >
                     {outcomeByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -355,7 +375,7 @@ export default function StatisticsDisplay({
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu danh mục
               </p>
             )}
@@ -363,18 +383,18 @@ export default function StatisticsDisplay({
         </Card>
 
         {/* By Day Statistics */}
-        <Card className='col-span-2 '>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <Calendar className='h-5 w-5 mr-2' />
-              Thống kê theo ngày (30 ngày gần nhất)
+        <Card className='col-span-1 xl:col-span-2'>
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <Calendar className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>Thống kê theo ngày</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {monthlyChartData.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='h-[400px] w-full md:w-3/4 mx-auto'
+                className='h-[300px] sm:h-[400px] w-full'
               >
                 <LineChart
                   data={monthlyChartData}
@@ -384,14 +404,14 @@ export default function StatisticsDisplay({
                 >
                   <XAxis
                     dataKey='date'
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     tickFormatter={(value) => {
                       const date = new Date(value);
                       return `${date.getDate()}/${date.getMonth() + 1}`;
                     }}
                   />
                   <YAxis
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     type='number'
                     tickFormatter={(value) => formatCurrency(value)}
                   />
@@ -429,7 +449,7 @@ export default function StatisticsDisplay({
                 </LineChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu theo ngày
               </p>
             )}
@@ -438,20 +458,22 @@ export default function StatisticsDisplay({
       </div>
 
       {/* Location Analytics */}
-      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8'>
+      <div className='grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8'>
         {/* By Location Statistics */}
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <Globe className='h-5 w-5 mr-2' />
-              Thống kê thu nhập theo tỉnh/thành phố
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>
+                Thống kê thu nhập theo tỉnh/thành phố
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {topProvinces.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='mx-auto aspect-square max-h-[300px]'
+                className='mx-auto aspect-square max-h-[250px] sm:max-h-[300px]'
               >
                 <PieChart>
                   <ChartTooltip
@@ -471,7 +493,7 @@ export default function StatisticsDisplay({
                     nameKey='province'
                     cx='50%'
                     cy='50%'
-                    outerRadius={80}
+                    outerRadius={60}
                   >
                     {topProvinces.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -480,7 +502,7 @@ export default function StatisticsDisplay({
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu theo địa điểm
               </p>
             )}
@@ -488,17 +510,19 @@ export default function StatisticsDisplay({
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <Globe className='h-5 w-5 mr-2' />
-              Thống kê chi tiêu theo tỉnh/thành phố
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>
+                Thống kê chi tiêu theo tỉnh/thành phố
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {topProvinces.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='mx-auto aspect-square max-h-[300px]'
+                className='mx-auto aspect-square max-h-[250px] sm:max-h-[300px]'
               >
                 <PieChart>
                   <ChartTooltip
@@ -518,7 +542,7 @@ export default function StatisticsDisplay({
                     nameKey='province'
                     cx='50%'
                     cy='50%'
-                    outerRadius={80}
+                    outerRadius={60}
                   >
                     {topProvinces.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -527,7 +551,7 @@ export default function StatisticsDisplay({
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu theo địa điểm
               </p>
             )}
@@ -535,17 +559,19 @@ export default function StatisticsDisplay({
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <Globe className='h-5 w-5 mr-2' />
-              Thống kê lợi nhuận theo tỉnh/thành phố
+          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center text-base sm:text-lg'>
+              <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
+              <span className='text-sm sm:text-lg'>
+                Thống kê lợi nhuận theo tỉnh/thành phố
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-4 sm:p-6 pt-0'>
             {topProvinces.length > 0 ? (
               <ChartContainer
                 config={chartConfig}
-                className='mx-auto aspect-square max-h-[300px]'
+                className='mx-auto aspect-square max-h-[250px] sm:max-h-[300px]'
               >
                 <PieChart>
                   <ChartTooltip
@@ -565,7 +591,7 @@ export default function StatisticsDisplay({
                     nameKey='province'
                     cx='50%'
                     cy='50%'
-                    outerRadius={80}
+                    outerRadius={60}
                   >
                     {topProvinces.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -574,61 +600,10 @@ export default function StatisticsDisplay({
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className='text-center text-gray-500 py-8'>
+              <p className='text-center text-gray-500 py-6 sm:py-8 text-sm sm:text-base'>
                 Chưa có dữ liệu theo địa điểm
               </p>
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Location Summary Tables */}
-      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8'>
-        {/* Province Summary Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center'>
-              <Globe className='h-5 w-5 mr-2' />
-              Bảng thống kê theo tỉnh/thành phố
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-2 max-h-64 overflow-y-auto'>
-              {stats.byProvince?.slice(0, 10).map((province, index) => (
-                <div
-                  key={province.province}
-                  className='flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'
-                >
-                  <div className='flex-1'>
-                    <div className='font-medium text-sm'>
-                      {province.province}
-                    </div>
-                    <div className='text-xs text-gray-500'>
-                      {province.customerCount} khách hàng • {province.count}{' '}
-                      giao dịch
-                    </div>
-                  </div>
-                  <div className='text-right'>
-                    <div className='font-bold text-sm'>
-                      {formatCurrency(province.total)}
-                    </div>
-                    <div className='text-xs text-gray-500'>
-                      <span className='text-green-600'>
-                        +{formatCurrency(province.income)}
-                      </span>
-                      {' / '}
-                      <span className='text-red-600'>
-                        -{formatCurrency(province.outcome)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )) || (
-                <p className='text-center text-gray-500 py-4'>
-                  Chưa có dữ liệu theo tỉnh/thành phố
-                </p>
-              )}
-            </div>
           </CardContent>
         </Card>
       </div>

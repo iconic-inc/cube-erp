@@ -25,6 +25,8 @@ import {
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { Button } from '~/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
+import { Badge } from '~/components/ui/badge';
 import { canAccessCustomerManagement } from '~/utils/permission';
 import {
   getDistrictBySlug,
@@ -122,14 +124,25 @@ export default function HRMCustomers() {
       render: (customer: ICustomer) => (
         <Link
           to={`/erp/crm/customers/${customer.id}`}
-          className='text-blue-600 hover:underline flex flex-col'
+          className='text-blue-600 hover:underline flex items-center'
         >
-          <span>
-            {customer.cus_firstName} {customer.cus_lastName}
-          </span>
-          <span className='text-gray-500 text-sm truncate'>
-            {customer.cus_code || 'Chưa có mã'}
-          </span>
+          <Avatar className='w-6 h-6 sm:w-8 sm:h-8 mr-2 shrink-0'>
+            <AvatarImage
+              src={'/assets/avatar-placeholder.png'}
+              alt={`${customer.cus_firstName} ${customer.cus_lastName}`}
+            />
+            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-xs sm:text-sm'>
+              {customer.cus_firstName?.charAt(0).toUpperCase() || 'N/A'}
+            </AvatarFallback>
+          </Avatar>
+          <div className='flex flex-col min-w-0 flex-1'>
+            <span className='text-sm sm:text-base font-medium truncate'>
+              {customer.cus_firstName} {customer.cus_lastName}
+            </span>
+            <span className='text-gray-500 text-xs sm:text-sm truncate'>
+              {customer.cus_code || 'Chưa có mã'}
+            </span>
+          </div>
         </Link>
       ),
     },
@@ -142,13 +155,15 @@ export default function HRMCustomers() {
         customer.cus_msisdn ? (
           <Link
             to={`tel:${customer.cus_msisdn}`}
-            className='text-blue-600 hover:underline truncate'
+            className='text-blue-600 hover:underline text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'
             onClick={(e) => e.stopPropagation()}
           >
             {customer.cus_msisdn}
           </Link>
         ) : (
-          'Chưa có số điện thoại'
+          <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
+            Chưa có số điện thoại
+          </span>
         ),
     },
     {
@@ -158,8 +173,14 @@ export default function HRMCustomers() {
       visible: true,
       filterField: 'contactChannel',
       options: Object.values(CUSTOMER.CONTACT_CHANNEL),
-      render: (customer: ICustomer) =>
-        getContactChannelLabel(customer.cus_contactChannel),
+      render: (customer: ICustomer) => (
+        <Badge
+          variant='secondary'
+          className='text-xs sm:text-sm whitespace-nowrap'
+        >
+          {getContactChannelLabel(customer.cus_contactChannel)}
+        </Badge>
+      ),
     },
     {
       key: 'source',
@@ -168,14 +189,25 @@ export default function HRMCustomers() {
       visible: true,
       filterField: 'source',
       options: Object.values(CUSTOMER.SOURCE),
-      render: (customer: ICustomer) => getSourceLabel(customer.cus_source),
+      render: (customer: ICustomer) => (
+        <Badge
+          variant='outline'
+          className='text-xs sm:text-sm whitespace-nowrap'
+        >
+          {getSourceLabel(customer.cus_source)}
+        </Badge>
+      ),
     },
     {
       key: 'address',
       title: 'Địa chỉ',
       sortField: 'cus_address.district',
       visible: true,
-      render: (customer: ICustomer) => toAddressString(customer.cus_address),
+      render: (customer: ICustomer) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[150px] sm:max-w-none'>
+          {toAddressString(customer.cus_address)}
+        </span>
+      ),
     },
     {
       key: 'province',
@@ -187,8 +219,11 @@ export default function HRMCustomers() {
         value: p.slug,
         label: p.name,
       })),
-      render: (customer: ICustomer) =>
-        getProvinceBySlug(customer.cus_address.province)?.name,
+      render: (customer: ICustomer) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
+          {getProvinceBySlug(customer.cus_address.province)?.name}
+        </span>
+      ),
     },
     {
       key: 'district',
@@ -200,8 +235,11 @@ export default function HRMCustomers() {
         value: p.slug,
         label: p.name,
       })),
-      render: (customer: ICustomer) =>
-        getDistrictBySlug(districts, customer.cus_address.district)?.name,
+      render: (customer: ICustomer) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
+          {getDistrictBySlug(districts, customer.cus_address.district)?.name}
+        </span>
+      ),
     },
     {
       key: 'createdAt',
@@ -210,17 +248,25 @@ export default function HRMCustomers() {
       visible: true,
       filterField: 'createdAt',
       dateFilterable: true,
-      render: (customer: ICustomer) =>
-        formatDate(customer.cus_createdAt, 'HH:mm - DD/MM/YYYY'),
+      render: (customer: ICustomer) => (
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[140px] sm:max-w-none'>
+          {formatDate(customer.cus_createdAt, 'HH:mm - DD/MM/YYYY')}
+        </span>
+      ),
     },
     {
       key: 'action',
       title: 'Hành động',
       visible: true,
       render: (customer) => (
-        <Button variant='primary' asChild>
+        <Button
+          variant='primary'
+          asChild
+          className='text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2'
+        >
           <Link to={`/erp/crm/cases/new?customerId=${customer?.id || ''}`}>
-            Thêm Hồ sơ vụ việc
+            <span className='hidden sm:inline'>Thêm Hồ sơ vụ việc</span>
+            <span className='sm:hidden'>Thêm vụ việc</span>
           </Link>
         </Button>
       ),
@@ -236,8 +282,9 @@ export default function HRMCustomers() {
         title='Danh sách Khách hàng'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
-            Thêm Khách hàng
+            <Plus className='w-4 h-4' />
+            <span className='hidden sm:inline'>Thêm Khách hàng</span>
+            <span className='sm:hidden'>Thêm</span>
           </>
         }
         actionHandler={() => navigate('/erp/crm/customers/new')}

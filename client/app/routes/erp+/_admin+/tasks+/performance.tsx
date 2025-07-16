@@ -95,7 +95,7 @@ export default function TaskPerformancePage() {
       title: 'Hạng',
       visible: true,
       render: (employee) => (
-        <div className='font-bold text-lg'>
+        <div className='font-bold text-base sm:text-lg'>
           {getRankIcon((employee.rank || 1) - 1)}
         </div>
       ),
@@ -106,8 +106,8 @@ export default function TaskPerformancePage() {
       visible: true,
       sortField: 'employeeName',
       render: (employee) => (
-        <div className='flex items-center space-x-3'>
-          <Avatar className='h-10 w-10'>
+        <div className='flex items-center space-x-2 sm:space-x-3'>
+          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0'>
             <AvatarImage
               src={employee.employeeAvatar}
               alt={employee.employeeName}
@@ -123,14 +123,14 @@ export default function TaskPerformancePage() {
           <div className='min-w-0 flex-1'>
             <Link
               to={`/erp/employees/${employee.employeeId}`}
-              className='font-semibold text-gray-900 hover:text-red-900 transition-colors block truncate'
+              className='font-semibold text-sm sm:text-base text-gray-900 hover:text-red-900 transition-colors block truncate'
             >
               {employee.employeeName}
             </Link>
-            <p className='text-sm text-gray-600 truncate'>
+            <p className='text-xs sm:text-sm text-gray-600 truncate'>
               {employee.employeeCode} • {employee.department}
             </p>
-            <p className='text-xs text-gray-500 truncate'>
+            <p className='text-xs text-gray-500 truncate hidden sm:block'>
               {employee.position}
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function TaskPerformancePage() {
           <Badge
             className={`${getPerformanceColor(
               employee.performanceScore,
-            )} font-bold text-sm px-3 py-1`}
+            )} font-bold text-xs sm:text-sm px-2 sm:px-3 py-1`}
           >
             {Math.round(employee.performanceScore)}
           </Badge>
@@ -160,17 +160,20 @@ export default function TaskPerformancePage() {
       visible: true,
       sortField: 'completionRate',
       render: (employee) => (
-        <div className='flex items-center'>
+        <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2'>
           <div>
-            <p className='text-sm font-semibold mb-1'>
+            <p className='text-xs sm:text-sm font-semibold mb-1'>
               {employee.completedTasks}/{employee.totalTasks}
             </p>
-            <p className='text-xs text-gray-500 mt-1'>
+            <p className='text-xs text-gray-500'>
               {Math.round(employee.completionRate)}%
             </p>
           </div>
-          <div className='w-20 mx-auto'>
-            <Progress value={employee.completionRate} className='h-2' />
+          <div className='w-16 sm:w-20'>
+            <Progress
+              value={employee.completionRate}
+              className='h-1.5 sm:h-2'
+            />
           </div>
         </div>
       ),
@@ -182,7 +185,7 @@ export default function TaskPerformancePage() {
       sortField: 'onTimeRate',
       render: (employee) => (
         <div className='space-x-1'>
-          <span className='text-sm font-semibold text-green-600'>
+          <span className='text-xs sm:text-sm font-semibold text-green-600'>
             {Math.round(employee.onTimeRate)}%
           </span>
         </div>
@@ -195,10 +198,10 @@ export default function TaskPerformancePage() {
       sortField: 'overdueTasks',
       render: (employee) => (
         <div className='space-x-1'>
-          <span className='text-sm font-semibold text-red-600'>
+          <span className='text-xs sm:text-sm font-semibold text-red-600'>
             {employee.overdueTasks}
           </span>
-          <span className='text-xs text-gray-500'>task</span>
+          <span className='text-xs text-gray-500 hidden sm:inline'>task</span>
         </div>
       ),
     },
@@ -208,10 +211,16 @@ export default function TaskPerformancePage() {
       visible: true,
       render: (employee) => (
         <div className=''>
-          <Button variant='outline' size='sm' asChild>
+          <Button
+            variant='outline'
+            size='sm'
+            asChild
+            className='text-xs px-2 py-1'
+          >
             <Link to={`/erp/employees/${employee.employeeId}`}>
-              <User className='w-4 h-4 mr-1' />
-              Chi tiết
+              <User className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
+              <span className='hidden sm:inline'>Chi tiết</span>
+              <span className='sm:hidden'>Xem</span>
             </Link>
           </Button>
         </div>
@@ -233,7 +242,7 @@ export default function TaskPerformancePage() {
   };
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Hiệu suất nhân viên'
@@ -257,16 +266,16 @@ export default function TaskPerformancePage() {
           return (
             <>
               {/* Summary Statistics */}
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+              <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6'>
                 <Card>
-                  <CardContent className='p-6'>
+                  <CardContent className='p-4 sm:p-6'>
                     <div className='flex items-center'>
-                      <Users className='h-8 w-8 text-blue-600' />
-                      <div className='ml-4'>
-                        <p className='text-sm font-medium text-gray-600'>
+                      <Users className='h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0' />
+                      <div className='ml-3 sm:ml-4 min-w-0'>
+                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
                           Tổng nhân viên
                         </p>
-                        <p className='text-2xl font-bold text-gray-900'>
+                        <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                           {data.summary.totalEmployees}
                         </p>
                       </div>
@@ -275,14 +284,14 @@ export default function TaskPerformancePage() {
                 </Card>
 
                 <Card>
-                  <CardContent className='p-6'>
+                  <CardContent className='p-4 sm:p-6'>
                     <div className='flex items-center'>
-                      <Target className='h-8 w-8 text-green-600' />
-                      <div className='ml-4'>
-                        <p className='text-sm font-medium text-gray-600'>
+                      <Target className='h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0' />
+                      <div className='ml-3 sm:ml-4 min-w-0'>
+                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
                           Tỷ lệ hoàn thành TB
                         </p>
-                        <p className='text-2xl font-bold text-gray-900'>
+                        <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                           {Math.round(data.summary.averageCompletionRate)}%
                         </p>
                       </div>
@@ -291,14 +300,14 @@ export default function TaskPerformancePage() {
                 </Card>
 
                 <Card>
-                  <CardContent className='p-6'>
+                  <CardContent className='p-4 sm:p-6'>
                     <div className='flex items-center'>
-                      <Clock className='h-8 w-8 text-orange-600' />
-                      <div className='ml-4'>
-                        <p className='text-sm font-medium text-gray-600'>
+                      <Clock className='h-6 w-6 sm:h-8 sm:w-8 text-orange-600 flex-shrink-0' />
+                      <div className='ml-3 sm:ml-4 min-w-0'>
+                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
                           Tỷ lệ đúng hạn TB
                         </p>
-                        <p className='text-2xl font-bold text-gray-900'>
+                        <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                           {Math.round(data.summary.averageOnTimeRate)}%
                         </p>
                       </div>
@@ -307,14 +316,14 @@ export default function TaskPerformancePage() {
                 </Card>
 
                 <Card>
-                  <CardContent className='p-6'>
+                  <CardContent className='p-4 sm:p-6'>
                     <div className='flex items-center'>
-                      <TrendingUp className='h-8 w-8 text-purple-600' />
-                      <div className='ml-4'>
-                        <p className='text-sm font-medium text-gray-600'>
+                      <TrendingUp className='h-6 w-6 sm:h-8 sm:w-8 text-purple-600 flex-shrink-0' />
+                      <div className='ml-3 sm:ml-4 min-w-0'>
+                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
                           Điểm hiệu suất TB
                         </p>
-                        <p className='text-2xl font-bold text-gray-900'>
+                        <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                           {Math.round(data.summary.averagePerformanceScore)}/100
                         </p>
                       </div>
@@ -325,13 +334,15 @@ export default function TaskPerformancePage() {
 
               {/* Performance Leaderboard */}
               <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center justify-between'>
+                <CardHeader className='p-4 sm:p-6'>
+                  <CardTitle className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0'>
                     <div className='flex items-center'>
-                      <Trophy className='w-5 h-5 mr-2 text-yellow-600' />
-                      Bảng xếp hạng hiệu suất
+                      <Trophy className='w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-600 flex-shrink-0' />
+                      <span className='text-sm sm:text-base font-bold'>
+                        Bảng xếp hạng hiệu suất
+                      </span>
                     </div>
-                    <Badge variant='outline'>
+                    <Badge variant='outline' className='text-xs sm:text-sm'>
                       {data.pagination.total} nhân viên
                     </Badge>
                   </CardTitle>
@@ -362,17 +373,19 @@ export default function TaskPerformancePage() {
               {/* Performance Period Info */}
               {data.summary.periodStart && data.summary.periodEnd && (
                 <Card>
-                  <CardContent className='p-4'>
-                    <div className='flex items-center justify-center text-sm text-gray-600'>
-                      <Calendar className='w-4 h-4 mr-2' />
-                      Dữ liệu từ{' '}
-                      {new Date(data.summary.periodStart).toLocaleDateString(
-                        'vi-VN',
-                      )}{' '}
-                      đến{' '}
-                      {new Date(data.summary.periodEnd).toLocaleDateString(
-                        'vi-VN',
-                      )}
+                  <CardContent className='p-3 sm:p-4'>
+                    <div className='flex items-center justify-center text-xs sm:text-sm text-gray-600'>
+                      <Calendar className='w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0' />
+                      <span className='text-center'>
+                        Dữ liệu từ{' '}
+                        {new Date(data.summary.periodStart).toLocaleDateString(
+                          'vi-VN',
+                        )}{' '}
+                        đến{' '}
+                        {new Date(data.summary.periodEnd).toLocaleDateString(
+                          'vi-VN',
+                        )}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

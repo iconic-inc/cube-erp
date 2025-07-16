@@ -1,19 +1,12 @@
-import {
-  useLoaderData,
-  data as dataResponse,
-  Link,
-  useNavigate,
-} from '@remix-run/react';
+import { useLoaderData, data as dataResponse } from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
 import { getEmployeeById, updateEmployee } from '~/services/employee.server';
 import { getRoles } from '~/services/role.server';
 import EmployeeDetailForm from './_components/EmployeeDetailForm';
 import { parseAuthCookie } from '~/services/cookie.server';
-import { IEmployeeUpdate } from '~/interfaces/employee.interface';
 import ContentHeader from '~/components/ContentHeader';
-import { ArrowLeft, Save } from 'lucide-react';
-import { Button } from '~/components/ui/button';
+import { Save } from 'lucide-react';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 import { canAccessEmployeeManagement } from '~/utils/permission';
@@ -131,14 +124,15 @@ export default function EmployeeEditPage() {
   const formId = useMemo(() => generateFormId('employee-edit-form'), []);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa nhân viên'
         actionContent={
           <>
-            <Save className='w-4 h-4 mr-1' />
-            Cập nhật Nhân viên
+            <Save className='w-4 h-4 sm:w-3 sm:h-3' />
+            <span className='hidden sm:inline'>Cập nhật Nhân viên</span>
+            <span className='sm:hidden'>Cập nhật</span>
           </>
         }
         actionHandler={() => {
@@ -150,7 +144,7 @@ export default function EmployeeEditPage() {
       />
 
       {/* Employee Edit Form */}
-      <div className='mt-8'>
+      <div className='mt-4 sm:mt-8'>
         <EmployeeDetailForm
           formId={formId}
           type='update'

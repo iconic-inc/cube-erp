@@ -20,20 +20,24 @@ export default function EmployeeAttendanceList({
 }) {
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-3 sm:py-4'>
         <div className='flex items-center justify-between'>
-          <CardTitle className='text-white text-xl font-bold flex items-center'>
-            <Clock className='w-6 h-6 mr-2' />
-            Lịch sử chấm công (7 ngày gần nhất)
+          <CardTitle className='text-white text-lg sm:text-xl font-bold flex items-center'>
+            <Clock className='w-5 h-5 sm:w-6 sm:h-6 mr-2' />
+            <span className='hidden sm:inline'>
+              Lịch sử chấm công (7 ngày gần nhất)
+            </span>
+            <span className='sm:hidden'>Chấm công (7 ngày)</span>
           </CardTitle>
           <Button
             size='sm'
             variant='secondary'
-            className='bg-white/20 hover:bg-white/30 text-white border-white/30'
+            className='bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm'
             asChild
           >
             <Link to={`/erp/attendance/detail?employeeId=${employeeId}`}>
-              Xem tất cả
+              <span className='hidden sm:inline'>Xem tất cả</span>
+              <span className='sm:hidden'>Xem tất cả</span>
             </Link>
           </Button>
         </div>
@@ -44,7 +48,7 @@ export default function EmployeeAttendanceList({
           {(attendanceList) => {
             if (!attendanceList || 'success' in attendanceList) {
               return (
-                <div className='p-6'>
+                <div className='p-4 sm:p-6'>
                   <ErrorCard
                     message={
                       attendanceList &&
@@ -60,20 +64,23 @@ export default function EmployeeAttendanceList({
 
             if (attendanceList.length === 0) {
               return (
-                <div className='p-8 text-center'>
-                  <Calendar className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-                  <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                <div className='p-6 sm:p-8 text-center'>
+                  <Calendar className='w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4' />
+                  <h3 className='text-base sm:text-lg font-medium text-gray-900 mb-2'>
                     Chưa có dữ liệu chấm công
                   </h3>
-                  <p className='text-gray-500 mb-4'>
+                  <p className='text-gray-500 mb-4 text-sm'>
                     Nhân viên này chưa có bản ghi chấm công nào trong 7 ngày gần
                     nhất.
                   </p>
-                  <Button variant='outline' asChild>
+                  <Button variant='outline' size='sm' asChild>
                     <Link
                       to={`/erp/attendance/detail?employeeId=${employeeId}`}
                     >
-                      Xem tất cả chấm công
+                      <span className='hidden sm:inline'>
+                        Xem tất cả chấm công
+                      </span>
+                      <span className='sm:hidden'>Xem tất cả</span>
                     </Link>
                   </Button>
                 </div>
@@ -85,21 +92,21 @@ export default function EmployeeAttendanceList({
                 {attendanceList.map((attendance) => (
                   <div
                     key={attendance.id}
-                    className='p-4 hover:bg-gray-50 transition-colors'
+                    className='p-3 sm:p-4 hover:bg-gray-50 transition-colors'
                   >
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center space-x-4'>
-                        <div className='flex-shrink-0'>
+                    <div className='flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0'>
+                      <div className='flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1'>
+                        <div className='flex-shrink-0 mt-1 sm:mt-0'>
                           {attendance.checkInTime && attendance.checkOutTime ? (
-                            <CheckCircle className='w-5 h-5 text-green-500' />
+                            <CheckCircle className='w-4 h-4 sm:w-5 sm:h-5 text-green-500' />
                           ) : (
-                            <AlertCircle className='w-5 h-5 text-yellow-500' />
+                            <AlertCircle className='w-4 h-4 sm:w-5 sm:h-5 text-yellow-500' />
                           )}
                         </div>
 
-                        <div>
-                          <div className='flex items-center space-x-2'>
-                            <span className='text-sm font-medium text-gray-900'>
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2'>
+                            <span className='text-sm font-medium text-gray-900 truncate'>
                               {attendance.date
                                 ? format(
                                     new Date(attendance.date),
@@ -115,7 +122,7 @@ export default function EmployeeAttendanceList({
                                   ? 'default'
                                   : 'secondary'
                               }
-                              className='text-xs'
+                              className='text-xs w-fit'
                             >
                               {attendance.checkInTime && attendance.checkOutTime
                                 ? 'Hoàn thành'
@@ -123,38 +130,42 @@ export default function EmployeeAttendanceList({
                             </Badge>
                           </div>
 
-                          <div className='flex items-center space-x-4 mt-1 text-sm text-gray-500'>
-                            <span className='flex items-center'>
-                              <Clock className='w-3 h-3 mr-1' />
-                              Vào:{' '}
-                              {attendance.checkInTime
-                                ? format(
-                                    new Date(attendance.checkInTime),
-                                    'HH:mm',
-                                    { locale: vi },
-                                  )
-                                : '--:--'}
-                            </span>
-                            <span className='flex items-center'>
-                              <Clock className='w-3 h-3 mr-1' />
-                              Ra:{' '}
-                              {attendance.checkOutTime
-                                ? format(
-                                    new Date(attendance.checkOutTime),
-                                    'HH:mm',
-                                    { locale: vi },
-                                  )
-                                : '--:--'}
-                            </span>
+                          <div className='grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mt-2 sm:mt-1 text-xs sm:text-sm text-gray-500'>
+                            <div className='flex items-center'>
+                              <Clock className='w-3 h-3 mr-1 flex-shrink-0' />
+                              <span className='truncate'>
+                                Vào:{' '}
+                                {attendance.checkInTime
+                                  ? format(
+                                      new Date(attendance.checkInTime),
+                                      'HH:mm',
+                                      { locale: vi },
+                                    )
+                                  : '--:--'}
+                              </span>
+                            </div>
+                            <div className='flex items-center'>
+                              <Clock className='w-3 h-3 mr-1 flex-shrink-0' />
+                              <span className='truncate'>
+                                Ra:{' '}
+                                {attendance.checkOutTime
+                                  ? format(
+                                      new Date(attendance.checkOutTime),
+                                      'HH:mm',
+                                      { locale: vi },
+                                    )
+                                  : '--:--'}
+                              </span>
+                            </div>
                             {attendance.checkInTime &&
                               attendance.checkOutTime && (
-                                <span className='text-blue-600 font-medium'>
+                                <div className='text-blue-600 font-medium'>
                                   Tổng:{' '}
                                   {calculateWorkHours(
                                     attendance.checkInTime,
                                     attendance.checkOutTime,
                                   )}
-                                </span>
+                                </div>
                               )}
                           </div>
                         </div>
@@ -164,12 +175,15 @@ export default function EmployeeAttendanceList({
                 ))}
 
                 {attendanceList.length > 0 && (
-                  <div className='p-4 bg-gray-50 text-center'>
-                    <Button variant='outline' asChild>
+                  <div className='p-3 sm:p-4 bg-gray-50 text-center'>
+                    <Button variant='outline' size='sm' asChild>
                       <Link
                         to={`/erp/attendance/detail?employeeId=${employeeId}`}
                       >
-                        Xem tất cả chấm công
+                        <span className='hidden sm:inline'>
+                          Xem tất cả chấm công
+                        </span>
+                        <span className='sm:hidden'>Xem tất cả</span>
                       </Link>
                     </Button>
                   </div>

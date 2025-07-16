@@ -14,6 +14,7 @@ import { isAuthenticated } from '~/services/auth.server';
 import { IRewardUpdate } from '~/interfaces/reward.interface';
 import { generateFormId } from '~/utils';
 import { canAccessRewardManagement } from '~/utils/permission';
+import { Save } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -54,8 +55,9 @@ export default function RewardEdit() {
         title='Chỉnh sửa Quỹ thưởng'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Quỹ thưởng
+            <Save className='h-4 w-4' />
+            <span className='hidden sm:inline'>Cập nhật quỹ thưởng</span>
+            <span className='sm:hidden'>Cập nhật</span>
           </>
         }
         actionHandler={() => {

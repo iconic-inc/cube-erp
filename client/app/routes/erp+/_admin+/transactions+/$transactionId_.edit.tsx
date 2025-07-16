@@ -20,6 +20,7 @@ import { ITransactionUpdate } from '~/interfaces/transaction.interface';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import { generateFormId } from '~/utils';
 import { canAccessTransactionManagement } from '~/utils/permission';
+import { Save } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -98,8 +99,9 @@ export default function TransactionEdit() {
         title='Chỉnh sửa Giao dịch'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Giao dịch
+            <Save className='inline w-4 h-4' />
+            <span className='hidden md:inline'>Lưu Giao dịch</span>
+            <span className='md:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {

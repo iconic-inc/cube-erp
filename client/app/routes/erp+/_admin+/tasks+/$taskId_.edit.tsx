@@ -15,6 +15,7 @@ import { isAuthenticated } from '~/services/auth.server';
 import { ITaskUpdate } from '~/interfaces/task.interface';
 import { TASK } from '~/constants/task.constant';
 import { generateFormId } from '~/utils';
+import { Save } from 'lucide-react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -55,14 +56,15 @@ export default function TaskEdit() {
   const formId = useMemo(() => generateFormId('task-update-form'), []);
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Chỉnh sửa Task'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Cập nhật Task
+            <Save className='h-4 w-4' />
+            <span className='hidden sm:inline'>Cập nhật Task</span>
+            <span className='sm:hidden'>Cập nhật</span>
           </>
         }
         actionHandler={() => {
@@ -74,12 +76,14 @@ export default function TaskEdit() {
       />
 
       {/* Form Container */}
-      <TaskDetailForm
-        formId={formId}
-        type='update'
-        employees={employeesPromise}
-        taskPromise={taskPromise}
-      />
+      <div className='mt-4 sm:mt-8'>
+        <TaskDetailForm
+          formId={formId}
+          type='update'
+          employees={employeesPromise}
+          taskPromise={taskPromise}
+        />
+      </div>
     </div>
   );
 }

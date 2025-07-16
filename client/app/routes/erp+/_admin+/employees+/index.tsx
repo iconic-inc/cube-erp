@@ -63,9 +63,9 @@ export default function HRMEmployees() {
       render: (item) => (
         <Link
           to={`/erp/employees/${item.id}`}
-          className='text-blue-600 hover:underline flex'
+          className='text-blue-600 hover:underline flex items-center'
         >
-          <Avatar className='w-8 h-8 mr-2'>
+          <Avatar className='w-6 h-6 sm:w-8 sm:h-8 mr-2 shrink-0'>
             <AvatarImage
               src={
                 item.emp_user.usr_avatar?.img_url ||
@@ -73,30 +73,19 @@ export default function HRMEmployees() {
               }
               alt={`${item.emp_user.usr_firstName} ${item.emp_user.usr_lastName}`}
             />
-            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold'>
+            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-xs sm:text-sm'>
               {item.emp_user.usr_firstName?.charAt(0).toUpperCase() || 'N/A'}
             </AvatarFallback>
           </Avatar>
-          <div className='flex flex-col'>
-            <span>
+          <div className='flex flex-col min-w-0 flex-1'>
+            <span className='text-sm sm:text-base font-medium truncate'>
               {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
             </span>
-            <span className='text-gray-500 text-sm truncate'>
+            <span className='text-gray-500 text-xs sm:text-sm truncate'>
               {item.emp_code || 'Chưa có mã'}
             </span>
           </div>
         </Link>
-      ),
-    },
-    {
-      title: 'Mã nhân viên',
-      key: 'code',
-      visible: true,
-      sortField: 'emp_code',
-      render: (item) => (
-        <span className='text-gray-600 text-sm'>
-          {item.emp_code || 'Chưa có mã'}
-        </span>
       ),
     },
     {
@@ -109,7 +98,10 @@ export default function HRMEmployees() {
         return { label: item.emp_department, value: item.emp_department };
       },
       render: (item) => (
-        <Badge variant='secondary' className='text-sm'>
+        <Badge
+          variant='secondary'
+          className='text-xs sm:text-sm whitespace-nowrap'
+        >
           {item.emp_department || 'Chưa có phòng ban'}
         </Badge>
       ),
@@ -124,7 +116,10 @@ export default function HRMEmployees() {
         return { label: item.emp_position, value: item.emp_position };
       },
       render: (item) => (
-        <Badge variant='outline' className='text-sm'>
+        <Badge
+          variant='outline'
+          className='text-xs sm:text-sm whitespace-nowrap'
+        >
           {item.emp_position || 'Chưa có chức vụ'}
         </Badge>
       ),
@@ -135,7 +130,7 @@ export default function HRMEmployees() {
       visible: true,
       sortField: 'emp_user.usr_msisdn',
       render: (item) => (
-        <span className='text-gray-600 text-sm'>
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
           {item.emp_user.usr_msisdn || 'Chưa có số điện thoại'}
         </span>
       ),
@@ -146,7 +141,7 @@ export default function HRMEmployees() {
       visible: true,
       sortField: 'emp_user.usr_email',
       render: (item) => (
-        <span className='text-gray-600 text-sm'>
+        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[150px] sm:max-w-none'>
           {item.emp_user.usr_email || 'Chưa có email'}
         </span>
       ),
@@ -158,12 +153,14 @@ export default function HRMEmployees() {
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
+
       <ContentHeader
         title='Danh sách Nhân viên'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
-            Thêm Nhân viên
+            <Plus className='w-4 h-4' />
+            <span className='hidden sm:inline'>Thêm Nhân viên</span>
+            <span className='sm:hidden'>Thêm</span>
           </>
         }
         actionHandler={() => navigate('/erp/employees/new')}

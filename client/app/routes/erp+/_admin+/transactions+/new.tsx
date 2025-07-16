@@ -18,6 +18,7 @@ import { getCustomers } from '~/services/customer.server';
 import { getCaseServices } from '~/services/case.server';
 import { generateFormId } from '~/utils';
 import { canAccessTransactionManagement } from '~/utils/permission';
+import { Save } from 'lucide-react';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -105,8 +106,9 @@ export default function NewTransaction() {
         title='Thêm mới giao dịch'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu giao dịch
+            <Save className='inline w-4 h-4' />
+            <span className='hidden md:inline'>Lưu Giao dịch</span>
+            <span className='md:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {

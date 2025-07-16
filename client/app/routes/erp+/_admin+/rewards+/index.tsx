@@ -98,6 +98,8 @@ export default function RewardsIndex() {
       title: 'Trạng thái',
       visible: true,
       sortField: 'rw_status',
+      filterField: 'status',
+      options: Object.values(REWARD.STATUS),
       render: (item) => (
         <Badge className={getStatusBadgeClass(item.rw_status)}>
           {getStatusLabel(item.rw_status)}
@@ -150,8 +152,9 @@ export default function RewardsIndex() {
         title='Quản lý quỹ thưởng'
         actionContent={
           <>
-            <Plus className='w-4 h-4 mr-2' />
-            Tạo quỹ thưởng mới
+            <Plus className='w-4 h-4' />
+            <span className='hidden sm:inline'>Tạo quỹ thưởng mới</span>
+            <span className='sm:hidden'>Tạo mới</span>
           </>
         }
         actionHandler={() => navigate('/erp/rewards/new')}

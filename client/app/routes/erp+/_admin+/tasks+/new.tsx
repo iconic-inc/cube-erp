@@ -18,6 +18,7 @@ import { getEmployees } from '~/services/employee.server';
 import { TASK } from '~/constants/task.constant';
 import { getCaseServiceById } from '~/services/case.server';
 import { generateFormId } from '~/utils';
+import { Save } from 'lucide-react';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -67,14 +68,15 @@ export default function NewTask() {
 
   const formId = useMemo(() => generateFormId('task-detail-form'), []);
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
       {/* Content Header */}
       <ContentHeader
         title='Thêm mới Task'
         actionContent={
           <>
-            <span className='material-symbols-outlined text-sm mr-1'>save</span>
-            Lưu Task
+            <Save className='h-4 w-4' />
+            <span className='hidden sm:inline'>Lưu Task</span>
+            <span className='sm:hidden'>Lưu</span>
           </>
         }
         actionHandler={() => {
@@ -86,12 +88,14 @@ export default function NewTask() {
       />
 
       {/* Form Container */}
-      <TaskDetailForm
-        employees={employeesPromise}
-        formId={formId}
-        type='create'
-        casePromise={casePromise}
-      />
+      <div className='mt-4 sm:mt-8'>
+        <TaskDetailForm
+          employees={employeesPromise}
+          formId={formId}
+          type='create'
+          casePromise={casePromise}
+        />
+      </div>
     </div>
   );
 }

@@ -159,7 +159,7 @@ export default function CaseTaskList({
                 <Progress value={progressPercentage} className='h-3' />
               </div>
             </CardHeader>
-            <CardContent className='p-6 space-y-4'>
+            <CardContent className='p-2 md:p-6 space-y-4'>
               <div className='flex justify-end'>
                 <Button variant='primary' className='px-4 py-2'>
                   <Link to={`/erp/tasks/new?caseId=${caseId}`}>Thêm Task</Link>

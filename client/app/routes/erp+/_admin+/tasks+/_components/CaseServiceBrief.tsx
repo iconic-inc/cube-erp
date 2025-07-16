@@ -19,19 +19,23 @@ export default function CaseServiceBrief({
   const { case_customer: customer } = caseService;
 
   return (
-    <div className='w-full p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm'>
-      <div className='flex justify-between items-center'>
-        <h4 className='text-xl font-bold text-green-800 mb-3 flex items-center'>
-          <BookUser className='mr-2' />
+    <div className='w-full p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-x-3 mb-3 sm:mb-0'>
+        <h4 className='text-lg sm:text-xl font-bold text-green-800 mb-2 sm:mb-3 flex items-center'>
+          <BookUser className='mr-2 w-4 h-4 sm:w-5 sm:h-5' />
           Chi tiết Hồ sơ vụ việc
         </h4>
 
-        <Button variant='primary' asChild>
+        <Button
+          variant='primary'
+          asChild
+          className='text-xs sm:text-sm w-full sm:w-auto'
+        >
           <Link to={`/erp/crm/cases/${caseService.id}`}>Xem chi tiết</Link>
         </Button>
       </div>
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm'>
         <p>
           <span className='font-bold text-gray-700'>Mã Hồ sơ:</span>{' '}
           {caseService.case_code}

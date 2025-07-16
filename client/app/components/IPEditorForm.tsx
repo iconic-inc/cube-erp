@@ -61,7 +61,7 @@ export default function IPEditorForm({
       action={
         type === 'update' ? `/api/office-ip/${officeIp?.id}` : '/api/office-ip'
       }
-      className='flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition duration-200'
+      className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition duration-200'
       onSubmit={(e) => {
         if (toastIdRef.current) {
           toast.dismiss(toastIdRef.current);
@@ -75,10 +75,10 @@ export default function IPEditorForm({
         setIsLoading(true);
       }}
     >
-      <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1 border-b border-gray-300'>
+      <div className='w-full sm:w-auto space-y-2'>
+        <label className='block text-xs md:text-sm font-medium text-gray-700 mb-1 border-b border-gray-300'>
           <input
-            className='bg-transparent font-medium text-sm focus-visible:outline-none placeholder:text-gray-400 border-b'
+            className='bg-transparent font-medium text-xs md:text-sm focus-visible:outline-none placeholder:text-gray-400 border-b w-full'
             name='officeName'
             value={officeName}
             onChange={(e) => setOfficeName(e.target.value)}
@@ -87,9 +87,9 @@ export default function IPEditorForm({
           />
         </label>
 
-        <label className='block text-sm font-medium text-gray-700 mb-1 border-b border-gray-300'>
+        <label className='block text-xs md:text-sm font-medium text-gray-700 mb-1 border-b border-gray-300'>
           <input
-            className='bg-transparent font-medium text-sm border-b focus-visible:outline-none placeholder:text-gray-400'
+            className='bg-transparent font-medium text-xs md:text-sm border-b focus-visible:outline-none placeholder:text-gray-400 w-full'
             name='ipAddress'
             value={ipAddress}
             onChange={(e) => setIpAddress(e.target.value)}
@@ -98,17 +98,19 @@ export default function IPEditorForm({
         </label>
       </div>
 
-      <div className='flex space-x-2 items-center'>
+      <div className='flex space-x-2 items-center self-end sm:self-auto'>
         <button
-          className='h-8 w-8 p-1 text-green-500 hover:bg-green-100 rounded-full transition-all'
+          className='h-7 w-7 md:h-8 md:w-8 p-1 text-green-500 hover:bg-green-100 rounded-full transition-all flex-shrink-0'
           disabled={isLoading}
           type='submit'
         >
-          <span className='material-symbols-outlined'>check</span>
+          <span className='material-symbols-outlined text-sm md:text-base'>
+            check
+          </span>
         </button>
 
         <button
-          className='h-8 w-8 text-red-500 hover:bg-red-100 p-1 rounded-full transition-all'
+          className='h-7 w-7 md:h-8 md:w-8 text-red-500 hover:bg-red-100 p-1 rounded-full transition-all flex-shrink-0'
           type='button'
           onClick={() => {
             if (type === 'update') {
@@ -123,27 +125,33 @@ export default function IPEditorForm({
             setIpAddress('');
           }}
         >
-          <span className='material-symbols-outlined'>close</span>
+          <span className='material-symbols-outlined text-sm md:text-base'>
+            close
+          </span>
         </button>
 
-        <button
-          className='h-8 w-8 text-red-500 hover:bg-red-50 p-1 rounded-full transition-all'
-          type='button'
-          onClick={() => {
-            toastIdRef.current = toast.loading('Đang xóa địa chỉ IP...');
-            fetcher.submit(
-              {},
-              {
-                method: 'DELETE',
-                action: `/api/office-ip/${officeIp?.id}`,
-              },
-            );
+        {type === 'update' && (
+          <button
+            className='h-7 w-7 md:h-8 md:w-8 text-red-500 hover:bg-red-50 p-1 rounded-full transition-all flex-shrink-0'
+            type='button'
+            onClick={() => {
+              toastIdRef.current = toast.loading('Đang xóa địa chỉ IP...');
+              fetcher.submit(
+                {},
+                {
+                  method: 'DELETE',
+                  action: `/api/office-ip/${officeIp?.id}`,
+                },
+              );
 
-            setIsLoading(true);
-          }}
-        >
-          <span className='material-symbols-outlined'>delete</span>
-        </button>
+              setIsLoading(true);
+            }}
+          >
+            <span className='material-symbols-outlined text-sm md:text-base'>
+              delete
+            </span>
+          </button>
+        )}
       </div>
     </fetcher.Form>
   );

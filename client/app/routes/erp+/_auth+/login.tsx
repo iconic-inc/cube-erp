@@ -1,8 +1,9 @@
 // components
 import { useEffect, useRef, useState } from 'react';
-import { redirect, useFetcher, useNavigation } from '@remix-run/react';
+import { redirect, useFetcher, useNavigation, Link } from '@remix-run/react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { toast } from 'react-toastify';
+import { Eye, EyeOff, User, Lock, Grid3X3 } from 'lucide-react';
 
 import { authenticator, logout } from '~/services/auth.server';
 import { isExpired } from '~/utils';
@@ -11,6 +12,17 @@ import {
   parseAuthCookie,
   serializeAuthCookie,
 } from '~/services/cookie.server';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -173,143 +185,124 @@ const Login = () => {
   }, []);
 
   return (
-    <div className='h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto'>
-      <div className='w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1'>
-        <div className='p-6 md:p-8'>
-          <div className='flex items-center justify-center mb-8'>
-            <div className='bg-blue-500 text-white p-1.5 rounded-md'>
-              <span className='material-symbols-outlined text-xs'>
-                grid_view
-              </span>
+    <div className='min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-red-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8'>
+      <div className='w-full max-w-md mx-auto'>
+        <Card className='border-0 shadow-xl bg-white/95 backdrop-blur-sm'>
+          <CardHeader className='space-y-4 pb-2 md:pb-6'>
+            {/* Title Section */}
+            <div className='text-center space-y-2'>
+              <CardTitle className='text-2xl sm:text-3xl font-bold text-red-900'>
+                Đăng nhập
+              </CardTitle>
+              <CardDescription className='text-sm sm:text-base text-gray-600'>
+                Đăng nhập để truy cập vào trang quản lý Nhân viên.
+              </CardDescription>
             </div>
-            <span className='text-blue-500 font-bold ml-2 text-xl'>
-              Cube Lawfirm Inc.
-            </span>
-          </div>
+          </CardHeader>
 
-          <h1 className='text-2xl font-bold text-center mb-6 text-gray-800'>
-            Đăng nhập
-          </h1>
-          <p className='text-center text-gray-500 mb-8'>
-            Đăng nhập để truy cập vào trang quản lý Nhân viên.
-          </p>
-
-          <fetcher.Form method='POST' className='space-y-5'>
-            <div className='space-y-2'>
-              <label className='block text-sm font-medium text-gray-700'>
-                Username
-              </label>
-              <div className='relative'>
-                <span className='absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400'>
-                  <span className='material-symbols-outlined text-sm'>
-                    person
-                  </span>
-                </span>
-                <input
-                  type='text'
-                  name='username'
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder='Nhập tên đăng nhập hoặc email'
-                  className='w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-1 
-                  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 focus-visible:outline-none'
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <div className='flex justify-between items-center'>
-                <label className='block text-sm font-medium text-gray-700'>
-                  Password
-                </label>
-                <a
-                  href='#'
-                  className='text-xs text-blue-500 hover:text-blue-600 hover:underline transition-all'
+          <CardContent className='space-y-6'>
+            <fetcher.Form method='POST' className='space-y-5'>
+              {/* Username Field */}
+              <div className='space-y-2'>
+                <Label
+                  htmlFor='username'
+                  className='text-sm sm:text-base font-medium text-gray-900'
                 >
-                  Forgot password?
-                </a>
+                  Username
+                </Label>
+                <div className='relative'>
+                  <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
+                  <Input
+                    id='username'
+                    type='text'
+                    name='username'
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder='Nhập tên đăng nhập hoặc email'
+                    className='pl-10 sm:pl-12 text-base h-12 sm:h-10'
+                    required
+                  />
+                </div>
               </div>
-              <div className='relative'>
-                <span className='absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400'>
-                  <span className='material-symbols-outlined text-sm'>
-                    lock
-                  </span>
-                </span>
-                <input
-                  type='password'
-                  placeholder='Enter your password'
-                  name='password'
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className='w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-1 
-                  focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 focus-visible:outline-none'
-                />
-                <button
-                  type='button'
-                  className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-all'
-                  onClick={() => setShowPassword(!showPassword)}
+
+              {/* Password Field */}
+              <div className='space-y-2'>
+                <div className='flex justify-between items-center'>
+                  <Label
+                    htmlFor='password'
+                    className='text-sm sm:text-base font-medium text-gray-900'
+                  >
+                    Password
+                  </Label>
+                </div>
+                <div className='relative'>
+                  <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
+                  <Input
+                    id='password'
+                    type={showPassword ? 'text' : 'password'}
+                    name='password'
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder='Enter your password'
+                    className='pl-10 sm:pl-12 pr-10 sm:pr-12 text-base h-12 sm:h-10'
+                    required
+                  />
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='absolute right-2 top-1/2 transform -translate-y-1/2 h-auto p-1 text-gray-400 hover:text-gray-600'
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className='w-4 h-4 sm:w-5 sm:h-5' />
+                    ) : (
+                      <Eye className='w-4 h-4 sm:w-5 sm:h-5' />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <input type='hidden' name='fingerprint' value={fingerprint} />
+
+              {/* Submit Button */}
+              <Button
+                type='submit'
+                className='w-full'
+                disabled={loading || !username || !password}
+              >
+                {loading ? (
+                  <div className='flex items-center space-x-2'>
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                    <span>Đang đăng nhập...</span>
+                  </div>
+                ) : (
+                  'Đăng nhập'
+                )}
+              </Button>
+            </fetcher.Form>
+          </CardContent>
+
+          <CardFooter className='bg-gray-50/50 border-t border-gray-100'>
+            <div className='w-full text-center'>
+              <p className='text-xs sm:text-sm text-gray-600'>
+                Không có tài khoản?{' '}
+                <Link
+                  to='#'
+                  className='text-blue-600 font-medium hover:text-blue-700 hover:underline transition-colors'
                 >
-                  {showPassword ? (
-                    <span className='material-symbols-outlined text-normal'>
-                      visibility
-                    </span>
-                  ) : (
-                    <span className='material-symbols-outlined text-normal'>
-                      visibility_off
-                    </span>
-                  )}
-                </button>
-              </div>
+                  Liên hệ admin
+                </Link>
+              </p>
             </div>
+          </CardFooter>
+        </Card>
 
-            <input type='hidden' name='fingerprint' value={fingerprint} />
-
-            <button
-              type='submit'
-              className='w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all duration-300'
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Đăng nhập'}
-            </button>
-          </fetcher.Form>
-        </div>
-
-        <div className='bg-gray-50 p-6 text-center border-t border-gray-100'>
-          <p className='text-sm text-gray-600'>
-            Không có tài khoản?{' '}
-            <a
-              href='#'
-              className='text-blue-500 font-medium hover:text-blue-600 hover:underline transition-all'
-            >
-              Liên hệ admin
-            </a>
+        {/* Footer */}
+        <div className='mt-6 sm:mt-8 text-center space-y-3'>
+          <p className='text-xs sm:text-sm text-gray-500'>
+            &copy; 2025 Cube Lawfirm ERP
           </p>
-        </div>
-      </div>
-
-      <div className='mt-6 text-center'>
-        <p className='text-xs text-gray-500'>&copy; Cube Lawfirm ERP</p>
-        <div className='flex items-center justify-center mt-2 space-x-3'>
-          <a
-            href='#'
-            className='text-xs text-gray-500 hover:text-gray-700 hover:underline transition-all'
-          >
-            Privacy Policy
-          </a>
-          <span className='text-gray-400'>•</span>
-          <a
-            href='#'
-            className='text-xs text-gray-500 hover:text-gray-700 hover:underline transition-all'
-          >
-            Terms of Service
-          </a>
-          <span className='text-gray-400'>•</span>
-          <a
-            href='#'
-            className='text-xs text-gray-500 hover:text-gray-700 hover:underline transition-all'
-          >
-            Help Center
-          </a>
         </div>
       </div>
     </div>

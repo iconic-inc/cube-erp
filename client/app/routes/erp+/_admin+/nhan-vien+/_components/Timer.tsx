@@ -15,7 +15,7 @@ export default function Timer() {
     <div>
       <Hydrated>
         {() => (
-          <p className='text-2xl font-bold text-yellow-500'>
+          <p className='text-lg sm:text-2xl font-bold text-yellow-500'>
             {now.toLocaleTimeString('us')}
           </p>
         )}

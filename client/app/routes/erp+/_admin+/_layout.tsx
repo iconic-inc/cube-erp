@@ -4,11 +4,16 @@ import HandsomeError from '~/components/HandsomeError';
 import { parseAuthCookie } from '~/services/cookie.server';
 import Sidebar from '../../../components/SideBar';
 import { getCurrentUser } from '~/services/user.server';
-import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
-import { Outlet, useLoaderData } from '@remix-run/react';
+import {
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '~/components/ui/sidebar';
+import { Outlet, useLoaderData, useNavigation } from '@remix-run/react';
 import { getRewardStatsForEmployee } from '~/services/reward.server';
 import RewardDisplay from '~/components/RewardDisplay';
 import { getCurrentEmployeeByUserId } from '~/services/employee.server';
+import { useEffect } from 'react';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -34,11 +39,27 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const ErrorBoundary = () => <HandsomeError basePath='/erp' />;
 
+// Component to handle sidebar auto-hide on navigation
+function SidebarNavigationHandler() {
+  const navigation = useNavigation();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  useEffect(() => {
+    // Close sidebar on mobile when navigation starts
+    if (isMobile && navigation.state === 'loading') {
+      setOpenMobile(false);
+    }
+  }, [navigation.state, isMobile, setOpenMobile]);
+
+  return null;
+}
+
 export default function RootAdminLayout() {
   const { rewardPromise } = useLoaderData<typeof loader>();
 
   return (
     <SidebarProvider>
+      <SidebarNavigationHandler />
       <Sidebar />
 
       <SidebarTrigger className='md:hidden fixed top-4 right-4 z-50' />

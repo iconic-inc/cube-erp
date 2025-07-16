@@ -195,7 +195,7 @@ export default function NewEmployee() {
         title='Thêm Nhân viên mới'
         actionContent={
           <>
-            <Save className='inline mr-2' />
+            <Save className='inline' />
             Lưu Nhân viên
           </>
         }
