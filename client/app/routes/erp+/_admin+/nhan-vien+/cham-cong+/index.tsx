@@ -119,7 +119,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Check if IP is in allowed list
       try {
         const officeIPs = await getOfficeIPs(session!);
-        const allowedIPs = officeIPs.map((ip: any) => ip.ip_address);
+        const allowedIPs = officeIPs.map((ip) => ip.ipAddress);
 
         if (!allowedIPs.includes(ipAddress)) {
           return data(
