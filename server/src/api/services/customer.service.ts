@@ -944,6 +944,16 @@ const importCustomersFromXLSX = async (
       );
     }
     throw error;
+  } finally {
+    // Clean up the uploaded file
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`Cleaned up uploaded file: ${filePath}`);
+      }
+    } catch (unlinkError) {
+      console.error('Error cleaning up uploaded file:', unlinkError);
+    }
   }
 };
 
