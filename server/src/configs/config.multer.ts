@@ -4,7 +4,6 @@ import path from 'path';
 import { BadRequestError } from '../api/core/errors';
 
 const UPLOAD_FOLDER = 'public/uploads';
-const TMP_FOLDER = path.join(__dirname, '../../tmp');
 
 /**
  * Configure storage for different upload types
@@ -15,16 +14,6 @@ export const storage = (subfolder: string = '') => {
   return multer.diskStorage({
     destination: (req, file, cb) => {
       let uploadPath = UPLOAD_FOLDER;
-
-      // For temp files (imports, exports, etc)
-      if (subfolder.includes('import') || subfolder.includes('export')) {
-        uploadPath = TMP_FOLDER;
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-        return;
-      }
 
       // For regular uploads, create subfolder if needed
       if (subfolder) {

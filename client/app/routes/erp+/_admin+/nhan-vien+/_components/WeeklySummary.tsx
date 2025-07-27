@@ -9,19 +9,7 @@ export default function WeeklySummary({
     <div className='bg-white rounded-lg shadow-sm p-4 md:p-6 mb-8'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
         <h2 className='font-semibold text-lg'>Lịch sử 7 ngày gần nhất</h2>
-        <div className='flex flex-wrap gap-2 w-full sm:w-auto'>
-          {/* <select className='text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition flex-1 sm:flex-none'>
-            <option>This Week</option>
-            <option>Last Week</option>
-            <option>Two Weeks Ago</option>
-          </select> */}
-          {/* <button className='text-blue-500 hover:text-blue-600 text-xs flex items-center transition-all hover:underline flex-1 sm:flex-none justify-center'>
-            Detailed Report
-            <span className='material-symbols-outlined text-sm ml-1'>
-              chevron_right
-            </span>
-          </button> */}
-        </div>
+        <div className='flex flex-wrap gap-2 w-full sm:w-auto'></div>
       </div>
 
       <div className='overflow-x-auto -mx-4 md:mx-0'>

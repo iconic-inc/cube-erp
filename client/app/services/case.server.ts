@@ -221,7 +221,7 @@ const getMyCaseServices = async (
   request: ISessionUser,
 ) => {
   const response = await fetcher<IListResponse<ICaseService>>(
-    `/case-services/me?${searchParams.toString()}`,
+    `/employees/me/case-services?${searchParams.toString()}`,
     { request },
   );
   return response;

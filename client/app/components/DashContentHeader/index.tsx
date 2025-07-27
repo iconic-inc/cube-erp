@@ -22,13 +22,6 @@ export default function DashContentHeader({
             {actionContent}
           </CustomButton>
         )}
-
-        {/* <button className='bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center border border-gray-200 transition-all duration-300 transform hover:-translate-y-0.5'>
-          <span className='material-symbols-outlined text-sm mr-1'>
-            filter_list
-          </span>
-          Filter
-        </button> */}
       </div>
     </div>
   );

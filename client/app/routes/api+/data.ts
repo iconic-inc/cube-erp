@@ -7,7 +7,7 @@ import { parseAuthCookie } from '~/services/cookie.server';
 
 const services = {
   // getUsers,
-  // getImages,
+  getImages,
   getDocuments,
 };
 

@@ -204,7 +204,7 @@ export default function ImagePicker({
                   selectedImages.map((img) =>
                     fetcher.submit(null, {
                       method: 'DELETE',
-                      action: `/cmsdesk/images/${img.id}`,
+                      action: `/api/images/${img.id}`,
                     }),
                   );
                 }}

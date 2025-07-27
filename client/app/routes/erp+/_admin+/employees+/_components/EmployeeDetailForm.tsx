@@ -8,7 +8,7 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { IRole } from '~/interfaces/role.interface';
 import {
@@ -721,9 +721,7 @@ export default function EmployeeDetailForm({
                     to='/erp/employees'
                     className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
                   >
-                    <span className='material-symbols-outlined text-sm mr-1'>
-                      keyboard_return
-                    </span>
+                    <ArrowLeft className='w-4 h-4 mr-1' />
                     <span className='hidden sm:inline'>Trở về Danh sách</span>
                     <span className='sm:hidden'>Trở về</span>
                   </Link>

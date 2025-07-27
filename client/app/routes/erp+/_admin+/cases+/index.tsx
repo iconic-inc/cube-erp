@@ -22,7 +22,7 @@ import {
   CASE_SERVICE,
   CASE_STATUS_BADGE_CLASSES,
 } from '~/constants/caseService.constant';
-import { canAccessCaseServices } from '~/utils/permission';
+import { canAccessCaseServices, hasRole } from '~/utils/permission';
 import { getEmployees } from '~/services/employee.server';
 import { getCustomers } from '~/services/customer.server';
 import { isResolveError } from '~/lib';
@@ -32,7 +32,7 @@ import { formatDate } from '~/utils';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
-  if (!canAccessCaseServices(user?.user.usr_role)) {
+  if (!hasRole(user?.user.usr_role, ['admin'])) {
     throw new Response('Bạn không có quyền truy cập vào trang này.', {
       status: 403,
     });

@@ -2,8 +2,7 @@ import { Router } from 'express';
 import { CaseServiceController } from '@controllers/caseService.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
-import multer from 'multer';
-import { fileFilter, storage } from '@configs/config.multer';
+import { excelImportStorage } from '@configs/config.multer';
 import {
   validateObjectId,
   validateSchema,
@@ -20,12 +19,6 @@ import {
 } from '@schemas/caseService.schema';
 
 const router = Router();
-
-// Configure multer for file uploads
-const upload = multer({
-  storage: storage('case-service-imports'),
-  fileFilter: fileFilter(['csv', 'xlsx', 'xls']),
-}).single('file');
 
 // Require authentication for all routes
 router.use(authenticationV2);
@@ -75,7 +68,7 @@ router.delete(
 router.post(
   '/import/xlsx',
   hasPermission('caseService', 'createAny'),
-  upload,
+  excelImportStorage.single('file'),
   CaseServiceController.importCaseServices
 );
 
