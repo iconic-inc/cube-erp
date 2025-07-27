@@ -22,9 +22,13 @@ const customerBaseSchema = {
   code: z.string().trim().min(1, 'Mã khách hàng là bắt buộc'),
   firstName: z.string().trim().min(1, 'Tên là bắt buộc'),
   lastName: z.string().trim().optional(),
-  email: z.string().trim().min(1, 'Email là bắt buộc').refine(isValidEmail, {
-    message: 'Email không hợp lệ',
-  }),
+  email: z
+    .string()
+    .trim()
+    .refine((val) => !val || isValidEmail(val), {
+      message: 'Email không hợp lệ',
+    })
+    .optional(),
   msisdn: z
     .string()
     .trim()
@@ -35,9 +39,17 @@ const customerBaseSchema = {
   province: z.string().trim().min(1, 'Tỉnh/Thành phố là bắt buộc'),
   district: z.string().trim().min(1, 'Quận/Huyện là bắt buộc'),
   street: z.string().trim().optional(),
-  sex: z.enum(Object.values(CUSTOMER.SEX) as [string, ...string[]], {
-    message: 'Giới tính không hợp lệ',
-  }),
+  sex: z
+    .enum(
+      Object.values(CUSTOMER.SEX).flatMap((item) => item.value) as [
+        string,
+        ...string[]
+      ],
+      {
+        message: 'Giới tính không hợp lệ',
+      }
+    )
+    .optional(),
   birthDate: z.preprocess(
     (val) => (val ? new Date(val as string) : undefined),
     z.date().optional()
@@ -95,7 +107,12 @@ export const customerQuerySchema = z
     sortBy: z.string().optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
     sex: z
-      .enum(Object.values(CUSTOMER.SEX) as [string, ...string[]])
+      .enum(
+        Object.values(CUSTOMER.SEX).flatMap((item) => item.value) as [
+          string,
+          ...string[]
+        ]
+      )
       .optional(),
     contactChannel: z.string().optional(),
     source: z.string().optional(),
@@ -166,6 +183,19 @@ export const customerImportSchema = z.object({
   customers: z
     .array(customerCreateSchema)
     .min(1, 'Cần ít nhất một khách hàng để import'),
+});
+
+// Schema for import options
+export const customerImportOptionsSchema = z.object({
+  skipDuplicates: z
+    .union([z.boolean(), z.string().transform((val) => val === 'true')])
+    .default(true),
+  updateExisting: z
+    .union([z.boolean(), z.string().transform((val) => val === 'true')])
+    .default(false),
+  skipEmptyRows: z
+    .union([z.boolean(), z.string().transform((val) => val === 'true')])
+    .default(true),
 });
 
 // Schema for exporting customers

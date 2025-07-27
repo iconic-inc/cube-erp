@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import {
@@ -32,8 +33,7 @@ import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import Defer from '~/components/Defer';
 import { Plus, Save, XCircle } from 'lucide-react';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { getEmployees } from '~/services/employee.server';
 import ItemList from '~/components/List/ItemList';
@@ -348,16 +348,12 @@ export default function DocumentDetailPage() {
                 Mô tả
               </Label>
               <div className='h-60 sm:h-80'>
-                <Hydrated>
-                  {() => (
-                    <TextEditor
-                      name='description'
-                      onChange={setDescription}
-                      value={description}
-                      placeholder='Nhập mô tả tài liệu...'
-                    />
-                  )}
-                </Hydrated>
+                <TextEditor
+                  name='description'
+                  onChange={setDescription}
+                  value={description}
+                  placeholder='Nhập mô tả tài liệu...'
+                />
               </div>
             </div>
 
@@ -579,9 +575,7 @@ export default function DocumentDetailPage() {
               to='/erp/documents'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
-              <span className='material-symbols-outlined text-xs sm:text-sm mr-1'>
-                keyboard_return
-              </span>
+              <ArrowLeft className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
               <span className='sm:hidden'>Trở về</span>
             </Link>
@@ -624,9 +618,7 @@ export default function DocumentDetailPage() {
                   </>
                 ) : (
                   <>
-                    <span className='material-symbols-outlined text-xs sm:text-sm mr-1'>
-                      save
-                    </span>
+                    <Save className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
                     <span className='hidden sm:inline'>Lưu thay đổi</span>
                     <span className='sm:hidden'>Lưu</span>
                   </>

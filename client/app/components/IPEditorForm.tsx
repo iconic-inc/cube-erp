@@ -1,9 +1,11 @@
 import { useFetcher } from '@remix-run/react';
+import { Check, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { IOfficeIP } from '~/interfaces/officeIP.interface';
 import { action } from '~/routes/api+/office-ip+/$id';
+import { Button } from './ui/button';
 
 export default function IPEditorForm({
   officeIp,
@@ -99,18 +101,18 @@ export default function IPEditorForm({
       </div>
 
       <div className='flex space-x-2 items-center self-end sm:self-auto'>
-        <button
-          className='h-7 w-7 md:h-8 md:w-8 p-1 text-green-500 hover:bg-green-100 rounded-full transition-all flex-shrink-0'
+        <Button
+          variant='ghost'
+          className='w-8 h-8 hover:bg-green-500/20 text-green-500 hover:text-green-600 rounded-full transition-all flex-shrink-0'
           disabled={isLoading}
           type='submit'
         >
-          <span className='material-symbols-outlined text-sm md:text-base'>
-            check
-          </span>
-        </button>
+          <Check className='h-4 w-4' />
+        </Button>
 
-        <button
-          className='h-7 w-7 md:h-8 md:w-8 text-red-500 hover:bg-red-100 p-1 rounded-full transition-all flex-shrink-0'
+        <Button
+          variant={'ghost'}
+          className='w-8 h-8 hover:bg-red-500/20 text-red-500 hover:text-red-600 rounded-full transition-all flex-shrink-0'
           type='button'
           onClick={() => {
             if (type === 'update') {
@@ -125,14 +127,13 @@ export default function IPEditorForm({
             setIpAddress('');
           }}
         >
-          <span className='material-symbols-outlined text-sm md:text-base'>
-            close
-          </span>
-        </button>
+          <X className='h-4 w-4' />
+        </Button>
 
         {type === 'update' && (
-          <button
-            className='h-7 w-7 md:h-8 md:w-8 text-red-500 hover:bg-red-50 p-1 rounded-full transition-all flex-shrink-0'
+          <Button
+            variant='ghost'
+            className='w-8 h-8 hover:bg-red-500/20 text-red-500 hover:text-red-600 rounded-full transition-all flex-shrink-0'
             type='button'
             onClick={() => {
               toastIdRef.current = toast.loading('Đang xóa địa chỉ IP...');
@@ -147,10 +148,8 @@ export default function IPEditorForm({
               setIsLoading(true);
             }}
           >
-            <span className='material-symbols-outlined text-sm md:text-base'>
-              delete
-            </span>
-          </button>
+            <Trash2 className='h-4 w-4' />
+          </Button>
         )}
       </div>
     </fetcher.Form>

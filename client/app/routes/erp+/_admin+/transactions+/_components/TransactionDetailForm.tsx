@@ -23,8 +23,7 @@ import LoadingCard from '~/components/LoadingCard';
 import { NumericFormat } from 'react-number-format';
 import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 import { DatePicker } from '~/components/ui/date-picker';
 
 export default function TransactionDetailForm({
@@ -395,7 +394,7 @@ export default function TransactionDetailForm({
                   { value: 'income', label: 'Thu' },
                   { value: 'outcome', label: 'Chi' },
                 ]}
-                defaultValue={transactionType}
+                value={transactionType}
                 onValueChange={(value) => {
                   setTransactionType(
                     (prev) => (value as 'income' | 'outcome') || prev,
@@ -416,7 +415,7 @@ export default function TransactionDetailForm({
               </Label>
               <SelectSearch
                 options={Object.values(TRANSACTION.CATEGORY[transactionType])}
-                defaultValue={category}
+                value={category}
                 onValueChange={(value) => setCategory(value)}
                 placeholder='Chọn danh mục'
                 name='category'
@@ -439,7 +438,7 @@ export default function TransactionDetailForm({
               </Label>
               <SelectSearch
                 options={Object.values(TRANSACTION.PAYMENT_METHOD)}
-                defaultValue={paymentMethod}
+                value={paymentMethod}
                 onValueChange={(value) => setPaymentMethod(value)}
                 placeholder='Chọn phương thức thanh toán'
                 name='paymentMethod'
@@ -559,7 +558,7 @@ export default function TransactionDetailForm({
                   value: customer.id,
                   label: `${customer.cus_firstName} ${customer.cus_lastName} (${customer.cus_code})`,
                 }))}
-                defaultValue={selectedCustomer}
+                value={selectedCustomer}
                 onValueChange={(value) => setSelectedCustomer(value)}
                 placeholder='Chọn khách hàng'
                 name='customer'
@@ -579,9 +578,9 @@ export default function TransactionDetailForm({
                   value: caseService.id,
                   label: `${caseService.case_code} - ${caseService.case_customer.cus_firstName} ${caseService.case_customer.cus_lastName}`,
                 }))}
-                defaultValue={selectedCaseService}
+                value={selectedCaseService}
                 onValueChange={(value) => setSelectedCaseService(value)}
-                placeholder='Chọn hồ sơ vụ việc'
+                placeholder='Chọn Hồ sơ vụ việc'
                 name='caseService'
                 id='caseService'
               />
@@ -597,18 +596,14 @@ export default function TransactionDetailForm({
               Mô tả
             </Label>
 
-            <Hydrated>
-              {() => (
-                <TextEditor
-                  isReady={isContentReady}
-                  name='description'
-                  value={description}
-                  onChange={setDescription}
-                  placeholder='Nhập mô tả chi tiết về giao dịch...'
-                  className='min-h-[250px] sm:min-h-[200px]'
-                />
-              )}
-            </Hydrated>
+            <TextEditor
+              isReady={isContentReady}
+              name='description'
+              value={description}
+              onChange={setDescription}
+              placeholder='Nhập mô tả chi tiết về giao dịch...'
+              className='min-h-[250px] sm:min-h-[200px]'
+            />
           </div>
         </CardContent>
 

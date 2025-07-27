@@ -65,4 +65,5 @@ export interface ICaseServiceQuery {
   endDate?: string;
   customerId?: string;
   leadAttorneyId?: string;
+  employeeUserId?: string;
 }

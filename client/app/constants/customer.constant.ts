@@ -1,13 +1,13 @@
 export const CUSTOMER = {
   SEX: {
-    MALE: 'male',
-    FEMALE: 'female',
+    MALE: { label: 'Nam', value: 'male' },
+    FEMALE: { label: 'Nữ', value: 'female' },
   },
   STATUS: {
-    ACTIVE: 'active',
-    INACTIVE: 'inactive',
-    PENDING: 'pending',
-    BLOCKED: 'blocked',
+    ACTIVE: { label: 'Kích hoạt', value: 'active' },
+    INACTIVE: { label: 'Không kích hoạt', value: 'inactive' },
+    PENDING: { label: 'Đang chờ', value: 'pending' },
+    BLOCKED: { label: 'Bị chặn', value: 'blocked' },
   },
   CONTACT_CHANNEL: {
     PHONE: {
@@ -36,12 +36,6 @@ export const CUSTOMER = {
     },
   },
   SOURCE: {
-    // WEBSITE: 'website',
-    // SOCIAL_MEDIA: 'social_media',
-    // REFERRAL: 'referral',
-    // EVENT: 'event',
-    // ADVERTISEMENT: 'advertisement',
-    // OTHER: 'other',
     WEBSITE: {
       value: 'website',
       label: 'Website',

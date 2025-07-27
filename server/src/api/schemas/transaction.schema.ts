@@ -67,7 +67,7 @@ const transactionBaseSchema = {
     .string()
     .trim()
     .refine(isValidObjectId, {
-      message: 'ID hồ sơ vụ việc không hợp lệ',
+      message: 'ID Hồ sơ vụ việc không hợp lệ',
     })
     .optional(),
 };
@@ -175,7 +175,7 @@ export const transactionQuerySchema = z
     caseServiceId: z
       .string()
       .refine(isValidObjectId, {
-        message: 'ID hồ sơ vụ việc không hợp lệ',
+        message: 'ID Hồ sơ vụ việc không hợp lệ',
       })
       .optional(),
     createdById: z

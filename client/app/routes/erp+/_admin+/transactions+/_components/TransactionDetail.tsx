@@ -195,7 +195,7 @@ export default function TransactionDetail({
                           Khách hàng:
                         </span>
                         <Link
-                          to={`/erp/crm/customers/${transaction.tx_customer.id}`}
+                          to={`/erp/customers/${transaction.tx_customer.id}`}
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {transaction.tx_customer.cus_firstName}{' '}
@@ -212,7 +212,7 @@ export default function TransactionDetail({
                           Hồ sơ vụ việc:
                         </span>
                         <Link
-                          to={`/erp/crm/cases/${transaction.tx_caseService.id}`}
+                          to={`/erp/cases/${transaction.tx_caseService.id}`}
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {transaction.tx_caseService.case_code} -{' '}

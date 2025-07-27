@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Search } from 'lucide-react';
 import { IDocument } from '~/interfaces/document.interface';
 import DocumentUploader from './DocumentUploader';
 import { useFetcher } from '@remix-run/react';
@@ -172,9 +173,7 @@ export default function DocumentPicker({
               <div className='flex flex-col overflow-hidden flex-grow'>
                 <div className='p-2 sm:p-4 border-b border-gray-200 flex flex-col gap-2 sm:gap-3 flex-shrink-0'>
                   <div className='relative w-full'>
-                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-sm sm:text-base'>
-                      search
-                    </span>
+                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                     <input
                       type='text'
                       placeholder='Tìm kiếm...'

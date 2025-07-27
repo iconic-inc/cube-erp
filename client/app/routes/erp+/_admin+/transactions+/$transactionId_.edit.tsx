@@ -66,7 +66,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     console.error('Error fetching case services:', e);
     return {
       success: false,
-      message: 'Xảy ra lỗi khi lấy danh sách hồ sơ vụ việc',
+      message: 'Xảy ra lỗi khi lấy danh sách Hồ sơ vụ việc',
     };
   });
   const transactionPromise = getTransactionById(transactionId, auth!).catch(

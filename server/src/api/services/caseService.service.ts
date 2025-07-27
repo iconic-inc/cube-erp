@@ -8,6 +8,8 @@ import {
 import { BadRequestError, NotFoundError } from '../core/errors';
 import { DocumentModel } from '@models/document.model';
 import { DocumentCaseModel } from '@models/documentCase.model';
+import { CustomerModel } from '@models/customer.model';
+import { EmployeeModel } from '@models/employee.model';
 import { IDocumentQuery } from '../interfaces/document.interface';
 import {
   getReturnList,
@@ -31,6 +33,7 @@ import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
 import { serverConfig } from '@configs/config.server';
+import { format, parse } from 'date-fns';
 
 const getCaseServices = async (
   query: ICaseServiceQuery = {}
@@ -55,7 +58,28 @@ const getCaseServices = async (
       endDate,
       customerId,
       leadAttorneyId,
+      employeeUserId,
     } = query;
+
+    // Get employee ID if employeeUserId is provided
+    let employeeId: string | undefined;
+    if (employeeUserId) {
+      try {
+        const employee = await getEmployeeByUserId(employeeUserId);
+        employeeId = employee.id;
+      } catch (error) {
+        // If employee not found, return empty result
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          },
+        };
+      }
+    }
 
     // Build the aggregation pipeline
     const pipeline: any[] = [];
@@ -87,6 +111,18 @@ const getCaseServices = async (
     // Add lead attorney filter if provided
     if (leadAttorneyId) {
       matchConditions.case_leadAttorney = new Types.ObjectId(leadAttorneyId);
+    }
+
+    // Add employee filter if provided (matches either lead attorney or assignees)
+    if (employeeId) {
+      const employeeObjectId = new Types.ObjectId(employeeId);
+
+      // Add a complex condition to match cases where the employee is either lead attorney or assignee
+      matchConditions.$or = [
+        ...(matchConditions.$or || []),
+        { case_leadAttorney: employeeObjectId },
+        { case_assignees: { $in: [employeeObjectId] } },
+      ];
     }
 
     // Add match stage if we have any conditions
@@ -561,16 +597,236 @@ const bulkDeleteCaseServices = async (ids: string[]) => {
   }
 };
 
-const importCaseServices = async (filePath: string) => {};
+/**
+ * Import case services data from XLSX file
+ * @param filePath Path to the Excel file to import
+ * @param options Import options
+ */
+const importCaseServices = async (
+  filePath: string,
+  options: {
+    skipDuplicates?: boolean;
+    updateExisting?: boolean;
+    skipEmptyRows?: boolean;
+  } = {}
+) => {
+  let session;
+  try {
+    const {
+      skipDuplicates = true,
+      updateExisting = false,
+      skipEmptyRows = true,
+    } = options;
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      throw new BadRequestError('Không tìm thấy file Excel để import');
+    }
+
+    // Read the Excel file
+    const workbook = XLSX.readFile(filePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+    if (!rawData || rawData.length === 0) {
+      throw new BadRequestError(
+        'File Excel không có dữ liệu hoặc định dạng không đúng'
+      );
+    }
+
+    // Start transaction
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const results = {
+      total: rawData.length,
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [] as Array<{ row: number; error: string; data?: any }>,
+    };
+
+    // Process each row
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i] as any;
+      const rowNumber = i + 2; // +2 because Excel is 1-indexed and first row is header
+
+      try {
+        // Skip empty rows if option is enabled
+        if (skipEmptyRows && isEmptyCaseServiceRow(row)) {
+          results.skipped++;
+          continue;
+        }
+
+        // Map Excel columns to case service data
+        const caseServiceData = await mapExcelRowToCaseService(row);
+        console.log(
+          '***************************************************import case service data',
+          caseServiceData
+        );
+
+        // Validate required fields
+        if (!caseServiceData.code) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Thiếu mã hồ sơ vụ việc',
+            data: row,
+          });
+          continue;
+        }
+
+        if (!caseServiceData.customer) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Thiếu thông tin khách hàng',
+            data: row,
+          });
+          continue;
+        }
+
+        if (!caseServiceData.leadAttorney) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Thiếu thông tin luật sư chính',
+            data: row,
+          });
+          continue;
+        }
+
+        // Check for existing case service
+        const existingCaseService = await CaseServiceModel.findOne({
+          case_code: caseServiceData.code,
+        });
+
+        if (existingCaseService) {
+          if (skipDuplicates && !updateExisting) {
+            results.skipped++;
+            continue;
+          } else if (updateExisting) {
+            // Update existing case service
+            await CaseServiceModel.findByIdAndUpdate(
+              existingCaseService._id,
+              formatAttributeName(
+                {
+                  customer: caseServiceData.customer,
+                  leadAttorney: caseServiceData.leadAttorney,
+                  assignees: caseServiceData.assignees,
+                  notes: caseServiceData.notes,
+                  status: caseServiceData.status,
+                  startDate: caseServiceData.startDate,
+                  endDate: caseServiceData.endDate,
+                },
+                CASE_SERVICE.PREFIX
+              ),
+              { session, new: true }
+            );
+            results.updated++;
+          } else {
+            results.errors.push({
+              row: rowNumber,
+              error: 'Hồ sơ vụ việc đã tồn tại (mã trùng)',
+              data: row,
+            });
+          }
+        } else {
+          // Create new case service
+          const [newCaseService] = await CaseServiceModel.create(
+            [
+              formatAttributeName(
+                {
+                  code: caseServiceData.code,
+                  customer: caseServiceData.customer,
+                  leadAttorney: caseServiceData.leadAttorney,
+                  assignees: caseServiceData.assignees,
+                  notes: caseServiceData.notes,
+                  status: caseServiceData.status,
+                  startDate: caseServiceData.startDate,
+                  endDate: caseServiceData.endDate,
+                },
+                CASE_SERVICE.PREFIX
+              ),
+            ],
+            { session }
+          );
+
+          if (newCaseService) {
+            // Create default tasks for the new case service
+            const taskTemplate = await TaskTemplateModel.findOne({
+              tpl_key: 'default',
+            }).lean();
+
+            if (taskTemplate) {
+              for (const step of taskTemplate.tpl_steps) {
+                await TaskModel.create(
+                  [
+                    formatAttributeName(
+                      {
+                        ...step,
+                        _id: undefined,
+                        name: `${caseServiceData.code} - ${step.name}`,
+                        caseService: newCaseService._id,
+                        startDate: new Date().addDays(step.caseOrder - 1),
+                        endDate: new Date().addDays(step.caseOrder),
+                        assignees: [
+                          ...(caseServiceData.assignees || []),
+                          caseServiceData.leadAttorney,
+                        ],
+                      },
+                      TASK.PREFIX
+                    ),
+                  ],
+                  { session }
+                );
+              }
+            }
+          }
+          results.imported++;
+        }
+      } catch (error) {
+        console.log('Error importing case service data:', error);
+        results.errors.push({
+          row: rowNumber,
+          error: error instanceof Error ? error.message : 'Lỗi không xác định',
+          data: row,
+        });
+      }
+    }
+
+    console.log(
+      '***************************************************import results',
+      results
+    );
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return results;
+  } catch (error) {
+    // Rollback transaction if there's an error
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi import dữ liệu hồ sơ vụ việc từ XLSX: ${error.message}`
+      );
+    }
+    throw error;
+  }
+};
 
 const exportCaseServicesToXLSX = async (query: ICaseServiceQuery = {}) => {
   try {
     // Reuse the same query logic from getCaseServices but get all data for export
-    const { data: caseServicesList } = await getCaseServices({
-      ...query,
-      page: 1,
-      limit: Number.MAX_SAFE_INTEGER, // Get all records for export
-    });
+    const { data: caseServicesList } = await getCaseServices(query);
 
     // Create directory if it doesn't exist
     const exportDir = path.join(process.cwd(), 'public', 'exports');
@@ -1200,6 +1456,148 @@ const getCaseServiceTasks = async (caseId: string) => {
     sortBy: 'tsk_caseOrder',
     sortOrder: 'asc',
   });
+};
+
+/**
+ * Helper function to check if a case service row is empty
+ */
+const isEmptyCaseServiceRow = (row: any): boolean => {
+  const values = Object.values(row);
+  return values.every(
+    (value) =>
+      value === null ||
+      value === undefined ||
+      (typeof value === 'string' && value.trim() === '')
+  );
+};
+
+/**
+ * Helper function to map Excel row to case service data
+ */
+const mapExcelRowToCaseService = async (row: any) => {
+  let startDate: string | undefined, endDate: string | undefined;
+
+  // Parse dates
+  if (row['Ngày bắt đầu']) {
+    try {
+      startDate = parse(
+        row['Ngày bắt đầu'],
+        'dd/MM/yyyy',
+        new Date()
+      ).toISOString();
+    } catch (error) {
+      console.warn('Error parsing start date:', error);
+    }
+  }
+
+  if (row['Ngày kết thúc']) {
+    try {
+      endDate = parse(
+        row['Ngày kết thúc'],
+        'dd/MM/yyyy',
+        new Date()
+      ).toISOString();
+    } catch (error) {
+      console.warn('Error parsing end date:', error);
+    }
+  }
+
+  // Find customer by code or name
+  let customerId;
+  if (row['Mã khách hàng']) {
+    const { CustomerModel } = await import('@models/customer.model');
+    const customer = await CustomerModel.findOne({
+      cus_code: row['Mã khách hàng'],
+    });
+    customerId = customer?._id;
+  } else if (row['Khách hàng']) {
+    // Try to find by name if code is not provided
+    const { CustomerModel } = await import('@models/customer.model');
+    const fullName = row['Khách hàng'].trim();
+    const nameParts = fullName.split(' ');
+    if (nameParts.length >= 2) {
+      const firstName = nameParts[nameParts.length - 1];
+      const lastName = nameParts.slice(0, -1).join(' ');
+
+      const customer = await CustomerModel.findOne({
+        cus_firstName: firstName,
+        cus_lastName: lastName,
+      });
+      customerId = customer?._id;
+    }
+  }
+
+  // Find lead attorney by code or name
+  let leadAttorneyId;
+  if (row['Mã luật sư']) {
+    const { EmployeeModel } = await import('@models/employee.model');
+    const attorney = await EmployeeModel.findOne({
+      emp_code: row['Mã luật sư'],
+    });
+    leadAttorneyId = attorney?._id;
+  } else if (row['Luật sư chính']) {
+    // Try to find by name if code is not provided
+    const { EmployeeModel } = await import('@models/employee.model');
+    const fullName = row['Luật sư chính'].trim();
+    const nameParts = fullName.split(' ');
+    if (nameParts.length >= 2) {
+      const firstName = nameParts[nameParts.length - 1];
+      const lastName = nameParts.slice(0, -1).join(' ');
+
+      const attorney = await EmployeeModel.findOne().populate({
+        path: 'emp_user',
+        match: {
+          usr_firstName: firstName,
+          usr_lastName: lastName,
+        },
+      });
+
+      if (attorney?.emp_user) {
+        leadAttorneyId = attorney._id;
+      }
+    }
+  }
+
+  // Find assignees by parsing the assignees string
+  let assigneeIds: string[] = [];
+  if (row['Người được phân công']) {
+    const { EmployeeModel } = await import('@models/employee.model');
+    const assigneeNames = row['Người được phân công']
+      .split(',')
+      .map((name: string) => name.trim())
+      .filter((name: string) => name.length > 0);
+
+    for (const fullName of assigneeNames) {
+      const nameParts = fullName.split(' ');
+      if (nameParts.length >= 2) {
+        const firstName = nameParts[nameParts.length - 1];
+        const lastName = nameParts.slice(0, -1).join(' ');
+
+        const assignee = await EmployeeModel.findOne().populate({
+          path: 'emp_user',
+          match: {
+            usr_firstName: firstName,
+            usr_lastName: lastName,
+          },
+        });
+
+        if (assignee?.emp_user) {
+          assigneeIds.push(assignee._id.toString());
+        }
+      }
+    }
+  }
+
+  return {
+    code: row['Mã hồ sơ'] || '',
+    customer: customerId,
+    leadAttorney: leadAttorneyId,
+    assignees: assigneeIds,
+    notes: row['Ghi chú'] || '',
+    status: row['Trạng thái'] || CASE_SERVICE.STATUS.OPEN,
+    startDate,
+    endDate,
+  };
 };
 
 export {

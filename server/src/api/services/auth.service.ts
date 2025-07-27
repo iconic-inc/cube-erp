@@ -37,15 +37,12 @@ export class AuthService {
     refreshToken: string | null;
   }) {
     const foundUser = await findUserById(username);
+    const isMatchPwd = foundUser?.usr_password
+      ? bcrypt.compareSync(password, foundUser.usr_password)
+      : false;
 
-    if (!foundUser) {
-      throw new BadRequestError('Email is not registered!');
-    }
-
-    const isMatchPwd = bcrypt.compareSync(password, foundUser.usr_password!);
-
-    if (!isMatchPwd) {
-      throw new BadRequestError('Password mismatch!');
+    if (!foundUser || !isMatchPwd) {
+      throw new BadRequestError('Tên đăng nhập hoặc mật khẩu không đúng!');
     }
 
     const { privateKey, publicKey } = generateKeyPair();

@@ -114,7 +114,7 @@ export default function () {
         if (!transaction.tx_customer) return 'N/A';
         return (
           <Link
-            to={`/erp/crm/customers/${transaction.tx_customer.id}`}
+            to={`/erp/customers/${transaction.tx_customer.id}`}
             className='text-blue-600 hover:underline'
           >
             {transaction.tx_customer.cus_firstName}{' '}

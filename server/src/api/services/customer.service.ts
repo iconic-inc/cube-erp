@@ -2,6 +2,7 @@ import { NotFoundError, BadRequestError } from '../core/errors';
 import { CustomerModel } from '../models/customer.model';
 import { CaseServiceModel } from '../models/caseService.model';
 import {
+  ICustomer,
   ICustomerCreate,
   ICustomerUpdate,
 } from '../interfaces/customer.interface';
@@ -18,6 +19,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as XLSX from 'xlsx';
 import { serverConfig } from '@configs/config.server';
+import {
+  getDistrictBySlug,
+  getDistrictsByProvinceCode,
+  getProvinceBySlug,
+  provinces,
+  toAddressString,
+} from '@utils/address.util';
+import { format, parse } from 'date-fns';
 
 interface ICustomerQuery {
   page?: number;
@@ -36,12 +45,25 @@ interface ICustomerQuery {
 // Enhanced createCustomer method to support creating customer with case service
 const createCustomer = async (customerData: ICustomerCreate) => {
   try {
-    // Check for existing customer with same email or msisdn
+    // Check for existing customer with same email or msisdn (only if provided)
+    const checks = [];
+
+    // Only check email if it's provided and not empty
+    if (customerData.email && customerData.email.trim()) {
+      checks.push(CustomerModel.findOne({ cus_email: customerData.email }));
+    } else {
+      checks.push(Promise.resolve(null));
+    }
+
+    // Always check msisdn if provided
+    if (customerData.msisdn) {
+      checks.push(CustomerModel.findOne({ cus_msisdn: customerData.msisdn }));
+    } else {
+      checks.push(Promise.resolve(null));
+    }
+
     const [existingCustomerByEmail, existingCustomerByMsisdn] =
-      await Promise.all([
-        CustomerModel.findOne({ cus_email: customerData.email }),
-        CustomerModel.findOne({ cus_msisdn: customerData.msisdn }),
-      ]);
+      await Promise.all(checks);
 
     if (existingCustomerByEmail) {
       throw new BadRequestError('Email khách hàng đã tồn tại trong hệ thống');
@@ -57,7 +79,10 @@ const createCustomer = async (customerData: ICustomerCreate) => {
     const newCustomer = await CustomerModel.build({
       firstName: customerData.firstName,
       lastName: customerData.lastName,
-      email: customerData.email,
+      email:
+        customerData.email && customerData.email.trim()
+          ? customerData.email
+          : undefined,
       msisdn: customerData.msisdn,
       address: {
         province: customerData.province || '',
@@ -188,6 +213,7 @@ const getCustomers = async (query: ICustomerQuery = {}) => {
         cus_notes: 1,
         cus_code: 1,
         cus_birthDate: 1,
+        cus_createdAt: 1,
         createdAt: 1,
         updatedAt: 1,
       },
@@ -215,7 +241,7 @@ const getCustomers = async (query: ICustomerQuery = {}) => {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: getReturnList(customers),
+      data: getReturnList<ICustomer>(customers),
       pagination: {
         total,
         page,
@@ -274,8 +300,8 @@ const updateCustomer = async (
       throw new NotFoundError('Không tìm thấy khách hàng');
     }
 
-    // Check for email or phone number duplication
-    if (customerData.email) {
+    // Check for email or phone number duplication (only if provided and not empty)
+    if (customerData.email && customerData.email.trim()) {
       const duplicateEmail = await CustomerModel.findOne({
         cus_email: customerData.email,
         _id: { $ne: customerId },
@@ -285,7 +311,7 @@ const updateCustomer = async (
       }
     }
 
-    if (customerData.msisdn) {
+    if (customerData.msisdn && customerData.msisdn.trim()) {
       const duplicatePhone = await CustomerModel.findOne({
         cus_msisdn: customerData.msisdn,
         _id: { $ne: customerId },
@@ -298,7 +324,14 @@ const updateCustomer = async (
     }
 
     // Format and clean data
-    const cleanedData = removeNestedNullish<ICustomerUpdate>(customerData);
+    const cleanedData = removeNestedNullish<ICustomerUpdate>({
+      ...customerData,
+      // Convert empty email strings to undefined to avoid unique constraint issues
+      email:
+        customerData.email && customerData.email.trim()
+          ? customerData.email
+          : undefined,
+    });
     const formattedData = formatAttributeName(
       {
         ...cleanedData,
@@ -527,12 +560,12 @@ const getCustomerStatistics = async (query: any) => {
     // Get count by gender
     const maleCount = await CustomerModel.countDocuments({
       ...query,
-      cus_sex: CUSTOMER.SEX.MALE,
+      cus_sex: CUSTOMER.SEX.MALE.value,
     });
 
     const femaleCount = await CustomerModel.countDocuments({
       ...query,
-      cus_sex: CUSTOMER.SEX.FEMALE,
+      cus_sex: CUSTOMER.SEX.FEMALE.value,
     });
 
     // Get count by source
@@ -612,10 +645,16 @@ const exportCustomersToXLSX = async (queryParams: any) => {
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
     } else {
-      for (const file of fs.readdirSync(exportDir)) {
-        if (file.startsWith('khach_hang_')) {
-          fs.unlinkSync(path.join(exportDir, file));
+      // Clean up old export files
+      try {
+        for (const file of fs.readdirSync(exportDir)) {
+          if (file.startsWith('khach_hang_')) {
+            fs.unlinkSync(path.join(exportDir, file));
+          }
         }
+      } catch (error) {
+        console.warn('Error cleaning up old export files:', error);
+        // Continue execution even if cleanup fails
       }
     }
 
@@ -628,12 +667,11 @@ const exportCustomersToXLSX = async (queryParams: any) => {
     const filePath = path.join(exportDir, fileName);
 
     // Map customer data for Excel
-    const excelData = customersList.map((customer: any) => {
+    const excelData = customersList.map((customer) => {
       // Format address from object to string
       let addressString = '';
       if (customer.cus_address) {
-        const { street, district, province } = customer.cus_address;
-        addressString = [street, district, province].filter(Boolean).join(', ');
+        addressString = toAddressString(customer.cus_address);
       }
 
       return {
@@ -643,32 +681,27 @@ const exportCustomersToXLSX = async (queryParams: any) => {
         Email: customer.cus_email || '',
         'Số điện thoại': customer.cus_msisdn || '',
         'Địa chỉ': addressString,
-        'Giới tính': customer.cus_sex || '',
-        'Kênh liên hệ': customer.cus_contactChannel || '',
-        Nguồn: customer.cus_source || '',
+        'Giới tính':
+          Object.values(CUSTOMER.SEX).find(
+            (item) => item.value === customer.cus_sex
+          )?.label || '',
+        'Kênh liên hệ':
+          Object.values(CUSTOMER.CONTACT_CHANNEL).find(
+            (item) => item.value === customer.cus_contactChannel
+          )?.label || '',
+        Nguồn:
+          Object.values(CUSTOMER.SOURCE).find(
+            (item) => item.value === customer.cus_source
+          )?.label || '',
         'Ghi chú': customer.cus_notes || '',
         'Ngày sinh': customer.cus_birthDate
-          ? new Date(customer.cus_birthDate).toISOString().split('T')[0]
+          ? format(new Date(customer.cus_birthDate), 'dd/MM/yyyy')
           : '',
-        'Tạo lúc': customer.createdAt
-          ? new Date(customer.createdAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })
+        'Tạo lúc': customer.cus_createdAt
+          ? format(new Date(customer.cus_createdAt), 'HH:mm dd/MM/yyyy')
           : '',
         'Cập nhật lúc': customer.updatedAt
-          ? new Date(customer.updatedAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })
+          ? format(new Date(customer.updatedAt), 'HH:mm dd/MM/yyyy')
           : '',
       };
     });
@@ -678,8 +711,21 @@ const exportCustomersToXLSX = async (queryParams: any) => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Khách hàng');
 
-    // Write to file
-    XLSX.writeFile(workbook, filePath);
+    // Write to file with error handling
+    try {
+      XLSX.writeFile(workbook, filePath);
+    } catch (error) {
+      throw new Error(
+        `Không thể tạo file Excel: ${
+          error instanceof Error ? error.message : 'Lỗi không xác định'
+        }`
+      );
+    }
+
+    // Verify file was created
+    if (!fs.existsSync(filePath)) {
+      throw new Error('File Excel được tạo nhưng không thể tìm thấy');
+    }
 
     return {
       fileUrl: `${serverConfig.serverUrl}/exports/${fileName}`,
@@ -701,6 +747,321 @@ const exportCustomersToXLSX = async (queryParams: any) => {
   }
 };
 
+/**
+ * Import customers data from XLSX file
+ * @param filePath Path to the Excel file to import
+ * @param options Import options
+ */
+const importCustomersFromXLSX = async (
+  filePath: string,
+  options: {
+    skipDuplicates?: boolean;
+    updateExisting?: boolean;
+    skipEmptyRows?: boolean;
+  } = {}
+) => {
+  let session;
+  try {
+    const {
+      skipDuplicates = true,
+      updateExisting = false,
+      skipEmptyRows = true,
+    } = options;
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      throw new BadRequestError('Không tìm thấy file Excel để import');
+    }
+
+    // Read the Excel file
+    const workbook = XLSX.readFile(filePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+    if (!rawData || rawData.length === 0) {
+      throw new BadRequestError(
+        'File Excel không có dữ liệu hoặc định dạng không đúng'
+      );
+    }
+
+    // Start transaction
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const results = {
+      total: rawData.length,
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [] as Array<{ row: number; error: string; data?: any }>,
+    };
+
+    // Process each row
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i] as any;
+      const rowNumber = i + 2; // +2 because Excel is 1-indexed and first row is header
+
+      try {
+        // Skip empty rows if option is enabled
+        if (skipEmptyRows && isEmptyRow(row)) {
+          results.skipped++;
+          continue;
+        }
+
+        // Map Excel columns to customer data
+        const customerData = mapExcelRowToCustomer(row);
+
+        // Validate required fields
+        if (!customerData.firstName && !customerData.lastName) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Thiếu thông tin họ tên',
+            data: row,
+          });
+          continue;
+        }
+
+        if (!customerData.msisdn && !customerData.email) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Phải có ít nhất số điện thoại hoặc email',
+            data: row,
+          });
+          continue;
+        }
+
+        // Validate email format if provided
+        if (
+          customerData.email &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)
+        ) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Định dạng email không hợp lệ',
+            data: row,
+          });
+          continue;
+        }
+
+        // Validate phone number format if provided
+        if (
+          customerData.msisdn &&
+          !/^[0-9+\-\s()]{8,15}$/.test(customerData.msisdn)
+        ) {
+          results.errors.push({
+            row: rowNumber,
+            error: 'Định dạng số điện thoại không hợp lệ',
+            data: row,
+          });
+          continue;
+        }
+
+        // Check for existing customer
+        const existingCustomer = await findExistingCustomer(customerData);
+
+        if (existingCustomer) {
+          if (skipDuplicates && !updateExisting) {
+            results.skipped++;
+            continue;
+          } else if (updateExisting) {
+            // Update existing customer
+            await CustomerModel.findByIdAndUpdate(
+              existingCustomer._id,
+              formatAttributeName(
+                {
+                  ...customerData,
+                  birthDate: customerData.birthDate,
+                  address: {
+                    province: customerData.province || '',
+                    district: customerData.district || '',
+                    street: customerData.street || '',
+                  },
+                },
+                CUSTOMER.PREFIX
+              ),
+              { session, new: true }
+            );
+            results.updated++;
+          } else {
+            results.errors.push({
+              row: rowNumber,
+              error: 'Khách hàng đã tồn tại (email hoặc số điện thoại trùng)',
+              data: row,
+            });
+          }
+        } else {
+          // Create new customer
+          await CustomerModel.build({
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            email: customerData.email,
+            msisdn: customerData.msisdn,
+            address: {
+              province: customerData.province || '',
+              district: customerData.district || '',
+              street: customerData.street || '',
+            },
+            sex: customerData.sex,
+            contactChannel: customerData.contactChannel,
+            source: customerData.source,
+            notes: customerData.notes,
+            code: customerData.code,
+            birthDate: customerData.birthDate,
+            createdAt: customerData.createdAt,
+          });
+          results.imported++;
+        }
+      } catch (error) {
+        console.log('Error importing customer data:', error);
+        results.errors.push({
+          row: rowNumber,
+          error: error instanceof Error ? error.message : 'Lỗi không xác định',
+          data: row,
+        });
+      }
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return results;
+  } catch (error) {
+    // Rollback transaction if there's an error
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+
+    // Wrap original error with Vietnamese message if it's a standard Error
+    if (
+      error instanceof Error &&
+      !(error instanceof BadRequestError) &&
+      !(error instanceof NotFoundError)
+    ) {
+      throw new Error(
+        `Đã xảy ra lỗi khi import dữ liệu khách hàng từ XLSX: ${error.message}`
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Helper function to check if a row is empty
+ */
+const isEmptyRow = (row: any): boolean => {
+  const values = Object.values(row);
+  return values.every(
+    (value) =>
+      value === null ||
+      value === undefined ||
+      (typeof value === 'string' && value.trim() === '')
+  );
+};
+
+/**
+ * Helper function to map Excel row to customer data
+ */
+const mapExcelRowToCustomer = (row: any) => {
+  const sexRow = row['Giới tính'];
+  const contactChannelRow = row['Kênh liên hệ'];
+  const sourceRow = row['Nguồn'];
+
+  let birthDate: string | undefined,
+    createdAt: string = new Date().toISOString();
+  if (row['Ngày sinh']) {
+    try {
+      birthDate = parse(
+        row['Ngày sinh'],
+        'dd/MM/yyyy',
+        new Date()
+      ).toISOString();
+    } catch (error) {
+      console.warn('Error parsing birth date:', error);
+    }
+  }
+  if (row['Tạo lúc']) {
+    try {
+      createdAt = parse(
+        row['Tạo lúc'],
+        'HH:mm dd/MM/yyyy',
+        new Date()
+      ).toISOString();
+    } catch (error) {
+      console.warn('Error parsing created date:', error);
+    }
+  }
+
+  // Parse address string to extract province, district, and street
+  const addressString = row['Địa chỉ'] || '';
+  let province = '',
+    district = '',
+    street = '';
+
+  if (addressString) {
+    // Try to parse address format: "street, district, province"
+    const addressParts = addressString
+      .split(',')
+      .map((part: string) => part.trim());
+    if (addressParts.length >= 3) {
+      street = addressParts.slice(0, -2).join(', ');
+      district = addressParts[addressParts.length - 2];
+      province = addressParts[addressParts.length - 1];
+    } else if (addressParts.length === 2) {
+      street = addressParts[0];
+      province = addressParts[1];
+    } else {
+      street = addressString;
+    }
+  }
+
+  return {
+    code: row['Mã khách hàng'] || '',
+    lastName: row['Họ'] || '',
+    firstName: row['Tên'] || '',
+    email:
+      row['Email'] && row['Email'].trim() ? row['Email'].trim() : undefined,
+    msisdn: row['Số điện thoại'] || '',
+    province,
+    district,
+    street,
+    sex: Object.values(CUSTOMER.SEX).find((item) => item.label === sexRow)
+      ?.value,
+    contactChannel:
+      Object.values(CUSTOMER.CONTACT_CHANNEL).find(
+        (item) => item.label === contactChannelRow
+      )?.value || CUSTOMER.CONTACT_CHANNEL.OTHER.value,
+    source:
+      Object.values(CUSTOMER.SOURCE).find((item) => item.label === sourceRow)
+        ?.value || CUSTOMER.SOURCE.OTHER.value,
+    notes: row['Ghi chú'] || '',
+    birthDate,
+    createdAt,
+  };
+};
+
+/**
+ * Helper function to find existing customer by email or phone
+ */
+const findExistingCustomer = async (customerData: any) => {
+  const conditions = [];
+
+  if (customerData.email) {
+    conditions.push({ cus_email: customerData.email });
+  }
+
+  if (customerData.msisdn) {
+    conditions.push({ cus_msisdn: customerData.msisdn });
+  }
+
+  if (conditions.length === 0) {
+    return null;
+  }
+
+  return await CustomerModel.findOne({ $or: conditions });
+};
+
 export {
   createCustomer,
   getCustomers,
@@ -711,4 +1072,5 @@ export {
   searchCustomers,
   getCustomerStatistics,
   exportCustomersToXLSX,
+  importCustomersFromXLSX,
 };

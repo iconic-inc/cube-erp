@@ -1,3 +1,4 @@
+import { LogIn, LogOut, Clock } from 'lucide-react';
 import { IAttendance } from '~/interfaces/attendance.interface';
 import { calHourDiff } from '~/utils';
 
@@ -15,9 +16,7 @@ export default function TodayActivities({
       <div className='bg-gray-50 rounded-lg p-4'>
         <div className='flex items-center justify-between mb-3'>
           <div className='flex items-center'>
-            <span className='material-symbols-outlined text-green-500 mr-2'>
-              login
-            </span>
+            <LogIn className='w-4 h-4 text-green-500 mr-2' />
             <span className='text-sm'>Điểm danh</span>
           </div>
 
@@ -30,9 +29,7 @@ export default function TodayActivities({
 
         <div className='flex items-center justify-between mb-3'>
           <div className='flex items-center'>
-            <span className='material-symbols-outlined text-orange-500 mr-2'>
-              logout
-            </span>
+            <LogOut className='w-4 h-4 text-orange-500 mr-2' />
             <span className='text-sm'>Kết thúc</span>
           </div>
           <div className='text-sm font-medium'>
@@ -44,9 +41,7 @@ export default function TodayActivities({
 
         <div className='flex items-center justify-between'>
           <div className='flex items-center'>
-            <span className='material-symbols-outlined text-orange-500 mr-2'>
-              schedule
-            </span>
+            <Clock className='w-4 h-4 text-orange-500 mr-2' />
             <span className='text-sm'>Tổng giờ làm</span>
           </div>
           <div className='text-sm font-medium'>

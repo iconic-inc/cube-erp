@@ -133,7 +133,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
 
                   {task.tsk_caseService && (
                     <Link
-                      to={`/erp/crm/cases/${task.tsk_caseService.id}`}
+                      to={`/erp/cases/${task.tsk_caseService.id}`}
                       className='text-red-900 hover:text-red-800 transition-colors text-xs shrink-0'
                     >
                       {task.tsk_caseService.case_code}

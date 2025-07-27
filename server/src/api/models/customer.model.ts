@@ -27,8 +27,8 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
     cus_email: {
       type: String,
       trim: true,
-      required: true,
       unique: true,
+      sparse: true, // Only apply unique constraint to non-null values
     },
     cus_msisdn: {
       type: String,
@@ -37,14 +37,14 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
       unique: true,
     },
     cus_address: {
-      province: { type: String, required: true },
-      district: { type: String, required: true },
+      province: { type: String },
+      district: { type: String },
       street: { type: String, required: true },
     },
     cus_sex: {
       type: String,
-      enum: Object.values(CUSTOMER.SEX),
-      default: CUSTOMER.SEX.MALE,
+      enum: Object.values(CUSTOMER.SEX).flatMap((item) => item.value),
+      default: CUSTOMER.SEX.MALE.value,
     },
     cus_birthDate: {
       type: Date,

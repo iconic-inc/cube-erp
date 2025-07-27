@@ -18,8 +18,7 @@ import {
 import LoadingCard from '~/components/LoadingCard';
 import { NumericFormat } from 'react-number-format';
 import { DatePicker } from '~/components/ui/date-picker';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 
 interface RewardDetailFormProps {
   formId: string;
@@ -330,18 +329,14 @@ export default function RewardDetailForm({
               Mô tả
             </Label>
 
-            <Hydrated>
-              {() => (
-                <TextEditor
-                  isReady={isContentReady}
-                  name='description'
-                  value={description}
-                  onChange={setDescription}
-                  placeholder='Nhập mô tả chi tiết về quỹ thưởng...'
-                  className='min-h-[200px]'
-                />
-              )}
-            </Hydrated>
+            <TextEditor
+              isReady={isContentReady}
+              name='description'
+              value={description}
+              onChange={setDescription}
+              placeholder='Nhập mô tả chi tiết về quỹ thưởng...'
+              className='min-h-[200px]'
+            />
           </div>
         </CardContent>
 

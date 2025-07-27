@@ -85,7 +85,7 @@ export class CaseServiceController {
   }
 
   /**
-   * Import case services from CSV or XLSX
+   * Import case services from XLSX
    */
   static async importCaseServices(req: Request, res: Response) {
     // Get the file path
@@ -94,17 +94,34 @@ export class CaseServiceController {
       throw new BadRequestError('File not found');
     }
 
-    // Import case services from the uploaded file
-    const result = await importCaseServices(filePath);
+    try {
+      // Parse import options from request body
+      const options = {
+        skipDuplicates: req.body.skipDuplicates === 'true',
+        updateExisting: req.body.updateExisting === 'true',
+        skipEmptyRows: req.body.skipEmptyRows !== 'false', // Default to true
+      };
 
-    // Delete the file after processing
-    fs.unlinkSync(filePath);
+      // Import case services from the uploaded file
+      const result = await importCaseServices(filePath, options);
 
-    return OK({
-      res,
-      message: 'Case services imported successfully',
-      metadata: {},
-    });
+      return OK({
+        res,
+        message: 'Case services imported successfully',
+        metadata: result,
+      });
+    } catch (error) {
+      throw error;
+    } finally {
+      // Always delete the file after processing
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkError) {
+        console.error('Error deleting uploaded file:', unlinkError);
+      }
+    }
   }
 
   /**
@@ -187,6 +204,21 @@ export class CaseServiceController {
       res,
       message: 'Tasks fetched successfully',
       metadata: tasks,
+    });
+  };
+
+  /**
+   * Get case services by employee user ID
+   */
+  static getCaseServicesByEmployee = async (req: Request, res: Response) => {
+    const caseServices = await getCaseServices({
+      ...req.query,
+      employeeUserId: req.user.userId,
+    });
+    return OK({
+      res,
+      message: 'Case services fetched successfully',
+      metadata: caseServices,
     });
   };
 }

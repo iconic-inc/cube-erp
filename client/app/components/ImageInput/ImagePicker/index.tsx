@@ -5,7 +5,7 @@ import ImageUploader from './ImageUploader';
 import ImageMetadata from './ImageMetadata';
 import { useFetcher } from '@remix-run/react';
 import { toast } from 'react-toastify';
-import { action } from '~/routes/cmsdesk+/images+/$id';
+import { action } from '~/routes/api+/images+/upload';
 
 interface ImagePickerProps {
   multiple?: boolean;

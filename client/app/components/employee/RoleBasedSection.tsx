@@ -85,7 +85,7 @@ export default function RoleBasedSection({ userRole }: RoleBasedSectionProps) {
           title: 'Quản lý vụ việc',
           description: 'Xem và xử lý các vụ việc pháp lý',
           icon: Scale,
-          href: '/erp/crm/cases',
+          href: '/erp/cases',
           color: 'bg-red-100 text-red-600',
         });
       }
@@ -95,7 +95,7 @@ export default function RoleBasedSection({ userRole }: RoleBasedSectionProps) {
           title: 'Quản lý khách hàng',
           description: 'Thông tin khách hàng và vụ việc',
           icon: Building,
-          href: '/erp/crm/customers',
+          href: '/erp/customers',
           color: 'bg-yellow-100 text-yellow-600',
         });
       }
@@ -121,7 +121,7 @@ export default function RoleBasedSection({ userRole }: RoleBasedSectionProps) {
           title: 'Hỗ trợ vụ việc',
           description: 'Hỗ trợ xử lý các vụ việc',
           icon: Scale,
-          href: '/erp/crm/cases',
+          href: '/erp/cases',
           color: 'bg-orange-100 text-orange-600',
         });
       }

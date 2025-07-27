@@ -14,6 +14,7 @@ import {
   caseServiceUpdateSchema,
   caseServiceQuerySchema,
   caseServiceBulkDeleteSchema,
+  caseServiceImportOptionsSchema,
   documentIdsSchema,
   caseDocumentIdsSchema,
 } from '@schemas/caseService.schema';
@@ -70,9 +71,9 @@ router.delete(
   CaseServiceController.detachDocFromCase
 );
 
-// Import case services from CSV or XLSX
+// Import case services from XLSX
 router.post(
-  '/import',
+  '/import/xlsx',
   hasPermission('caseService', 'createAny'),
   upload,
   CaseServiceController.importCaseServices

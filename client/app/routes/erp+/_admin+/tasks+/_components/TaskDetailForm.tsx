@@ -500,7 +500,7 @@ export default function TaskDetailForm({
                 asChild
                 className='text-sm sm:text-base'
               >
-                <Link to={`/erp/crm/cases`}>Chọn hồ sơ liên quan</Link>
+                <Link to={`/erp/cases`}>Chọn hồ sơ liên quan</Link>
               </Button>
             </div>
           )}

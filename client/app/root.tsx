@@ -11,7 +11,6 @@ import toastifyCss from 'react-toastify/ReactToastify.css?url';
 import style from './styles/index.scss?url';
 import HandsomeError from './components/HandsomeError';
 import { Bounce, ToastContainer } from 'react-toastify';
-import 'material-symbols/outlined.css';
 import BackToTop from './widgets/BackToTop';
 
 export const links: LinksFunction = () => [

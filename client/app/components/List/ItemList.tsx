@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from '@remix-run/react';
+import { ChevronUp, ChevronDown, FileSpreadsheet } from 'lucide-react';
 import Defer from '~/components/Defer';
 import { IListResponse } from '~/interfaces/response.interface';
 import ItemPagination from './ListPagination';
@@ -119,11 +120,13 @@ export default function ItemList<T>({
                             <span className='text-sm'>{column.title}</span>
                             <span className='w-4 h-4 inline-flex justify-center'>
                               {sortBy === (column.sortField || column.key) && (
-                                <span className='material-symbols-outlined text-xs'>
-                                  {sortOrder === 'asc'
-                                    ? 'arrow_upward'
-                                    : 'arrow_downward'}
-                                </span>
+                                <>
+                                  {sortOrder === 'asc' ? (
+                                    <ChevronUp className='w-3 h-3' />
+                                  ) : (
+                                    <ChevronDown className='w-3 h-3' />
+                                  )}
+                                </>
                               )}
                             </span>
                           </div>
@@ -166,7 +169,6 @@ export default function ItemList<T>({
                 if (!items || items.length === 0) {
                   return (
                     <EmptyListRow
-                      icon='person_off'
                       title={`Không có ${name} nào`}
                       description={`Hãy thêm ${name} đầu tiên của bạn để bắt đầu quản lý thông tin.`}
                       addNewHandler={addNewHandler}
@@ -224,9 +226,7 @@ export default function ItemList<T>({
             if (!items || items.length === 0) {
               return (
                 <div className='text-center py-12'>
-                  <span className='material-symbols-outlined text-6xl text-gray-300 mb-4 block'>
-                    person_off
-                  </span>
+                  <FileSpreadsheet className='w-16 h-16 text-gray-300 mb-4 mx-auto' />
                   <h3 className='text-xl font-medium text-gray-900 mb-2'>
                     Không có {name} nào
                   </h3>

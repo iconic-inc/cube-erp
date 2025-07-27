@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { CustomerController } from '@controllers/customer.controller';
 import { authenticationV2 } from '@middlewares/authentication';
 import { hasPermission } from '@middlewares/authorization';
@@ -6,7 +6,9 @@ import { validateObjectId, validateSchema } from '@schemas/index';
 import {
   customerBulkDeleteSchema,
   customerCreateSchema,
+  customerImportOptionsSchema,
 } from '@schemas/customer.schema';
+import { excelImportStorage } from '@configs/config.multer';
 
 const router = Router();
 
@@ -18,6 +20,14 @@ router.get(
   '/export/xlsx',
   hasPermission('employee', 'readAny'),
   CustomerController.exportCustomersToXLSX
+);
+
+// Route để import dữ liệu khách hàng từ XLSX
+router.post(
+  '/import/xlsx',
+  hasPermission('customer', 'createAny'),
+  excelImportStorage.single('file'),
+  CustomerController.importCustomersFromXLSX
 );
 
 // Get customer by ID
