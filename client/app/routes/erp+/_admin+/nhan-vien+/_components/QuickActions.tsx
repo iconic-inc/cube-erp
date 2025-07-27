@@ -1,3 +1,5 @@
+import { Clock, BarChart3, FileText, ArrowRight } from 'lucide-react';
+
 export default function QuickActions() {
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8'>
@@ -5,9 +7,7 @@ export default function QuickActions() {
         <div className='flex justify-between items-start'>
           <div>
             <div className='flex items-center mb-3'>
-              <span className='material-symbols-outlined text-purple-500 mr-2'>
-                timer
-              </span>
+              <Clock className='w-5 h-5 text-purple-500 mr-2' />
               <h3 className='text-lg font-semibold'>Request Time Off</h3>
             </div>
             <p className='text-sm text-gray-500 mb-4'>
@@ -15,9 +15,7 @@ export default function QuickActions() {
             </p>
             <button className='text-purple-500 hover:text-purple-600 text-sm flex items-center hover:underline transition-all'>
               Request Leave
-              <span className='material-symbols-outlined text-sm ml-1'>
-                arrow_forward
-              </span>
+              <ArrowRight className='w-4 h-4 ml-1' />
             </button>
           </div>
         </div>
@@ -27,9 +25,7 @@ export default function QuickActions() {
         <div className='flex justify-between items-start'>
           <div>
             <div className='flex items-center mb-3'>
-              <span className='material-symbols-outlined text-blue-500 mr-2'>
-                insights
-              </span>
+              <BarChart3 className='w-5 h-5 text-blue-500 mr-2' />
               <h3 className='text-lg font-semibold'>Work Analytics</h3>
             </div>
             <p className='text-sm text-gray-500 mb-4'>
@@ -37,9 +33,7 @@ export default function QuickActions() {
             </p>
             <button className='text-blue-500 hover:text-blue-600 text-sm flex items-center hover:underline transition-all'>
               View Analytics
-              <span className='material-symbols-outlined text-sm ml-1'>
-                arrow_forward
-              </span>
+              <ArrowRight className='w-4 h-4 ml-1' />
             </button>
           </div>
         </div>
@@ -49,9 +43,7 @@ export default function QuickActions() {
         <div className='flex justify-between items-start'>
           <div>
             <div className='flex items-center mb-3'>
-              <span className='material-symbols-outlined text-green-500 mr-2'>
-                report
-              </span>
+              <FileText className='w-5 h-5 text-green-500 mr-2' />
               <h3 className='text-lg font-semibold'>Attendance Report</h3>
             </div>
             <p className='text-sm text-gray-500 mb-4'>
@@ -59,9 +51,7 @@ export default function QuickActions() {
             </p>
             <button className='text-green-500 hover:text-green-600 text-sm flex items-center hover:underline transition-all'>
               Generate Report
-              <span className='material-symbols-outlined text-sm ml-1'>
-                arrow_forward
-              </span>
+              <ArrowRight className='w-4 h-4 ml-1' />
             </button>
           </div>
         </div>

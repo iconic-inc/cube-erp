@@ -5,7 +5,7 @@ import 'quill/dist/quill.snow.css';
 import './index.css';
 import { cn } from '~/lib/utils';
 
-export default function TextEditor({
+export default function TextEditorClient({
   value,
   onChange,
   name,

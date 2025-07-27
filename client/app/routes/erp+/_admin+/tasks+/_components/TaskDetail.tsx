@@ -201,7 +201,7 @@ export default function TaskDetail({
                           </span>
                         </div>
                         <Link
-                          to={`/erp/crm/cases/${task.tsk_caseService.id}`}
+                          to={`/erp/cases/${task.tsk_caseService.id}`}
                           className='text-sm md:text-base font-medium text-blue-600 hover:underline truncate'
                         >
                           {task.tsk_caseService.case_code}

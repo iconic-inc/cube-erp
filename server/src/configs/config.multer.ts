@@ -96,6 +96,14 @@ export const diskDocStorage = multer({
   },
 });
 
+export const excelImportStorage = multer({
+  storage: storage('import'),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB for large Excel files
+  },
+  fileFilter: fileFilter(['xlsx', 'xls']),
+});
+
 export const memoryStorage = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -109,5 +117,6 @@ export default {
   fileFilter,
   diskImageStorage,
   diskDocStorage,
+  excelImportStorage,
   memoryStorage,
 };

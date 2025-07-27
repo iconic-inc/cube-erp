@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader } from './ui/card';
+import { TrendingUp } from 'lucide-react';
+import { LucideIcon } from './ui/lucide-icon';
 
 export default function StatCard({
   title,
@@ -25,9 +27,7 @@ export default function StatCard({
 
             {description && (
               <p className='text-xs text-green-500 mt-2 flex items-center'>
-                <span className='material-symbols-outlined text-xs mr-1'>
-                  arrow_upward
-                </span>
+                <TrendingUp className='w-3 h-3 mr-1' />
                 {description}
               </p>
             )}
@@ -36,11 +36,10 @@ export default function StatCard({
           <div
             className={`w-10 h-10 rounded-full ${COLORS[color].bg} flex items-center justify-center`}
           >
-            <span
-              className={`material-symbols-outlined ${COLORS[color].text} text-lg`}
-            >
-              {icon}
-            </span>
+            <LucideIcon
+              name={icon}
+              className={`${COLORS[color].text} w-5 h-5`}
+            />
           </div>
         </div>
       </CardContent>

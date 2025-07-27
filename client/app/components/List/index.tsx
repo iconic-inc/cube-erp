@@ -15,6 +15,7 @@ export default function List<T>({
   name,
   addNewHandler,
   exportable = false,
+  importable = false,
   showToolbar = true,
   showPagination = true,
   deleteHandleRoute,
@@ -25,6 +26,7 @@ export default function List<T>({
   name: string;
   addNewHandler?: () => void;
   exportable?: boolean;
+  importable?: boolean;
   showToolbar?: boolean;
   showPagination?: boolean;
   deleteHandleRoute?: string;
@@ -43,6 +45,7 @@ export default function List<T>({
                 <ListToolbar<T>
                   name={name}
                   exportable={exportable}
+                  importable={importable}
                   visibleColumns={visibleColumns}
                   setVisibleColumns={setVisibleColumns}
                   items={items}

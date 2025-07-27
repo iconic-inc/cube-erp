@@ -1,15 +1,16 @@
-import { Link } from '@remix-run/react';
+import { CircleOff, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
+import { cloneElement, ReactElement } from 'react';
 
 export default function EmptyListRow({
-  icon = 'person_off',
+  icon = <CircleOff />,
   title = 'Không có dữ liệu',
   description = 'Thêm dữ liệu đầu tiên của bạn để bắt đầu quản lý thông tin.',
   linkText = 'Thêm mới',
   addNewHandler,
   colSpan = 1,
 }: {
-  icon?: string;
+  icon?: ReactElement;
   title: string;
   description: string;
   addNewHandler?: () => void;
@@ -21,9 +22,7 @@ export default function EmptyListRow({
       <td colSpan={colSpan}>
         <div className='py-12 flex flex-col items-center justify-center'>
           <div className='bg-gray-100 rounded-full p-6 mb-4'>
-            <span className='material-symbols-outlined text-5xl text-gray-400'>
-              {icon}
-            </span>
+            {cloneElement(icon, { className: 'w-12 h-12 text-gray-400' })}
           </div>
           <h3 className='text-xl font-medium text-gray-800 mb-2'>{title}</h3>
           <p className='text-gray-500 mb-6 text-center max-w-md'>
@@ -32,7 +31,7 @@ export default function EmptyListRow({
 
           {addNewHandler && (
             <Button type='button' variant={'primary'} onClick={addNewHandler}>
-              <span className='material-symbols-outlined text-sm'>add</span>
+              <Plus className='w-4 h-4 mr-2' />
               {linkText}
             </Button>
           )}

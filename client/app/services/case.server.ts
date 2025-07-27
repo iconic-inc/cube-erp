@@ -145,22 +145,47 @@ const detachDocumentsFromCase = async (
 };
 
 // Import case services from file (CSV or XLSX)
-const importCaseServices = async (file: File, request: ISessionUser) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
 
-    const response = await fetcher<any>('/case-services/import', {
-      method: 'POST',
-      body: formData,
-      request,
-    });
+// Import case services from Excel file
+const importCaseServices = async (
+  file: File,
+  options: {
+    skipDuplicates?: boolean;
+    updateExisting?: boolean;
+    skipEmptyRows?: boolean;
+  },
+  request: ISessionUser,
+) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append(
+    'skipDuplicates',
+    options.skipDuplicates?.toString() || 'true',
+  );
+  formData.append(
+    'updateExisting',
+    options.updateExisting?.toString() || 'false',
+  );
+  formData.append('skipEmptyRows', options.skipEmptyRows?.toString() || 'true');
 
-    return response;
-  } catch (error) {
-    console.error('Error importing case services:', error);
-    throw error;
-  }
+  const response = await fetcher<{
+    total: number;
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: Array<{
+      row: number;
+      error: string;
+      data: any;
+    }>;
+  }>('/case-services/import/xlsx', {
+    request,
+    method: 'POST',
+    body: formData,
+    headers: {}, // Let fetch handle content-type for FormData
+  });
+
+  return response;
 };
 
 // Export case services to CSV
@@ -191,6 +216,17 @@ const exportCaseServicesToXLSX = async (
   );
 };
 
+const getMyCaseServices = async (
+  searchParams: URLSearchParams,
+  request: ISessionUser,
+) => {
+  const response = await fetcher<IListResponse<ICaseService>>(
+    `/case-services/me?${searchParams.toString()}`,
+    { request },
+  );
+  return response;
+};
+
 export {
   getCaseServices,
   getCaseServiceById,
@@ -204,4 +240,5 @@ export {
   exportCaseServicesToXLSX,
   getCaseServiceTasks,
   getCaseServiceDocuments,
+  getMyCaseServices,
 };

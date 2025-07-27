@@ -97,6 +97,12 @@ export const caseServiceQuerySchema = z
         message: 'ID luật sư chính không hợp lệ',
       })
       .optional(),
+    employeeUserId: z
+      .string()
+      .refine((val) => !val || isValidObjectId(val), {
+        message: 'ID người dùng nhân viên không hợp lệ',
+      })
+      .optional(),
     startDate: z.preprocess(
       (val) => (val ? new Date(val as string) : undefined),
       z.date().optional()
@@ -196,4 +202,23 @@ export const caseDocumentIdsSchema = z.object({
       message: 'ID tài liệu vụ việc không hợp lệ',
     })
   ),
+});
+
+// Schema for case service import options
+export const caseServiceImportOptionsSchema = z.object({
+  skipDuplicates: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true')
+    .default('true'),
+  updateExisting: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true')
+    .default('false'),
+  skipEmptyRows: z
+    .string()
+    .optional()
+    .transform((val) => val !== 'false')
+    .default('true'),
 });

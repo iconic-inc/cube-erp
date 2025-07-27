@@ -1,5 +1,12 @@
 import { Form, useFetcher, useSearchParams } from '@remix-run/react';
-import { LoaderCircle, X } from 'lucide-react';
+import {
+  LoaderCircle,
+  X,
+  Search,
+  Download,
+  Columns,
+  Upload,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -16,12 +23,14 @@ import { IListResponse } from '~/interfaces/response.interface';
 export default function ListToolbar<T>({
   name,
   exportable = false,
+  importable = false,
   visibleColumns,
   setVisibleColumns,
   items,
 }: {
   name: string;
   exportable?: boolean;
+  importable?: boolean;
   visibleColumns: IListColumn<T>[];
   setVisibleColumns: (value: IListColumn<T>[]) => void;
   items: IListResponse<T>;
@@ -171,8 +180,12 @@ export default function ListToolbar<T>({
   };
 
   const exportFetcher = useFetcher<IActionFunctionResponse<IExportResponse>>();
+  const importFetcher = useFetcher<IActionFunctionResponse<any>>();
   const toastIdRef = useRef<any>(null);
+  const importToastIdRef = useRef<any>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync activeFilters with URL params
   useEffect(() => {
@@ -235,6 +248,41 @@ export default function ListToolbar<T>({
     }
   }, [exportFetcher.data]);
 
+  useEffect(() => {
+    if (importFetcher.data) {
+      const response = importFetcher.data;
+      if (response.success) {
+        toast.update(importToastIdRef.current, {
+          render: `Đã nhập dữ liệu ${name} thành công! ${response.data?.imported || 0} bản ghi được thêm, ${response.data?.updated || 0} bản ghi được cập nhật.`,
+          type: response.toast.type,
+          autoClose: 5000,
+          isLoading: false,
+        });
+
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        const errorDetails = response.data?.errors?.length
+          ? ` (${response.data.errors.length} lỗi)`
+          : '';
+        toast.update(importToastIdRef.current, {
+          render:
+            response.toast.message ||
+            `Có lỗi xảy ra khi nhập dữ liệu ${name}${errorDetails}.`,
+          type: 'error',
+          autoClose: 5000,
+          isLoading: false,
+        });
+      }
+      setIsImporting(false);
+    }
+  }, [importFetcher.data]);
+
   const getFilterOptions = (column: IListColumn<T>) => {
     if (typeof column.options === 'function') {
       const options = items.data.map((item) =>
@@ -244,6 +292,44 @@ export default function ListToolbar<T>({
       return Array.from(new Set(options)).map((item) => JSON.parse(item));
     }
     return column.options || [];
+  };
+
+  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 10MB');
+      event.target.value = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwrite', 'false'); // Default to not overwrite
+
+    setIsImporting(true);
+    importToastIdRef.current = toast.loading(`Đang nhập dữ liệu ${name}...`);
+
+    importFetcher.submit(formData, {
+      method: 'POST',
+      action: './import/xlsx',
+      encType: 'multipart/form-data',
+    });
   };
 
   return (
@@ -256,9 +342,7 @@ export default function ListToolbar<T>({
           onSubmit={handleSearch}
           className='relative flex-1 max-w-none sm:max-w-md'
         >
-          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-sm sm:text-base'>
-            search
-          </span>
+          <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
           <input
             type='text'
             placeholder='Tìm kiếm...'
@@ -270,6 +354,40 @@ export default function ListToolbar<T>({
 
         {/* Actions */}
         <div className='flex-1 flex items-center justify-end gap-2 sm:gap-3 flex-wrap'>
+          {/* Import Button */}
+          {importable && (
+            <div className='flex-shrink-0'>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
+                onChange={handleImportFile}
+                className='hidden'
+                disabled={isImporting}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+                className='px-3 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition shadow-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap'
+              >
+                {isImporting ? (
+                  <>
+                    <LoaderCircle className='animate-spin w-4 h-4' />
+                    <span className='hidden sm:inline'>Đang nhập...</span>
+                    <span className='sm:hidden'>Nhập...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className='w-4 h-4' />
+                    <span className='hidden sm:inline'>Nhập Excel</span>
+                    <span className='sm:hidden'>Nhập</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Export Button */}
           {exportable && (
             <exportFetcher.Form
               method='POST'
@@ -296,9 +414,7 @@ export default function ListToolbar<T>({
                   </>
                 ) : (
                   <>
-                    <span className='material-symbols-outlined text-sm'>
-                      download
-                    </span>
+                    <Download className='w-4 h-4' />
                     <span className='hidden sm:inline'>Xuất Excel</span>
                     <span className='sm:hidden'>Xuất</span>
                   </>
@@ -310,9 +426,7 @@ export default function ListToolbar<T>({
           {/* Column Visibility Toggle */}
           <details className='relative flex-shrink-0'>
             <summary className='px-3 py-2 bg-white border border-gray-300 rounded-md cursor-pointer flex items-center gap-1 sm:gap-2 hover:bg-gray-50 transition text-xs sm:text-sm whitespace-nowrap'>
-              <span className='material-symbols-outlined text-sm'>
-                view_column
-              </span>
+              <Columns className='w-4 h-4' />
               <span className='hidden sm:inline'>Cột</span>
             </summary>
             <div className='absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10'>

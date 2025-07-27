@@ -8,7 +8,9 @@ import {
   deleteCustomer,
   deleteMultipleCustomers,
   exportCustomersToXLSX,
+  importCustomersFromXLSX,
 } from '@services/customer.service';
+import { BadRequestError } from '../core/errors';
 
 export class CustomerController {
   static async createCustomer(req: Request, res: Response) {
@@ -75,6 +77,33 @@ export class CustomerController {
       res,
       message: 'Export customers functionality not implemented yet',
       metadata: await exportCustomersToXLSX(req.query),
+    });
+  }
+
+  static async importCustomersFromXLSX(req: Request, res: Response) {
+    // Get file path from uploaded file
+    const filePath = req.file?.path;
+
+    if (!filePath) {
+      throw new BadRequestError('Vui lòng chọn file Excel để import');
+    }
+
+    // Get import options from request body
+    const options = {
+      skipDuplicates:
+        req.body.skipDuplicates === 'true' || req.body.skipDuplicates === true,
+      updateExisting:
+        req.body.updateExisting === 'true' || req.body.updateExisting === true,
+      skipEmptyRows:
+        req.body.skipEmptyRows === 'true' || req.body.skipEmptyRows === true,
+    };
+
+    const result = await importCustomersFromXLSX(filePath, options);
+
+    return OK({
+      res,
+      message: 'Customers imported successfully',
+      metadata: result,
     });
   }
 }

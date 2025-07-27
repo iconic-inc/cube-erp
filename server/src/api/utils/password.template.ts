@@ -928,7 +928,7 @@ export const passwordEmailTemplate = () => {
                                     >
                                       <a
                                         target="_blank"
-                                        href="https://www.iconictalents.vn"
+                                        href="https://www.luatlapphuong.vn"
                                         style="
                                           -webkit-text-size-adjust: none;
                                           -ms-text-size-adjust: none;
@@ -937,7 +937,7 @@ export const passwordEmailTemplate = () => {
                                           color: #2d3142;
                                           font-size: 14px;
                                         "
-                                      >Copyright © 2025&nbsp;Iconic Talents</a>
+                                      >Copyright © 2025&nbsp;Cube Law Firm</a>
                                     </p>
                                   </td>
                                 </tr>

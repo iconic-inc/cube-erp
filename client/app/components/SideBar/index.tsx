@@ -94,11 +94,11 @@ const getNavItems = (user: IUser) => {
         items: [
           {
             title: 'Khách hàng',
-            url: '/erp/crm/customers',
+            url: '/erp/customers',
           },
           {
             title: 'Hồ sơ vụ việc',
-            url: '/erp/crm/cases',
+            url: '/erp/cases',
           },
         ],
       },
@@ -170,7 +170,7 @@ const getNavItems = (user: IUser) => {
   if (canAccessCustomerManagement(user?.usr_role)) {
     CRMItems.push({
       title: 'Khách hàng',
-      url: '/erp/crm/customers',
+      url: '/erp/customers',
     });
   }
 
@@ -178,7 +178,7 @@ const getNavItems = (user: IUser) => {
   if (canAccessCaseServices(user?.usr_role)) {
     CRMItems.push({
       title: 'Hồ sơ vụ việc',
-      url: '/erp/crm/cases',
+      url: '/erp/nhan-vien/cases',
     });
   }
 

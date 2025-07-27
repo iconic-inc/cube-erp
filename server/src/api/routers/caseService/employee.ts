@@ -1,0 +1,8 @@
+import { CaseServiceController } from '@controllers/caseService.controller';
+import { Router } from 'express';
+
+const router = Router();
+
+router.get('/', CaseServiceController.getAllCaseServices);
+
+module.exports = router;

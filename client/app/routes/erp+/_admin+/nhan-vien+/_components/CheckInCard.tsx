@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { IAttendanceBrief } from '~/interfaces/attendance.interface';
@@ -29,9 +29,7 @@ export default function CheckInCard({
   `}
       >
         <div className='w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-green-200 transition-all'>
-          <span className='material-symbols-outlined text-2xl sm:text-3xl text-green-500'>
-            login
-          </span>
+          <LogIn className='w-6 h-6 sm:w-8 sm:h-8 text-green-500' />
         </div>
 
         <h3 className='text-lg sm:text-xl font-semibold mb-2'>

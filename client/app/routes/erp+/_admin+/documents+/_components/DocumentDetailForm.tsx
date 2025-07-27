@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useFetcher } from '@remix-run/react';
 import {
   Card,
   CardContent,
@@ -10,10 +9,8 @@ import {
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
-import { Badge } from '~/components/ui/badge';
 import { Switch } from '~/components/ui/switch';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import Defer from '~/components/Defer';
 import LoadingCard from '~/components/LoadingCard';
@@ -309,16 +306,13 @@ function DocumentFormContent({
             <FileText className='w-5 h-5 mr-2' />
             Mô tả tài liệu
           </h3>
-          <Hydrated>
-            {() => (
-              <TextEditor
-                value={description}
-                name='description'
-                onChange={setDescription}
-                placeholder='Nhập mô tả tài liệu...'
-              />
-            )}
-          </Hydrated>
+
+          <TextEditor
+            value={description}
+            name='description'
+            onChange={setDescription}
+            placeholder='Nhập mô tả tài liệu...'
+          />
         </div>
 
         {/* Access Control */}

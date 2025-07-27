@@ -1,4 +1,5 @@
 import { Link, useFetcher } from '@remix-run/react';
+import { ChevronsUpDown, Eye, Edit, Trash2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import Defer from '~/components/Defer';
 import { IEmployee } from '~/interfaces/employee.interface';
@@ -75,9 +76,7 @@ export default function EmployeeList({
               >
                 <div className='flex items-center'>
                   Mã nhân viên
-                  <span className='material-symbols-outlined text-xs ml-1'>
-                    unfold_more
-                  </span>
+                  <ChevronsUpDown className='w-3 h-3 ml-1' />
                 </div>
               </th>
               <th
@@ -86,9 +85,7 @@ export default function EmployeeList({
               >
                 <div className='flex items-center'>
                   Phòng ban
-                  <span className='material-symbols-outlined text-xs ml-1'>
-                    unfold_more
-                  </span>
+                  <ChevronsUpDown className='w-3 h-3 ml-1' />
                 </div>
               </th>
 
@@ -98,9 +95,7 @@ export default function EmployeeList({
               >
                 <div className='flex items-center'>
                   Trạng thái
-                  <span className='material-symbols-outlined text-xs ml-1'>
-                    unfold_more
-                  </span>
+                  <ChevronsUpDown className='w-3 h-3 ml-1' />
                 </div>
               </th>
 
@@ -216,18 +211,14 @@ export default function EmployeeList({
                           to={`/erp/employees/${employee.id}`}
                           className='text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-all'
                         >
-                          <span className='material-symbols-outlined text-sm'>
-                            visibility
-                          </span>
+                          <Eye className='w-4 h-4' />
                         </Link>
 
                         <Link
                           to={`/erp/employees/${employee.id}/edit`}
                           className='text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50 transition-all'
                         >
-                          <span className='material-symbols-outlined text-sm'>
-                            edit
-                          </span>
+                          <Edit className='w-4 h-4' />
                         </Link>
 
                         <button
@@ -249,9 +240,7 @@ export default function EmployeeList({
                             }
                           }}
                         >
-                          <span className='material-symbols-outlined text-sm'>
-                            delete
-                          </span>
+                          <Trash2 className='w-4 h-4' />
                         </button>
                       </div>
                     </td>

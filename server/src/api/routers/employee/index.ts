@@ -31,7 +31,7 @@ router.post(
 );
 
 // Employee KPI route
-// router.use('/:userId/kpi', require('../kpi').employeeKPIRouter);
+router.use('/me/case-services', require('../caseService/employee'));
 router.use('/me/attendance', require('../attendance/employee'));
 router.use('/me/attendance-requests', require('../attendanceRequest/employee'));
 router.use('/me/rewards', require('../reward/employee'));

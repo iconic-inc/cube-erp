@@ -31,7 +31,7 @@ export default function CaseServiceBrief({
           asChild
           className='text-xs sm:text-sm w-full sm:w-auto'
         >
-          <Link to={`/erp/crm/cases/${caseService.id}`}>Xem chi tiết</Link>
+          <Link to={`/erp/cases/${caseService.id}`}>Xem chi tiết</Link>
         </Button>
       </div>
 
@@ -59,7 +59,7 @@ export default function CaseServiceBrief({
         </p>
         <p>
           <span className='font-bold text-gray-700'>Email:</span>{' '}
-          {customer.cus_email}
+          {customer.cus_email || 'N/A'}
         </p>
         <p>
           <span className='font-bold text-gray-700'>Số điện thoại:</span>{' '}

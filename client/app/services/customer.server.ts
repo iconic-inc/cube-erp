@@ -139,6 +139,34 @@ const exportCustomers = async (
   );
 };
 
+// Import customers from Excel file
+const importCustomers = async (
+  file: File,
+  overwrite: boolean,
+  request: ISessionUser,
+) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('overwrite', overwrite.toString());
+
+  const response = await fetcher<{
+    imported: number;
+    updated: number;
+    errors: Array<{
+      row: number;
+      error: string;
+      data: any;
+    }>;
+  }>('/customers/import/xlsx', {
+    request,
+    method: 'POST',
+    body: formData,
+    headers: {}, // Let fetch handle content-type for FormData
+  });
+
+  return response;
+};
+
 export {
   getCustomers,
   getCustomerById,
@@ -148,4 +176,5 @@ export {
   getCustomerStatistics,
   deleteMultipleCustomers,
   exportCustomers,
+  importCustomers,
 };
