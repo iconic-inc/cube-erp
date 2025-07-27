@@ -13,7 +13,7 @@ import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
 import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
-import { Plus, Save, XCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Save, XCircle } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
@@ -641,9 +641,7 @@ export default function TaskDetailForm({
             to='/erp/tasks'
             className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
           >
-            <span className='material-symbols-outlined text-sm mr-1'>
-              keyboard_return
-            </span>
+            <ArrowLeft className='h-4 w-4 mr-1' />
             Trở về Danh sách
           </Link>
 

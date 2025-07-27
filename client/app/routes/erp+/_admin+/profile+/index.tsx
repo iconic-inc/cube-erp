@@ -1,7 +1,7 @@
 import { useFetcher, Link } from '@remix-run/react';
 import { ActionFunctionArgs, data as dataResponse } from '@remix-run/node';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import { isAuthenticated } from '~/services/auth.server';
@@ -28,6 +28,9 @@ import {
 import { useERPLoaderData } from '~/lib';
 import { updateMyEmployee } from '~/services/employee.server';
 import { DatePicker } from '~/components/ui/date-picker';
+import ImageInput from '~/components/ImageInput';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { IImage } from '~/interfaces/image.interface';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
@@ -49,7 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       birthdate: data.birthdate as string,
       username: data.username as string,
       password: data.password as string,
-      // avatar: data.avatar as string,
+      avatar: data.avatar as string,
     };
 
     const updatedEmployee = await updateMyEmployee(updateData, auth!);
@@ -80,9 +83,9 @@ export default function HRMProfile() {
   const formId = useMemo(() => generateFormId('admin-profile-form'), []);
 
   // Form state
-  // const [avatar, setAvatar] = useState<IImage>(
-  //   user?.usr_avatar || ({} as IImage),
-  // );
+  const [avatar, setAvatar] = useState<IImage>(
+    user?.usr_avatar || ({} as IImage),
+  );
   const [username, setUsername] = useState(user?.usr_username || '');
   const [firstName, setFirstName] = useState(user?.usr_firstName || '');
   const [lastName, setLastName] = useState(user?.usr_lastName || '');
@@ -122,7 +125,7 @@ export default function HRMProfile() {
       sex !== user?.usr_sex ||
       password !== '' ||
       username !== user?.usr_username;
-    // avatar.id !== user?.usr_avatar?.id;
+    avatar.id !== user?.usr_avatar?.id;
 
     setIsChanged(hasChanged);
   }, [
@@ -136,6 +139,7 @@ export default function HRMProfile() {
     password,
     username,
     user,
+    avatar.id,
   ]);
 
   // Form submission handler
@@ -242,6 +246,21 @@ export default function HRMProfile() {
           </CardHeader>
 
           <CardContent className='p-3 sm:p-6 space-y-4 sm:space-y-6'>
+            {/* Avatar Section */}
+            <div className='space-y-4'>
+              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
+                Ảnh đại diện
+              </h3>
+
+              <div className='flex flex-col items-center space-y-4'>
+                <ImageInput
+                  name='avatar'
+                  value={avatar}
+                  onChange={(e) => setAvatar(e as IImage)}
+                  className='w-full max-w-md'
+                />
+              </div>
+            </div>
             {/* Personal Information */}
             <div className='space-y-3 sm:space-y-4'>
               <h3 className='text-base sm:text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
@@ -504,33 +523,6 @@ export default function HRMProfile() {
                 </div>
               </div>
             </div>
-
-            {/* Avatar Section */}
-            {/* <div className='space-y-4'>
-              <h3 className='text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2'>
-                Ảnh đại diện
-              </h3>
-
-              <div className='flex flex-col items-center space-y-4'>
-                <Avatar className='w-24 h-24'>
-                  <AvatarImage
-                    src={avatar?.img_url || user?.usr_avatar?.img_url}
-                    alt='Avatar'
-                  />
-                  <AvatarFallback>
-                    {firstName?.[0]?.toUpperCase()}
-                    {lastName?.[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-
-                <ImageInput
-                  name='avatar'
-                  value={avatar}
-                  onChange={(e) => setAvatar(e as IImage)}
-                  className='w-full max-w-md'
-                />
-              </div>
-            </div> */}
           </CardContent>
 
           <CardFooter className='p-3 sm:p-6'>
@@ -539,9 +531,7 @@ export default function HRMProfile() {
                 to='/erp'
                 className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
               >
-                <span className='material-symbols-outlined text-sm mr-1'>
-                  keyboard_return
-                </span>
+                <ArrowLeft className='h-4 w-4 mr-1' />
                 <span className='hidden sm:inline'>Trở về Trang chủ</span>
                 <span className='sm:hidden'>Trang chủ</span>
               </Link>
@@ -552,7 +542,7 @@ export default function HRMProfile() {
                 form={formId}
                 disabled={!isChanged}
               >
-                <Save className='w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
+                <Save className='h-4 w-4' />
                 <span className='hidden sm:inline'>Cập nhật hồ sơ</span>
                 <span className='sm:hidden'>Cập nhật</span>
               </Button>

@@ -9,7 +9,11 @@ import CustomerDetail from './_components/CustomerDetail';
 import CustomerCaseServiceList from './_components/CustomerCaseServiceList';
 import CustomerTransactionList from './_components/CustomerTransactionList';
 import { Edit, Pen } from 'lucide-react';
-import { canAccessCustomerManagement } from '~/utils/permission';
+import {
+  canAccessCustomerManagement,
+  canAccessTransactionManagement,
+  hasRole,
+} from '~/utils/permission';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -35,11 +39,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   );
   const customerCaseServicesPromise = getCaseServices(
-    new URLSearchParams([
-      ['customerId', customerId],
-      ['limit', '100'],
-      ['page', '1'],
-    ]),
+    new URLSearchParams({
+      customerId,
+      page: '1',
+      limit: '100',
+      ...(hasRole(session?.user.usr_role, ['admin'])
+        ? {}
+        : { employeeUserId: session?.user.id || '' }),
+    }),
     session!,
   ).catch((error) => {
     console.error('Error fetching customer case services:', error);
@@ -48,16 +55,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       message: error.message || 'Có lỗi khi lấy danh sách Hồ sơ vụ việc',
     };
   });
-  const customerTransactionsPromise = getTransactions(
-    new URLSearchParams({ customerId, page: '1', limit: '100' }),
-    session!,
-  ).catch((error) => {
-    console.error('Error fetching customer transactions:', error);
-    return {
-      success: false,
-      message: error.message || 'Có lỗi khi lấy danh sách giao dịch',
-    };
-  });
+  const customerTransactionsPromise = canAccessTransactionManagement(
+    session?.user.usr_role,
+  )
+    ? getTransactions(
+        new URLSearchParams({ customerId, page: '1', limit: '100' }),
+        session!,
+      ).catch((error) => {
+        console.error('Error fetching customer transactions:', error);
+        return {
+          success: false,
+          message: error.message || 'Có lỗi khi lấy danh sách giao dịch',
+        };
+      })
+    : null;
 
   return {
     customerId,
@@ -102,10 +113,12 @@ export default function CustomerDetails() {
       />
 
       {/* Associated Transactions Card */}
-      <CustomerTransactionList
-        customerId={customerId}
-        customerTransactionsPromise={customerTransactionsPromise}
-      />
+      {customerTransactionsPromise && (
+        <CustomerTransactionList
+          customerId={customerId}
+          customerTransactionsPromise={customerTransactionsPromise}
+        />
+      )}
     </div>
   );
 }
