@@ -44,6 +44,7 @@ import {
 } from '~/components/ui/card';
 import Defer from '~/components/Defer';
 import CustomerBrief from './CustomerBrief';
+import { generateCode } from '~/utils';
 
 export default function CaseDetailForm({
   formId,
@@ -62,7 +63,7 @@ export default function CaseDetailForm({
   const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState<string>(generateCode('HS'));
   const [leadAttorney, setLeadAttorney] = useState<IEmployeeBrief | null>(null);
   const [assignees, setAssignees] = useState<IEmployeeBrief[]>([]);
   const [notes, setNotes] = useState<string>('');
@@ -80,13 +81,6 @@ export default function CaseDetailForm({
   const [employeeToRemove, setEmployeeToRemove] =
     useState<IEmployeeBrief | null>(null);
   const [employeesToAdd, setEmployeesToAdd] = useState<IEmployeeBrief[]>([]);
-
-  // Generate case code function
-  const generateCaseCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const codeGenerated = `HS${timestamp}`;
-    setCode(codeGenerated);
-  };
 
   const handleRemoveAssignee = (employee: IEmployeeBrief) => {
     setEmployeeToRemove(employee);
@@ -322,7 +316,7 @@ export default function CaseDetailForm({
                 type='button'
                 variant='outline'
                 size='sm'
-                onClick={generateCaseCode}
+                onClick={() => setCode(generateCode('HS'))}
                 className='whitespace-nowrap justify-center sm:justify-start'
               >
                 <RotateCcw className='h-4 w-4 mr-1' />

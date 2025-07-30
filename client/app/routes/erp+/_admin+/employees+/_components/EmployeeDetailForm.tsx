@@ -29,6 +29,8 @@ import {
 } from '~/components/ui/select';
 import Defer from '~/components/Defer';
 import ErrorCard from '~/components/ErrorCard';
+import { USER } from '~/constants/user.constant';
+import { generateCode } from '~/utils';
 
 export default function EmployeeDetailForm({
   formId,
@@ -46,7 +48,7 @@ export default function EmployeeDetailForm({
   const navigate = useNavigate();
 
   // Form state
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState<string>(generateCode('NV'));
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -63,18 +65,10 @@ export default function EmployeeDetailForm({
   const [status, setStatus] = useState<string>('active');
 
   // Control states
-  const [employee, setEmployee] = useState<IEmployee | null>(null);
-  const [roles, setRoles] = useState<IRole[]>([]);
+  //  const [employee, setEmployee] = useState<IEmployee | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
-
-  // Generate employee code
-  const generateEmployeeCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const codeGenerated = `NV${timestamp}`;
-    setCode(codeGenerated);
-  };
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -241,7 +235,7 @@ export default function EmployeeDetailForm({
           const employeeData = await employeePromise;
 
           if (employeeData && 'emp_code' in employeeData) {
-            setEmployee(employeeData);
+            // setEmployee(employeeData);
             setCode(employeeData.emp_code || '');
             setFirstName(employeeData.emp_user.usr_firstName || '');
             setLastName(employeeData.emp_user.usr_lastName || '');
@@ -280,44 +274,6 @@ export default function EmployeeDetailForm({
     }
   }, [type, employeePromise]);
 
-  // Load roles data
-  useEffect(() => {
-    if (rolesPromise) {
-      const loadRoles = async () => {
-        try {
-          const rolesData = await rolesPromise;
-          if (Array.isArray(rolesData)) {
-            setRoles(rolesData);
-          } else if ('success' in rolesData && !rolesData.success) {
-            console.error('Error loading roles:', rolesData.message);
-            toast.error('Không thể tải danh sách quyền.');
-          } else {
-            console.error(
-              'Roles data is not in the expected format:',
-              rolesData,
-            );
-          }
-        } catch (error) {
-          console.error('Error loading roles data:', error);
-        }
-      };
-
-      loadRoles();
-    }
-  }, [rolesPromise]);
-
-  const sexOptions = [
-    { value: 'male', label: 'Nam' },
-    { value: 'female', label: 'Nữ' },
-    { value: 'other', label: 'Khác' },
-  ];
-
-  const statusOptions = [
-    { value: 'active', label: 'Hoạt động' },
-    { value: 'inactive', label: 'Ngưng hoạt động' },
-  ];
-
-  console.log(birthDate);
   return (
     <Defer resolve={rolesPromise} fallback={<LoadingCard />}>
       {(rolesData) => {
@@ -377,7 +333,7 @@ export default function EmployeeDetailForm({
                       <Button
                         type='button'
                         variant='outline'
-                        onClick={generateEmployeeCode}
+                        onClick={() => setCode(generateCode('NV'))}
                         className='px-2 sm:px-3 flex-shrink-0'
                         size='sm'
                       >
@@ -516,7 +472,7 @@ export default function EmployeeDetailForm({
                           <SelectValue placeholder='Chọn giới tính' />
                         </SelectTrigger>
                         <SelectContent>
-                          {sexOptions.map((sexOption) => (
+                          {Object.values(USER.SEX).map((sexOption) => (
                             <SelectItem
                               key={sexOption.value}
                               value={sexOption.value}
@@ -700,7 +656,7 @@ export default function EmployeeDetailForm({
                           <SelectValue placeholder='Chọn trạng thái' />
                         </SelectTrigger>
                         <SelectContent>
-                          {statusOptions.map((statusOption) => (
+                          {Object.values(USER.STATUS).map((statusOption) => (
                             <SelectItem
                               key={statusOption.value}
                               value={statusOption.value}

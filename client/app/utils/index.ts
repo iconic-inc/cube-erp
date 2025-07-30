@@ -164,10 +164,20 @@ const generateFormId = (prefix: string) => {
   return `${prefix}-${Math.random().toString(36).substring(2, 15)}`;
 };
 
+function generateCode(prefix: string, length: number = 6): string {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = prefix.toUpperCase();
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}
+
 export {
   toAgeString,
   toCurrencyString,
   getMapLink,
+  generateCode,
   isEmptyObj,
   toVnDateString,
   toVnDateTimeString,

@@ -25,6 +25,7 @@ import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import TextEditor from '~/components/TextEditor';
 import { DatePicker } from '~/components/ui/date-picker';
+import { generateCode } from '~/utils';
 
 export default function TransactionDetailForm({
   formId,
@@ -47,8 +48,20 @@ export default function TransactionDetailForm({
   const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
+  // Generate transaction code
+  const generateTransactionCode = () => {
+    const prefix =
+      transactionType === 'income'
+        ? 'TN'
+        : transactionType === 'outcome'
+          ? 'TC'
+          : 'TD';
+
+    setCode(generateCode(prefix));
+  };
+
   // Form state
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState<string>(generateCode('TN'));
   const [transactionType, setTransactionType] = useState<'income' | 'outcome'>(
     'income',
   );
@@ -84,19 +97,6 @@ export default function TransactionDetailForm({
   // Ensure numeric values for form submission
   const getNumericValue = (value: string): string => {
     return value.toString() || '0';
-  };
-
-  // Generate transaction code
-  const generateTransactionCode = () => {
-    const prefix =
-      transactionType === 'income'
-        ? 'TN'
-        : transactionType === 'outcome'
-          ? 'TC'
-          : 'TD';
-    const timestamp = Date.now().toString().slice(-6);
-    const codeGenerated = `${prefix}${timestamp}`;
-    setCode(codeGenerated);
   };
 
   // Handle form submission
