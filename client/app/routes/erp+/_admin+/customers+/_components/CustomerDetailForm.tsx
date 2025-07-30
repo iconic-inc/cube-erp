@@ -29,6 +29,7 @@ import {
   getProvinceBySlug,
   provinces,
 } from '~/utils/address.util';
+import { generateCode } from '~/utils';
 
 export default function CustomerDetailForm({
   formId,
@@ -46,7 +47,7 @@ export default function CustomerDetailForm({
   const navigate = useNavigate();
 
   // Form state
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState<string>(generateCode('KH'));
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -76,15 +77,10 @@ export default function CustomerDetailForm({
   useEffect(() => {
     const newDistricts = getDistrictsByProvinceCode(province.code);
     setDistricts(newDistricts);
-    setDistrict(newDistricts[0] || districts[0]);
-  }, [province]);
-
-  // Generate customer code
-  const generateCustomerCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const codeGenerated = `KH${timestamp}`;
-    setCode(codeGenerated);
-  };
+    if (district.provinceCode !== province.code) {
+      setDistrict(newDistricts[0] || districts[0]);
+    }
+  }, [province.code]);
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -342,7 +338,7 @@ export default function CustomerDetailForm({
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={generateCustomerCode}
+                  onClick={() => setCode(generateCode('KH'))}
                   className='whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3'
                 >
                   <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />

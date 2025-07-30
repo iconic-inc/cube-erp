@@ -11,7 +11,12 @@ import { useLoaderData, useNavigate } from '@remix-run/react';
 import ContentHeader from '~/components/ContentHeader';
 import { Edit, Pen } from 'lucide-react';
 import CaseDocumentList from './_components/CaseDocumentList';
-import { canAccessCaseServices } from '~/utils/permission';
+import {
+  canAccessCaseServices,
+  canAccessTransactionManagement,
+} from '~/utils/permission';
+import { getTransactions } from '~/services/transaction.server';
+import CaseTransactionList from './_components/CaseTransactionList';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -34,6 +39,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       message: error.message || 'Có lỗi khi lấy thông tin dịch vụ',
     };
   });
+  const caseTransactionsPromise = canAccessTransactionManagement(
+    session?.user.usr_role,
+  )
+    ? getTransactions(
+        new URLSearchParams({ caseId, page: '1', limit: '100' }),
+        session!,
+      ).catch((error) => {
+        console.error('Error fetching customer transactions:', error);
+        return {
+          success: false,
+          message: error.message || 'Có lỗi khi lấy danh sách giao dịch',
+        };
+      })
+    : null;
   const caseTasksPromise = getCaseServiceTasks(caseId, session!).catch(
     (error) => {
       console.error('Error fetching case tasks:', error);
@@ -53,12 +72,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   );
 
-  return { caseId, casePromise, caseTasksPromise, caseDocumentsPromise };
+  return {
+    caseId,
+    casePromise,
+    caseTasksPromise,
+    caseDocumentsPromise,
+    caseTransactionsPromise,
+  };
 };
 
 export default function () {
-  const { caseId, casePromise, caseTasksPromise, caseDocumentsPromise } =
-    useLoaderData<typeof loader>();
+  const {
+    caseId,
+    casePromise,
+    caseTasksPromise,
+    caseDocumentsPromise,
+    caseTransactionsPromise,
+  } = useLoaderData<typeof loader>();
 
   const navigate = useNavigate();
 
@@ -81,6 +111,14 @@ export default function () {
 
       {/* Case Service Details Card */}
       <CaseDetail casePromise={casePromise} />
+
+      {/* Associated Transactions Card */}
+      {caseTransactionsPromise && (
+        <CaseTransactionList
+          caseId={caseId}
+          caseTransactionsPromise={caseTransactionsPromise}
+        />
+      )}
 
       {/* Associated Tasks Card */}
       <CaseTaskList caseId={caseId} caseTasksPromise={caseTasksPromise} />

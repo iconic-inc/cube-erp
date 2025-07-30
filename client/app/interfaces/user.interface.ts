@@ -16,7 +16,7 @@ export interface IUser extends IUserBrief {
   usr_birthdate?: string;
   usr_msisdn: string;
   usr_sex?: string;
-  usr_status: Values<typeof USER.STATUS>;
+  usr_status: Values<typeof USER.STATUS>['value'];
   usr_avatar?: IImage;
   usr_role: IRole;
   createdAt: string;
@@ -32,7 +32,7 @@ export interface IUserCreate {
   sex: string;
   role: string;
   password: string;
-  status: Values<typeof USER.STATUS>;
+  status: Values<typeof USER.STATUS>['value'];
   avatar?: string;
   lastName?: string;
   slug?: string;
