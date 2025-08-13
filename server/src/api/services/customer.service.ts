@@ -19,13 +19,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as XLSX from 'xlsx';
 import { serverConfig } from '@configs/config.server';
-import {
-  getDistrictBySlug,
-  getDistrictsByProvinceCode,
-  getProvinceBySlug,
-  provinces,
-  toAddressString,
-} from '@utils/address.util';
+import { toAddressString } from '@utils/address.util';
 import { format, parse } from 'date-fns';
 
 interface ICustomerQuery {

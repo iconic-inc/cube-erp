@@ -77,6 +77,19 @@ export function SelectSearch({
           <CommandList>
             <CommandEmpty>Không có kết quả nào phù hợp</CommandEmpty>
             <CommandGroup>
+              <CommandItem
+                value=''
+                onSelect={() => handleSelect('')}
+                className='cursor-pointer'
+              >
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    !value ? 'opacity-100' : 'opacity-0',
+                  )}
+                />
+                Không chọn
+              </CommandItem>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}

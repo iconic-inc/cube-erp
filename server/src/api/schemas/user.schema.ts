@@ -20,7 +20,7 @@ const isValidEmail = (email: string) => {
 
 // Helper function to validate username
 const isValidUsername = (username: string) => {
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  const usernameRegex = /^[a-zA-Z0-9_\-\.]+$/;
   return usernameRegex.test(username);
 };
 
@@ -30,8 +30,10 @@ export const userBaseSchema = {
     .string()
     .trim()
     .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
+    .max(30, 'Tên đăng nhập không được quá 30 ký tự')
     .refine(isValidUsername, {
-      message: 'Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới',
+      message:
+        'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới, gạch ngang và dấu chấm',
     }),
   email: z.string().trim().min(1, 'Email là bắt buộc').refine(isValidEmail, {
     message: 'Email không hợp lệ',

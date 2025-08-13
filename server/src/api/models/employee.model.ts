@@ -31,6 +31,10 @@ const employeeSchema = new Schema<IEmployeeDocument, IEmployeeModel>(
       type: Date,
       required: true,
     },
+    emp_score: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

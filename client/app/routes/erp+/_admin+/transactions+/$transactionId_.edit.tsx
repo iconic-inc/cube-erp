@@ -17,7 +17,6 @@ import {
 } from '~/services/transaction.server';
 import { isAuthenticated } from '~/services/auth.server';
 import { ITransactionUpdate } from '~/interfaces/transaction.interface';
-import { TRANSACTION } from '~/constants/transaction.constant';
 import { generateFormId } from '~/utils';
 import { canAccessTransactionManagement } from '~/utils/permission';
 import { Save } from 'lucide-react';
