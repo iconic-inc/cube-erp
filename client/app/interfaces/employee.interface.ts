@@ -6,6 +6,7 @@ export interface IEmployeeBrief {
   emp_position: string;
   emp_department: string;
   emp_joinDate: string;
+  emp_score: number;
   createdAt: string;
   updatedAt: string;
   emp_user: IUserBrief;
@@ -20,6 +21,7 @@ export interface IEmployeeCreate extends IUserCreate {
   position: string;
   department: string;
   joinDate: Date | string;
+  score?: number;
 }
 
 export interface IEmployeeUpdate extends Partial<IEmployeeCreate> {}

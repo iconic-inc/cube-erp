@@ -419,6 +419,7 @@ const updateTransaction = async (
     }
 
     // Remove undefined values and format attributes
+    console.log('Updating transaction with data:', data);
     const cleanData = removeNestedNullish(data);
     const formattedData = formatAttributeName(
       cleanData as any,

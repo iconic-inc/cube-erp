@@ -16,6 +16,7 @@ export interface IEmployee extends Omit<IEmployeePopulate, 'emp_user'> {
   emp_position: string;
   emp_department: string;
   emp_joinDate: Date;
+  emp_score: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ export interface IEmployee extends Omit<IEmployeePopulate, 'emp_user'> {
 export interface IEmployeeDetail extends IEmployeePopulate {
   emp_user: IUserDetail;
   emp_joinDate: Date | string;
+  emp_score: number;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -32,6 +34,7 @@ export interface IEmployeeCreate extends IUserCreate {
   position: string;
   department: string;
   joinDate: Date | string;
+  score?: number;
 }
 
 export type IEmployeeDocument = HydratedDocument<IEmployee>;

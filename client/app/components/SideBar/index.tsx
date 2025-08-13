@@ -188,6 +188,10 @@ const getNavItems = (user: IUser) => {
       title: 'Giao dịch',
       url: '/erp/transactions',
     });
+    financialItems.push({
+      title: 'Báo cáo',
+      url: '/erp/transactions/reports',
+    });
   }
 
   const otherItems = [];

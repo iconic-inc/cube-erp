@@ -174,7 +174,7 @@ export default function CaseTaskList({
                 addNewHandler={() => navigate('/erp/tasks/new')}
                 showPagination={false}
                 showToolbar={false}
-                deleteHandleRoute='/erp/tasks'
+                deleteHandleRoute='/erp/tasks?index'
               />
             </CardContent>
           </Card>
