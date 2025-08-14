@@ -12,6 +12,7 @@ import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { canAccessCustomerManagement } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -28,7 +29,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {};
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -65,11 +68,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              customer: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
             },
             { headers },
@@ -80,10 +82,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            customer: res,
+            success: true,
             toast: {
               message: 'Thêm mới Khách hàng thành công!',
-              type: 'success' as ToastType,
+              type: 'success',
             },
             redirectTo: `/erp/customers/${res.id}`,
           },
@@ -96,11 +98,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            customer: null,
-            redirectTo: null,
+            success: false,
             toast: {
               message: errorMessage,
-              type: 'error' as ToastType,
+              type: 'error',
             },
           },
           { headers },
@@ -111,9 +112,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          customer: null,
-          redirectTo: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
         },
         { headers },
       );

@@ -19,6 +19,7 @@ export default function List<T>({
   showToolbar = true,
   showPagination = true,
   deleteHandleRoute,
+  readOnly = false,
 }: {
   itemsPromise: ILoaderDataPromise<IListResponse<T>>;
   visibleColumns: IListColumn<T>[];
@@ -30,6 +31,7 @@ export default function List<T>({
   showToolbar?: boolean;
   showPagination?: boolean;
   deleteHandleRoute?: string;
+  readOnly?: boolean;
 }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
@@ -57,7 +59,7 @@ export default function List<T>({
       )}
 
       {/* Bulk Action Bar (Visible when rows selected) */}
-      {selectedItems.length > 0 && (
+      {!readOnly && selectedItems.length > 0 && (
         <div className='border-b border-gray-200 bg-blue-50'>
           <ListBulkActionBar
             name={name}
@@ -68,7 +70,7 @@ export default function List<T>({
         </div>
       )}
 
-      {showDeleteModal && selectedItems.length && (
+      {!readOnly && showDeleteModal && selectedItems.length && (
         <ListConfirmModal
           name={name}
           setShowDeleteModal={setShowDeleteModal}
@@ -87,6 +89,7 @@ export default function List<T>({
           visibleColumns={visibleColumns}
           addNewHandler={addNewHandler}
           showPagination={showPagination}
+          readOnly={readOnly}
         />
       </div>
     </Card>

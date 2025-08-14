@@ -27,7 +27,10 @@ import {
   updateReward,
 } from '~/services/reward.server';
 import { getEmployees } from '~/services/employee.server';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import { Button } from '~/components/ui/button';
 import {
@@ -53,6 +56,8 @@ import TextInput from '~/components/TextInput';
 import NumericInput from '~/components/NumericInput';
 import TextRenderer from '~/components/TextRenderer';
 import { canAccessRewardManagement } from '~/utils/permission';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -94,20 +99,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 };
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
-  if (!session) {
-    return data(
-      {
-        success: false,
-        toast: {
-          type: 'error' as const,
-          message: 'Bạn cần đăng nhập để thực hiện hành động này',
-        },
-      },
-      { headers },
-    );
-  }
+  if (!session) return getUnauthorizedActionResponse(data, headers);
 
   const rewardId = params.rewardId;
   if (!rewardId) {
@@ -119,7 +116,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           message: 'ID quỹ thưởng không hợp lệ',
         },
       },
-      { headers },
+      { headers, status: 400 },
     );
   }
 
@@ -140,7 +137,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               message: 'Số tiền khấu trừ phải lớn hơn 0',
             },
           },
-          { headers },
+          { headers, status: 400 },
         );
       }
 
@@ -183,7 +180,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           message: 'Hành động không được hỗ trợ',
         },
       },
-      { headers },
+      { headers, status: 405 },
     );
   } catch (error: any) {
     console.error('Error in reward  action:', error);
@@ -195,7 +192,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           message: error.message || 'Đã xảy ra lỗi',
         },
       },
-      { headers },
+      { headers, status: 500 },
     );
   }
 };
@@ -229,7 +226,7 @@ const getStatusLabel = (status: string) => {
 export default function RewardDetail() {
   const { reward, employees } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<typeof action>();
 
   const [showDeductModal, setShowDeductModal] = useState(false);
   const [showCashOutModal, setShowCashOutModal] = useState(false);
@@ -261,22 +258,7 @@ export default function RewardDetail() {
     setShowCashOutModal(false);
   };
 
-  useEffect(() => {
-    if (
-      fetcher.data &&
-      typeof fetcher.data === 'object' &&
-      'success' in fetcher.data
-    ) {
-      const data = fetcher.data as any;
-      if (data.success) {
-        toast.success(data.toast.message);
-        // Refresh the page data
-        window.location.reload();
-      } else {
-        toast.error(data.toast.message);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   return (
     <div className='space-y-4 sm:space-y-6 min-h-screen'>

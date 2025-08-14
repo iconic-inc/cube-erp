@@ -80,7 +80,7 @@ export function SelectSearch({
               <CommandItem
                 value=''
                 onSelect={() => handleSelect('')}
-                className='cursor-pointer'
+                className='cursor-pointer hover:bg-zinc-100'
               >
                 <Check
                   className={cn(

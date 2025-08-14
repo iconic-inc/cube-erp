@@ -44,6 +44,7 @@ export default function EmployeeAttendanceRequestList({
       sortField: 'employee.emp_user.usr_firstName',
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`../attendance-requests/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >

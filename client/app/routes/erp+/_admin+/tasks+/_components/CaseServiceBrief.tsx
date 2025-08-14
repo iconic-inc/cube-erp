@@ -31,7 +31,9 @@ export default function CaseServiceBrief({
           asChild
           className='text-xs sm:text-sm w-full sm:w-auto'
         >
-          <Link to={`/erp/cases/${caseService.id}`}>Xem chi tiết</Link>
+          <Link to={`/erp/cases/${caseService.id}`} prefetch='intent'>
+            Xem chi tiết
+          </Link>
         </Button>
       </div>
 

@@ -28,7 +28,7 @@ export default function ERPSidebar() {
   return (
     <Sidebar className='lg:h-screen'>
       <SidebarHeader>
-        <Link to='/erp' className='flex items-center mb-6'>
+        <Link to='/erp' className='flex items-center mb-6' prefetch='intent'>
           <div className='w-12 h-12 rounded-full overflow-hidden'>
             <img src='/assets/cube-lawfirm-logo.png' alt='Cube Lawfirm Logo' />
           </div>

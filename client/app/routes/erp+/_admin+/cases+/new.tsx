@@ -31,6 +31,7 @@ import {
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 import { canAccessCaseServices } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -71,7 +72,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return { customerPromise, employeesPromise };
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -83,14 +86,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!customerId) {
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng chọn Khách hàng trước khi tạo Hồ sơ',
-                type: 'error' as ToastType,
+                type: 'error',
               },
             },
-            { headers },
+            { headers, status: 400 },
           );
         }
 
@@ -116,14 +118,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
             },
-            { headers },
+            { headers, status: 400 },
           );
         }
 
@@ -131,10 +132,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            case: res,
+            success: true,
             toast: {
               message: 'Thêm mới Hồ sơ thành công!',
-              type: 'success' as ToastType,
+              type: 'success',
             },
             redirectTo: `/erp/cases/${res.id}`,
           },
@@ -146,14 +147,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            case: null,
-            redirectTo: null,
+            success: false,
             toast: {
               message: errorMessage,
-              type: 'error' as ToastType,
+              type: 'error',
             },
           },
-          { headers },
+          { headers, status: 500 },
         );
       }
     }
@@ -161,11 +161,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          case: null,
-          redirectTo: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
         },
-        { headers },
+        { headers, status: 405 },
       );
   }
 };
@@ -238,6 +237,7 @@ export default function NewCase() {
               <Button variant={'primary'} className='w-full sm:w-auto'>
                 <Link
                   to='/erp/customers'
+                  prefetch='intent'
                   className='flex items-center justify-center'
                 >
                   Chọn Khách hàng

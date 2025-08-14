@@ -25,6 +25,7 @@ export default function ItemList<T>({
   visibleColumns,
   addNewHandler,
   showPagination = true,
+  readOnly = false,
 }: {
   name: string;
   itemsPromise: ILoaderDataPromise<IListResponse<T>>;
@@ -33,6 +34,7 @@ export default function ItemList<T>({
   visibleColumns: IListColumn<T>[];
   addNewHandler?: () => void;
   showPagination?: boolean;
+  readOnly?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get('sortBy') || 'createdAt';
@@ -92,24 +94,26 @@ export default function ItemList<T>({
               >
                 {({ data }) => (
                   <>
-                    <TableHead className='w-[50px] text-center'>
-                      {!!data.length && (
-                        <Checkbox
-                          checked={
-                            selectedItems.length === data.length &&
-                            data.length > 0
-                          }
-                          onCheckedChange={() => handleSelectAll(data)}
-                          className='rounded h-4 w-4'
-                        />
-                      )}
-                    </TableHead>
+                    {!readOnly && (
+                      <TableHead className='w-[50px] text-center'>
+                        {!!data.length && (
+                          <Checkbox
+                            checked={
+                              selectedItems.length === data.length &&
+                              data.length > 0
+                            }
+                            onCheckedChange={() => handleSelectAll(data)}
+                            className='rounded h-4 w-4'
+                          />
+                        )}
+                      </TableHead>
+                    )}
                     {visibleColumns
                       .filter((column) => column.visible)
                       .map((column) => (
                         <TableHead
                           key={column.key as string}
-                          className={`min-w-fit text-left whitespace-nowrap text-gray-600 font-semibold py-4 ${column.sortField ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                          className={`min-w-fit text-left whitespace-nowrap text-gray-600 font-semibold p-4 ${column.sortField ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                           onClick={() => {
                             if (!column.sortField) return;
                             const sortKey = column.sortField;
@@ -185,22 +189,24 @@ export default function ItemList<T>({
                     key={i}
                     className={`border-b border-gray-100 transition-colors duration-150 ease-in-out ${selectedItems.some((selected: any) => selected.id === (item as any).id) ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}`}
                   >
-                    <TableCell className='text-center py-3'>
-                      <Checkbox
-                        checked={selectedItems.some(
-                          (selected: any) => selected.id === (item as any).id,
-                        )}
-                        onCheckedChange={() => handleItemSelect(item)}
-                        className='rounded h-4 w-4'
-                      />
-                    </TableCell>
+                    {!readOnly && (
+                      <TableCell className='text-center py-3'>
+                        <Checkbox
+                          checked={selectedItems.some(
+                            (selected: any) => selected.id === (item as any).id,
+                          )}
+                          onCheckedChange={() => handleItemSelect(item)}
+                          className='rounded h-4 w-4'
+                        />
+                      </TableCell>
+                    )}
 
                     {visibleColumns
                       .filter((column) => column.visible)
                       .map((column) => (
                         <TableCell
                           key={column.key}
-                          className='max-w-[200px] lg:max-w-[250px] overflow-hidden text-sm'
+                          className='max-w-[200px] lg:max-w-[250px] overflow-hidden text-sm px-4'
                         >
                           <div className='truncate'>{column.render(item)}</div>
                         </TableCell>

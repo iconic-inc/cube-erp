@@ -1,9 +1,14 @@
 import { useFetcher } from '@remix-run/react';
 import { UploadCloud } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { FilePondFile, FilePondInitialFile } from 'filepond';
+import { FilePond } from 'react-filepond';
+import 'filepond/dist/filepond.min.css';
+
 import { IDocument } from '~/interfaces/document.interface';
 import { action } from '~/routes/api+/documents+/upload';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function DocumentUploader({
   multiple = true,
@@ -14,27 +19,17 @@ export default function DocumentUploader({
   'onChange' | 'value'
 >) {
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
+  const [files, setFiles] = useState<FilePondFile[]>([]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      toast.update(toastIdRef.current, {
-        type: fetcher.data.toast.type as 'success' | 'error',
-        render: fetcher.data.toast.message,
-        ...toastUpdateOptions,
-      });
-
-      if (fetcher.data.toast.type === 'success') {
-        handleDocumentUploaded(fetcher.data.documents);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher, {
+    onSuccess: (data) => data && handleDocumentUploaded(data),
+  });
 
   return (
     <div
-      className={`flex gap-2 sm:gap-4 items-center justify-center h-full p-2 sm:p-4`}
+    // className={`flex gap-2 sm:gap-4 items-center justify-center h-full p-2 sm:p-4`}
     >
-      <label className='cursor-pointer flex flex-col w-full max-w-md items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-4 sm:p-6 text-center hover:border-blue-500 transition-colors'>
+      {/* <label className='cursor-pointer flex flex-col w-full max-w-md items-center rounded-xl border-2 border-dashed border-blue-400 bg-white p-4 sm:p-6 text-center hover:border-blue-500 transition-colors'>
         <UploadCloud className='w-5 h-5 sm:w-6 sm:h-6 text-blue-400 m-auto' />
 
         <h2 className='text-lg sm:text-xl mt-1 sm:mt-2 font-medium text-gray-700 tracking-wide'>
@@ -85,7 +80,17 @@ export default function DocumentUploader({
             }
           }}
         />
-      </label>
+      </label> */}
+
+      <FilePond
+        files={files as any}
+        onupdatefiles={setFiles}
+        allowMultiple={true}
+        maxFiles={3}
+        server='/api'
+        name='files' /* sets the file input name, it's filepond by default */
+        labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
+      />
     </div>
   );
 }

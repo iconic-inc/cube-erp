@@ -1446,6 +1446,22 @@ const getMyPerformance = async (userId: string, query: any = {}) => {
   });
 };
 
+const maskTaskAsCompleted = async (taskId: string) => {
+  const updatedTask = await TaskModel.findByIdAndUpdate(
+    taskId,
+    { tsk_status: TASK.STATUS.COMPLETED },
+    { new: true }
+  )
+    .populate(taskAssigneesPopulate)
+    .populate(taskCaseServicePopulate);
+
+  if (!updatedTask) {
+    throw new NotFoundError('Không tìm thấy Task');
+  }
+
+  return getReturnData(updatedTask);
+};
+
 export {
   createTask,
   getTasks,
@@ -1460,4 +1476,5 @@ export {
   getMyTasks,
   getMyTaskById,
   getMyPerformance,
+  maskTaskAsCompleted,
 };

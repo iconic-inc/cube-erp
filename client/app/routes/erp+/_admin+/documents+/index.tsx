@@ -13,7 +13,7 @@ import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { IDocument } from '~/interfaces/document.interface';
 import { IListResponse } from '~/interfaces/response.interface';
-import { IListColumn } from '~/interfaces/app.interface';
+import { IActionFunctionReturn, IListColumn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import List from '~/components/List';
 import { toast } from 'react-toastify';
@@ -22,6 +22,7 @@ import { canAccessDocumentManagement } from '~/utils/permission';
 import { getEmployees } from '~/services/employee.server';
 import { isResolveError } from '~/lib';
 import { IEmployeeBrief } from '~/interfaces/employee.interface';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -105,6 +106,7 @@ export default function HRMDocuments() {
       sortField: 'doc_name',
       render: (item: IDocument) => (
         <Link
+          prefetch='intent'
           to={`/erp/documents/${item.id}`}
           className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-none'
           title={item.doc_name}
@@ -146,6 +148,7 @@ export default function HRMDocuments() {
         }
         return (
           <Link
+            prefetch='intent'
             to={`/erp/employees/${item.doc_createdBy.id}`}
             className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
             title={`${item.doc_createdBy.emp_user.usr_firstName} ${item.doc_createdBy.emp_user.usr_lastName}`}
@@ -190,7 +193,6 @@ export default function HRMDocuments() {
     },
   ]);
   const uploadFetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
 
   const addNewHandler = () => {
     const input = document.createElement('input');
@@ -209,7 +211,6 @@ export default function HRMDocuments() {
         formData.append('document', files[i]);
       }
 
-      toastIdRef.current = toast.loading('Đang tải lên...');
       uploadFetcher.submit(formData, {
         method: 'POST',
         encType: 'multipart/form-data',
@@ -221,26 +222,7 @@ export default function HRMDocuments() {
     input.click();
   };
 
-  useEffect(() => {
-    if (uploadFetcher.data) {
-      if (uploadFetcher.data.success) {
-        toastIdRef.current = toast.update(toastIdRef.current, {
-          render: 'Tải lên thành công',
-          type: 'success',
-          autoClose: 3000,
-          isLoading: false,
-        });
-      } else {
-        toastIdRef.current = toast.update(toastIdRef.current, {
-          render:
-            uploadFetcher.data.toast.message || 'Có lỗi xảy ra khi tải lên',
-          type: 'error',
-          autoClose: 3000,
-          isLoading: false,
-        });
-      }
-    }
-  }, [uploadFetcher.data]);
+  useFetcherResponseHandler(uploadFetcher);
 
   return (
     <div className='space-y-4 sm:space-y-6 min-h-screen p-2 sm:p-4'>
@@ -268,7 +250,9 @@ export default function HRMDocuments() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
   if (!session) {
     return data(
@@ -348,11 +332,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         for (let i = 0; i < files.length; i++) {
           payload.append('documents', files[i]);
         }
-        const documents = await uploadDocument(payload, session!);
+        await uploadDocument(payload, session!);
 
         return data(
           {
-            documents,
             success: true,
             toast: {
               message: 'Upload Tài liệu thành công!',

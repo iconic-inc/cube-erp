@@ -1,8 +1,12 @@
 import { ActionFunctionArgs, data } from '@remix-run/node';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import { createOfficeIP } from '~/services/officeIP.server';
-export const action = async ({ request }: ActionFunctionArgs) => {
+
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const formData = await request.formData();
   let ipAddress = getClientIPAddress(request);
   if (request.headers.get('host')?.includes('localhost')) {
@@ -13,12 +17,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const officeName = formData.get('officeName') as string;
 
   if (!ipAddress) {
-    return {
+    return data({
+      success: false,
       toast: {
         message: 'Không thể lấy địa chỉ IP',
         type: 'error',
       },
-    };
+    });
   }
 
   const { session, headers } = await isAuthenticated(request);
@@ -32,6 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return data(
           {
+            success: true,
             toast: {
               message: 'Thêm địa chỉ IP thành công',
               type: 'success',
@@ -44,6 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       default: {
         return data(
           {
+            success: false,
             toast: {
               message: 'Không thể thực hiện yêu cầu',
               type: 'error',
@@ -56,6 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error: any) {
     return data(
       {
+        success: false,
         toast: {
           message: error.message || error.statusText,
           type: 'error',

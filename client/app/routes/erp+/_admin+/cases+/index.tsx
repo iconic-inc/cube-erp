@@ -9,7 +9,10 @@ import {
   getCaseServices,
 } from '~/services/case.server';
 import ContentHeader from '~/components/ContentHeader';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import { ICaseService } from '~/interfaces/case.interface';
 import {
   IListColumn,
@@ -133,6 +136,7 @@ export default function CRMCaseService() {
       render: (item) => (
         <Link
           to={`/erp/cases/${item.id}`}
+          prefetch='intent'
           className='text-blue-600 hover:underline block w-full h-full'
         >
           <div className='flex flex-col'>
@@ -153,6 +157,7 @@ export default function CRMCaseService() {
       render: (item) => (
         <Link
           to={`/erp/customers/${item.case_customer.id}`}
+          prefetch='intent'
           className='text-blue-600 hover:underline block w-full h-full'
         >
           <span className='text-sm sm:text-base truncate block max-w-[150px] sm:max-w-none'>
@@ -189,7 +194,8 @@ export default function CRMCaseService() {
       render: (item) =>
         item.case_leadAttorney ? (
           <Link
-            to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
+            to={`/erp/employees/${item.case_leadAttorney.id}`}
+            prefetch='intent'
             className='text-blue-600 hover:underline block w-full h-full'
           >
             <span className='text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
@@ -265,24 +271,14 @@ export const action = async ({
   request,
 }: ActionFunctionArgs): IActionFunctionReturn<IExportResponse> => {
   const { session, headers } = await isAuthenticated(request);
-  if (!session) {
-    return data(
-      {
-        success: false,
-        toast: {
-          type: 'error',
-          message: 'Bạn cần đăng nhập để thực hiện hành động này',
-        },
-      },
-      { headers },
-    );
-  }
+  if (!session) return getUnauthorizedActionResponse(data, headers);
 
   try {
     const formData = await request.formData();
     switch (request.method) {
       case 'DELETE':
         const caseIdsString = formData.get('itemIds') as string;
+        console.log('caseIdsString:', caseIdsString);
         if (!caseIdsString) {
           return data(
             {

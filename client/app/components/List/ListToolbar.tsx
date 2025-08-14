@@ -19,6 +19,7 @@ import { Button } from '../ui/button';
 import { SelectSearch } from '../ui/SelectSearch';
 import { DatePicker } from '../ui/date-picker';
 import { IListResponse } from '~/interfaces/response.interface';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function ListToolbar<T>({
   name,
@@ -181,10 +182,6 @@ export default function ListToolbar<T>({
 
   const exportFetcher = useFetcher<IActionFunctionResponse<IExportResponse>>();
   const importFetcher = useFetcher<IActionFunctionResponse<any>>();
-  const toastIdRef = useRef<any>(null);
-  const importToastIdRef = useRef<any>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync activeFilters with URL params
@@ -216,72 +213,33 @@ export default function ListToolbar<T>({
     setActiveDateFilters(dateFilters);
   }, [searchParams, visibleColumns]);
 
-  useEffect(() => {
-    if (exportFetcher.data) {
-      const response = exportFetcher.data;
-      if (response.success) {
-        toast.update(toastIdRef.current, {
-          render: `Đã xuất dữ liệu ${name} thành công!`,
-          type: response.toast.type,
-          autoClose: 3000,
-          isLoading: false,
-        });
-
-        if (response.data?.fileUrl) {
+  const { isSubmitting: isExporting } = useFetcherResponseHandler(
+    exportFetcher,
+    {
+      onSuccess(data) {
+        if (data?.fileUrl) {
           const link = document.createElement('a');
-          link.href = response.data.fileUrl;
-          link.download = response.data.fileName || 'customers';
+          link.href = data.fileUrl;
+          link.download = data.fileName || 'customers';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         }
-      } else {
-        toast.update(toastIdRef.current, {
-          render:
-            response.toast.message || `Có lỗi xảy ra khi xuất dữ liệu ${name}.`,
-          type: 'error',
-          autoClose: 3000,
-          isLoading: false,
-        });
-      }
-      setIsExporting(false);
-    }
-  }, [exportFetcher.data]);
+      },
+    },
+  );
 
-  useEffect(() => {
-    if (importFetcher.data) {
-      const response = importFetcher.data;
-      if (response.success) {
-        toast.update(importToastIdRef.current, {
-          render: `Đã nhập dữ liệu ${name} thành công! ${response.data?.imported || 0} bản ghi được thêm, ${response.data?.updated || 0} bản ghi được cập nhật.`,
-          type: response.toast.type,
-          autoClose: 5000,
-          isLoading: false,
-        });
-
-        // Reset file input
+  const { isSubmitting: isImporting } = useFetcherResponseHandler(
+    importFetcher,
+    {
+      // Reset file input
+      onSuccess() {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
-
-        // Refresh the page to show updated data
-        window.location.reload();
-      } else {
-        const errorDetails = response.data?.errors?.length
-          ? ` (${response.data.errors.length} lỗi)`
-          : '';
-        toast.update(importToastIdRef.current, {
-          render:
-            response.toast.message ||
-            `Có lỗi xảy ra khi nhập dữ liệu ${name}${errorDetails}.`,
-          type: 'error',
-          autoClose: 5000,
-          isLoading: false,
-        });
-      }
-      setIsImporting(false);
-    }
-  }, [importFetcher.data]);
+      },
+    },
+  );
 
   const getFilterOptions = (column: IListColumn<T>) => {
     if (typeof column.options === 'function') {
@@ -322,9 +280,6 @@ export default function ListToolbar<T>({
     formData.append('file', file);
     formData.append('overwrite', 'false'); // Default to not overwrite
 
-    setIsImporting(true);
-    importToastIdRef.current = toast.loading(`Đang nhập dữ liệu ${name}...`);
-
     importFetcher.submit(formData, {
       method: 'POST',
       action: './import/xlsx',
@@ -340,7 +295,7 @@ export default function ListToolbar<T>({
         <Form
           method='GET'
           onSubmit={handleSearch}
-          className='relative flex-1 max-w-none sm:max-w-md'
+          className='relative flex-1 flex gap-4 items-center max-w-none sm:max-w-lg'
         >
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
           <input
@@ -350,6 +305,21 @@ export default function ListToolbar<T>({
             onChange={(e) => setSearchTerm(e.target.value)}
             className='w-full pl-8 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           />
+
+          <Button type='submit' className=''>
+            Tìm kiếm
+          </Button>
+
+          <Button
+            type='submit'
+            className='border-red-500 text-red-500'
+            variant={'outline'}
+            onClick={() => {
+              setSearchTerm('');
+            }}
+          >
+            Đặt lại
+          </Button>
         </Form>
 
         {/* Actions */}
@@ -389,16 +359,7 @@ export default function ListToolbar<T>({
 
           {/* Export Button */}
           {exportable && (
-            <exportFetcher.Form
-              method='POST'
-              className='flex-shrink-0'
-              onSubmitCapture={(e) => {
-                setIsExporting(true);
-                toastIdRef.current = toast.loading(
-                  `Đang xuất dữ liệu ${name}...`,
-                );
-              }}
-            >
+            <exportFetcher.Form method='POST' className='flex-shrink-0'>
               <button
                 className='px-3 py-2 text-xs sm:text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap'
                 name='fileType'
@@ -463,10 +424,7 @@ export default function ListToolbar<T>({
                   className='min-w-0 w-full sm:w-auto sm:min-w-48'
                 >
                   <SelectSearch
-                    options={[
-                      { label: `Tất cả ${column.title}`, value: '' },
-                      ...getFilterOptions(column),
-                    ]}
+                    options={getFilterOptions(column)}
                     value={activeFilters[column.filterField!] || ''}
                     onValueChange={(value) =>
                       handleFilterChange(column.filterField!, value)

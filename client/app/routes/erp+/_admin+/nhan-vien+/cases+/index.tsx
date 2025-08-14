@@ -132,6 +132,7 @@ export default function CRMCaseService() {
       sortField: 'case_code',
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/cases/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
@@ -152,6 +153,7 @@ export default function CRMCaseService() {
       options: [],
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/customers/${item.case_customer.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
@@ -189,7 +191,8 @@ export default function CRMCaseService() {
       render: (item) =>
         item.case_leadAttorney ? (
           <Link
-            to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
+            prefetch='intent'
+            to={`/erp/employees/${item.case_leadAttorney.id}`}
             className='text-blue-600 hover:underline block w-full h-full'
           >
             <span className='text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>

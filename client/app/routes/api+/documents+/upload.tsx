@@ -1,8 +1,12 @@
 import { ActionFunctionArgs, data } from '@remix-run/node';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { IDocument } from '~/interfaces/document.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import { uploadDocument } from '~/services/document.server';
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<IDocument[]> => {
   const { session, headers } = await isAuthenticated(request);
   const body = await request.formData();
 
@@ -11,8 +15,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!files.length) {
       return data(
         {
-          documents: [],
-          success: 0,
+          data: [],
+          success: false,
           toast: {
             message: 'Không có tài liệu nào được chọn để tải lên.',
             type: 'error',
@@ -31,8 +35,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return data(
       {
-        documents,
-        success: 1,
+        data: documents,
+        success: true,
         toast: { message: 'Upload tài liệu thành công!', type: 'success' },
       },
       { headers },
@@ -41,8 +45,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.error(error);
     return data(
       {
-        documents: [],
-        success: 0,
+        data: [],
+        success: false,
         toast: { message: error.message, type: 'error' },
       },
       { headers },

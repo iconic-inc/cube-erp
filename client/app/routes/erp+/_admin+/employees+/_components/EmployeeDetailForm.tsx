@@ -1,14 +1,14 @@
 import { toast } from 'react-toastify';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
+import { format } from 'date-fns';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 
 import { action } from '~/routes/erp+/_admin+/employees+/new';
-import { format } from 'date-fns';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { IRole } from '~/interfaces/role.interface';
 import {
@@ -30,7 +30,7 @@ import {
 import Defer from '~/components/Defer';
 import ErrorCard from '~/components/ErrorCard';
 import { USER } from '~/constants/user.constant';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function EmployeeDetailForm({
   formId,
@@ -44,11 +44,10 @@ export default function EmployeeDetailForm({
   rolesPromise?: ILoaderDataPromise<IRole[]>;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
   // Form state
-  const [code, setCode] = useState<string>(generateCode('NV'));
+  const [code, setCode] = useState<string>('');
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -158,8 +157,6 @@ export default function EmployeeDetailForm({
       formData.set('joinDate', format(joinDate, 'yyyy-MM-dd'));
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -207,25 +204,7 @@ export default function EmployeeDetailForm({
   ]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if ('redirectTo' in fetcher.data && fetcher.data.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load employee data when in edit mode
   useEffect(() => {
@@ -330,16 +309,6 @@ export default function EmployeeDetailForm({
                         placeholder='Nhập mã nhân viên'
                         className={`flex-1 text-sm sm:text-base ${errors.code ? 'border-red-500' : ''}`}
                       />
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={() => setCode(generateCode('NV'))}
-                        className='px-2 sm:px-3 flex-shrink-0'
-                        size='sm'
-                      >
-                        <RotateCcw className='w-3 h-3 sm:w-4 sm:h-4' />
-                        <span className='hidden sm:inline ml-1'>Tạo mã</span>
-                      </Button>
                     </div>
                     {errors.code && (
                       <p className='text-red-500 text-xs sm:text-sm mt-1'>
@@ -675,6 +644,7 @@ export default function EmployeeDetailForm({
                 <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3'>
                   <Link
                     to='/erp/employees'
+                    prefetch='intent'
                     className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
                   >
                     <ArrowLeft className='w-4 h-4 mr-1' />

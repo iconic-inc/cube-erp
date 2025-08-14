@@ -54,7 +54,7 @@ export default function SideNav({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <Link to={subItem.url}>
+                        <Link to={subItem.url} prefetch='intent'>
                           <span>{subItem.title}</span>
                         </Link>
                       </SidebarMenuSubButton>

@@ -1,5 +1,5 @@
 import { ActionFunctionArgs } from '@remix-run/node';
-import { authenticator, isAuthenticated } from '~/services/auth.server';
+import { isAuthenticated } from '~/services/auth.server';
 import { createImage } from '~/services/image.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {

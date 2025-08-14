@@ -1,4 +1,4 @@
-import { Link } from '@remix-run/react';
+import { Link, useFetcher } from '@remix-run/react';
 import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import Defer from '~/components/Defer';
 import LoadingCard from '~/components/LoadingCard';
@@ -27,14 +27,23 @@ import {
   Play,
   Edit,
   ArrowLeft,
+  Trash,
+  Check,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
+import { useRef } from 'react';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { action } from '../$taskId';
 
 export default function TaskDetail({
   taskPromise,
 }: {
   taskPromise: ILoaderDataPromise<ITask>;
 }) {
+  const fetcher = useFetcher<typeof action>();
+
+  useFetcherResponseHandler(fetcher);
+
   return (
     <Defer resolve={taskPromise} fallback={<LoadingCard />}>
       {(task) => {
@@ -201,6 +210,7 @@ export default function TaskDetail({
                           </span>
                         </div>
                         <Link
+                          prefetch='intent'
                           to={`/erp/cases/${task.tsk_caseService.id}`}
                           className='text-sm md:text-base font-medium text-blue-600 hover:underline truncate'
                         >
@@ -246,7 +256,7 @@ export default function TaskDetail({
               {/* Actions */}
               <div className='flex flex-col sm:flex-row flex-wrap gap-2 md:gap-3 pt-3 md:pt-4 border-t border-gray-200'>
                 <Button asChild variant={'primary'} className='text-base'>
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4 md:w-5 md:h-5' />
                     <span className='hidden sm:inline'>
                       Chỉnh sửa công việc
@@ -255,8 +265,40 @@ export default function TaskDetail({
                   </Link>
                 </Button>
 
+                <Button
+                  variant={'destructive'}
+                  className='text-base'
+                  onClick={() => {
+                    fetcher.submit(null, {
+                      method: 'DELETE',
+                      action: `/erp/tasks/${task.id}`,
+                    });
+                  }}
+                >
+                  <Trash className='w-4 h-4 md:w-5 md:h-5' />
+                  <span className='hidden sm:inline'>Xóa công việc</span>
+                  <span className='sm:hidden'>Xóa</span>
+                </Button>
+
+                <Button
+                  className='text-base bg-green-600 hover:bg-green-700'
+                  onClick={() => {
+                    fetcher.submit(
+                      { op: 'markAsCompleted' },
+                      {
+                        method: 'PATCH',
+                        action: `/erp/tasks/${task.id}`,
+                      },
+                    );
+                  }}
+                >
+                  <Check className='w-4 h-4 md:w-5 md:h-5' />
+                  <span className='hidden sm:inline'>Xác nhận hoàn thành</span>
+                  <span className='sm:hidden'>Hoàn thành</span>
+                </Button>
+
                 <Button asChild variant={'secondary'} className='text-base'>
-                  <Link to='/erp/tasks'>
+                  <Link to='/erp/tasks' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4 md:w-5 md:h-5' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>

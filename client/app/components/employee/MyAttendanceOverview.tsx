@@ -85,7 +85,11 @@ export default function MyAttendanceOverview({
             Chấm công của tôi
           </CardTitle>
           <Button variant='ghost' size='sm' asChild>
-            <Link to='/erp/nhan-vien/cham-cong' className='flex items-center'>
+            <Link
+              to='/erp/nhan-vien/cham-cong'
+              className='flex items-center'
+              prefetch='intent'
+            >
               Xem tất cả
               <ArrowUpRight className='w-4 h-4 ml-1' />
             </Link>

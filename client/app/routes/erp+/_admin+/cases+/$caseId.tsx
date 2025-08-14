@@ -43,7 +43,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     session?.user.usr_role,
   )
     ? getTransactions(
-        new URLSearchParams({ caseId, page: '1', limit: '100' }),
+        new URLSearchParams({ caseServiceId: caseId, page: '1', limit: '100' }),
         session!,
       ).catch((error) => {
         console.error('Error fetching customer transactions:', error);

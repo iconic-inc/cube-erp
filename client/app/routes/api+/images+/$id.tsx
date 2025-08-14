@@ -1,15 +1,22 @@
 import { data, LoaderFunctionArgs } from '@remix-run/node';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
+import { getUnauthorizedActionResponse } from '~/services/cookie.server';
 import { deleteImage, updateImage } from '~/services/image.server';
 
-export const action = async ({ request, params }: LoaderFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+}: LoaderFunctionArgs): IActionFunctionReturn<{ imageId: string }> => {
   const { id } = params;
-  if (!id) throw new Response('Image not found', { status: 404 });
+  if (!id)
+    return data(
+      { success: false, toast: { type: 'error', message: 'Image not found' } },
+      { status: 404 },
+    );
 
   const { session, headers } = await isAuthenticated(request);
-  if (!session) {
-    return data({ success: false, message: 'Unauthorized' }, { headers });
-  }
+  if (!session) return getUnauthorizedActionResponse(data, headers);
 
   try {
     switch (request.method) {
@@ -31,6 +38,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
         return data(
           {
+            success: true,
             toast: { message: 'Cập nhật thành công', type: 'success' },
           },
           { headers },
@@ -42,7 +50,8 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
         return data(
           {
-            imageId: id,
+            data: { imageId: id },
+            success: true,
             toast: { message: 'Xóa ảnh thành công', type: 'success' },
           },
           { headers },
@@ -55,6 +64,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
   } catch (error: any) {
     return data(
       {
+        success: false,
         toast: { message: error.message, type: 'error' },
       },
       { headers },

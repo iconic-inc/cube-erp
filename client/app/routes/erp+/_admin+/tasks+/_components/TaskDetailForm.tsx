@@ -46,6 +46,7 @@ import {
 import Defer from '~/components/Defer';
 import CaseServiceBrief from './CaseServiceBrief';
 import { useERPLoaderData } from '~/lib';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function TaskDetailForm({
   formId,
@@ -62,7 +63,6 @@ export default function TaskDetailForm({
 }) {
   const { employee } = useERPLoaderData();
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -174,7 +174,6 @@ export default function TaskDetailForm({
     // Set the task status
     formData.append('status', status);
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -211,25 +210,7 @@ export default function TaskDetailForm({
     setIsChanged,
   ]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data.toast.type === 'success' && fetcher.data.redirectTo) {
-        navigate(fetcher.data.redirectTo);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   // false by default if type is 'update', true after resolve the casePromise
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
@@ -353,24 +334,26 @@ export default function TaskDetailForm({
               )}
             </div>
 
-            <div className='lg:col-span-4'>
-              <Label
-                htmlFor='caseOrder'
-                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
-              >
-                Thứ tự
-              </Label>
-              <Input
-                id='caseOrder'
-                name='caseOrder'
-                type='number'
-                value={caseOrder}
-                onChange={(e) => setCaseOrder(Number(e.target.value))}
-                className='bg-white border-gray-300 text-sm sm:text-base'
-                placeholder='Nhập thứ tự'
-                required
-              />
-            </div>
+            {!!caseService && (
+              <div className='lg:col-span-4'>
+                <Label
+                  htmlFor='caseOrder'
+                  className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
+                >
+                  Thứ tự
+                </Label>
+                <Input
+                  id='caseOrder'
+                  name='caseOrder'
+                  type='number'
+                  value={caseOrder}
+                  onChange={(e) => setCaseOrder(Number(e.target.value))}
+                  className='bg-white border-gray-300 text-sm sm:text-base'
+                  placeholder='Nhập thứ tự'
+                  required
+                />
+              </div>
+            )}
           </div>
 
           {/* Task Description */}
@@ -500,7 +483,9 @@ export default function TaskDetailForm({
                 asChild
                 className='text-sm sm:text-base'
               >
-                <Link to={`/erp/cases`}>Chọn hồ sơ liên quan</Link>
+                <Link prefetch='intent' to={`/erp/cases`}>
+                  Chọn hồ sơ liên quan
+                </Link>
               </Button>
             </div>
           )}
@@ -639,6 +624,7 @@ export default function TaskDetailForm({
         <CardFooter className='px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center border-t border-gray-200 gap-3 sm:gap-0'>
           <Link
             to='/erp/tasks'
+            prefetch='intent'
             className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />

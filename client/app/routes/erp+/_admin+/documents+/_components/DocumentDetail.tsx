@@ -185,6 +185,7 @@ export default function DocumentDetail({
                           </span>
                         </div>
                         <Link
+                          prefetch='intent'
                           to={`/erp/employees/${doc_createdBy.id}`}
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
@@ -308,7 +309,7 @@ export default function DocumentDetail({
                   variant={'primary'}
                   className='w-full sm:w-auto text-sm sm:text-sm'
                 >
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
                     <span className='hidden sm:inline'>Chỉnh sửa tài liệu</span>
                     <span className='sm:hidden'>Chỉnh sửa</span>
@@ -338,7 +339,7 @@ export default function DocumentDetail({
                   variant={'secondary'}
                   className='w-full sm:w-auto text-sm sm:text-sm'
                 >
-                  <Link to='/erp/documents'>
+                  <Link to='/erp/documents' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>

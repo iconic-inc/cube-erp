@@ -1,12 +1,17 @@
 import { ActionFunctionArgs, data } from '@remix-run/node';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { authenticator, isAuthenticated } from '~/services/auth.server';
 import {
   createOfficeIP,
   deleteOfficeIP,
   updateOfficeIP,
 } from '~/services/officeIP.server';
-export const action = async ({ params, request }: ActionFunctionArgs) => {
+
+export const action = async ({
+  params,
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const id = params.id || '';
   const formData = await request.formData();
   let ipAddress = formData.get('ipAddress') as string;
@@ -21,6 +26,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           if (!ipAddress) {
             return data(
               {
+                success: true,
                 toast: {
                   message: 'Không thể lấy địa chỉ IP',
                   type: 'error',
@@ -38,6 +44,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
         return data(
           {
+            success: true,
             toast: {
               message: 'Cập nhật địa chỉ IP thành công',
               type: 'success',
@@ -51,6 +58,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         const officeIP = await deleteOfficeIP(id, session!);
         return data(
           {
+            success: true,
             toast: {
               message: 'Xóa địa chỉ IP thành công',
               type: 'success',
@@ -63,6 +71,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       default: {
         return data(
           {
+            success: false,
             toast: {
               message: 'Không thể thực hiện yêu cầu',
               type: 'error',
@@ -75,6 +84,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   } catch (error: any) {
     return data(
       {
+        success: false,
         toast: {
           message: error.message || error.statusText,
           type: 'error',

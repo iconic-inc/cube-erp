@@ -7,6 +7,11 @@ import {
   taskUpdateSchema,
 } from '../schemas/task.schema';
 import { ITaskCreate, ITaskUpdate } from '../interfaces/task.interface';
+import { BadRequestError } from '../core/errors';
+
+const patchTaskHandler = {
+  markAsCompleted: taskService.maskTaskAsCompleted,
+};
 
 export class TaskController {
   // Create new Task
@@ -149,6 +154,21 @@ export class TaskController {
       res,
       message: 'Lấy hiệu suất nhân viên thành công',
       metadata: performanceData,
+    });
+  }
+
+  static async patchTask(req: Request, res: Response) {
+    const action = req.body.op as keyof typeof patchTaskHandler;
+    if (!patchTaskHandler[action]) {
+      throw new BadRequestError(`Invalid action: ${action}`);
+    }
+
+    const { id } = req.params;
+    const task = await patchTaskHandler[action](id);
+    return OK({
+      res,
+      message: 'Cập nhật Task thành công',
+      metadata: task,
     });
   }
 }

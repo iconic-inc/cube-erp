@@ -1,4 +1,4 @@
-import { createCookie } from '@remix-run/node';
+import { createCookie, data } from '@remix-run/node';
 import { ISessionUser } from '~/interfaces/auth.interface';
 
 const authCookie = createCookie('_auth', {
@@ -28,4 +28,20 @@ export const parseAuthCookie = async (request: Request) => {
   if (!cookie) return null;
 
   return cookie as ISessionUser;
+};
+
+export const getUnauthorizedActionResponse = (
+  dataResponse: typeof data,
+  headers: HeadersInit,
+) => {
+  return dataResponse(
+    {
+      success: false,
+      toast: {
+        type: 'error' as const,
+        message: 'Bạn cần đăng nhập để thực hiện hành động này',
+      },
+    },
+    { headers, status: 401 },
+  );
 };

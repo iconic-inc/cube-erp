@@ -77,6 +77,7 @@ export default function RewardsIndex() {
       sortField: 'rw_name',
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/rewards/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full font-medium'
         >
@@ -167,7 +168,7 @@ export default function RewardsIndex() {
         addNewHandler={() => navigate('/erp/rewards/new')}
         exportable={false}
         name='Quỹ thưởng'
-        deleteHandleRoute='/erp/rewards'
+        deleteHandleRoute='/erp/rewards?index'
       />
     </div>
   );
@@ -175,7 +176,7 @@ export default function RewardsIndex() {
 
 export const action = async ({
   request,
-}: ActionFunctionArgs): IActionFunctionReturn<any> => {
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
   if (!session) {
     return data(

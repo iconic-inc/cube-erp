@@ -83,7 +83,11 @@ export default function AttendanceOverview({
             <span className='sm:hidden'>Chấm công</span>
           </CardTitle>
           <Button variant='ghost' size='sm' asChild>
-            <Link to='/erp/attendance' className='flex items-center'>
+            <Link
+              to='/erp/attendance'
+              className='flex items-center'
+              prefetch='intent'
+            >
               <span className='hidden sm:inline'>Xem tất cả</span>
               <span className='sm:hidden'>Xem</span>
               <ArrowUpRight className='w-4 h-4' />
@@ -148,6 +152,7 @@ export default function AttendanceOverview({
                   <div className='flex items-center justify-between mb-1 gap-2'>
                     <Link
                       to={`/erp/employees/${attendance.employee?.id}`}
+                      prefetch='intent'
                       className='text-xs sm:text-sm font-medium text-foreground hover:text-red-900 transition-colors truncate'
                     >
                       {attendance.employee?.emp_user?.usr_firstName}{' '}

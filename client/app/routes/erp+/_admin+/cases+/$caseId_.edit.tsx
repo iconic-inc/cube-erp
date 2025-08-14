@@ -17,6 +17,7 @@ import { CASE_SERVICE } from '~/constants/caseService.constant';
 import { useMemo } from 'react';
 import { generateFormId } from '~/utils';
 import { canAccessCaseServices } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -89,9 +90,10 @@ export default function () {
   );
 }
 
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -101,11 +103,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         if (!caseId) {
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng cung cấp ID Hồ sơ vụ việc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
             },
             { headers },
@@ -133,11 +134,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
             },
             { headers },
@@ -148,26 +148,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            case: res,
+            success: true,
             toast: {
               message: 'Cập nhật Hồ sơ thành công!',
-              type: 'success' as ToastType,
+              type: 'success',
             },
             redirectTo: `/erp/cases/${res.id}`,
           },
           { headers },
         );
       } catch (error: any) {
-        console.error('Error creating case:', error);
-        const errorMessage = error.message || 'Có lỗi xảy ra khi thêm Hồ sơ';
+        console.error('Error updating case:', error);
+        const errorMessage =
+          error.message || 'Có lỗi xảy ra khi cập nhật Hồ sơ';
 
         return dataResponse(
           {
-            case: null,
-            redirectTo: null,
+            success: false,
             toast: {
               message: errorMessage,
-              type: 'error' as ToastType,
+              type: 'error',
             },
           },
           { headers },
@@ -178,9 +178,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          case: null,
-          redirectTo: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
         },
         { headers },
       );

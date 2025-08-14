@@ -1,10 +1,10 @@
 import { Link, useFetcher } from '@remix-run/react';
 import { ChevronsUpDown, Eye, Edit, Trash2 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+
 import Defer from '~/components/Defer';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { action } from '../../routes/erp+/_admin+/employees+/$employeeId';
-import { toast } from 'react-toastify';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function EmployeeList({
   employees,
@@ -13,43 +13,7 @@ export default function EmployeeList({
 }) {
   const fetcher = useFetcher<typeof action>();
 
-  const toastIdRef = useRef<any>(null);
-
-  useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Đang xử lý...', {
-          autoClose: false,
-        });
-        // Xóa lỗi khi bắt đầu submit
-        break;
-
-      case 'idle':
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success', // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-
-          toastIdRef.current = null;
-
-          break;
-        }
-        if (toastIdRef.current) {
-          toast.update(toastIdRef.current, {
-            render: 'Có lỗi xảy ra',
-            type: 'error',
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-        }
-        break;
-    }
-  }, [fetcher.state, fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   return (
     <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
@@ -154,6 +118,7 @@ export default function EmployeeList({
 
                         <Link
                           to={`/erp/employees/${employee.id}`}
+                          prefetch='intent'
                           className='flex items-center flex-grow text-gray-900 hover:text-red-500'
                         >
                           <div className='flex-shrink-0 h-10 w-10'>
@@ -209,6 +174,7 @@ export default function EmployeeList({
                       <div className='flex justify-end space-x-2'>
                         <Link
                           to={`/erp/employees/${employee.id}`}
+                          prefetch='intent'
                           className='text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-all'
                         >
                           <Eye className='w-4 h-4' />
@@ -216,6 +182,7 @@ export default function EmployeeList({
 
                         <Link
                           to={`/erp/employees/${employee.id}/edit`}
+                          prefetch='intent'
                           className='text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50 transition-all'
                         >
                           <Edit className='w-4 h-4' />

@@ -47,6 +47,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
           <Button variant='ghost' size='sm' asChild>
             <Link
               to='/erp/tasks?sortBy=createdAt&sortOrder=desc'
+              prefetch='intent'
               className='flex items-center'
             >
               <span className='hidden sm:inline'>Xem tất cả</span>
@@ -78,6 +79,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                   <div className='flex-1 min-w-0 pr-2'>
                     <Link
                       to={`/erp/tasks/${task.id}`}
+                      prefetch='intent'
                       className='text-xs sm:text-sm font-medium text-foreground hover:text-red-900 transition-colors line-clamp-2'
                     >
                       {task.tsk_name}
@@ -134,6 +136,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                   {task.tsk_caseService && (
                     <Link
                       to={`/erp/cases/${task.tsk_caseService.id}`}
+                      prefetch='intent'
                       className='text-red-900 hover:text-red-800 transition-colors text-xs shrink-0'
                     >
                       {task.tsk_caseService.case_code}

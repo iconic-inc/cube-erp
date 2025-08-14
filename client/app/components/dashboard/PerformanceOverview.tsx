@@ -24,7 +24,11 @@ export default function PerformanceOverview({
             <span className='sm:hidden'>Xếp hạng</span>
           </CardTitle>
           <Button variant='ghost' size='sm' asChild>
-            <Link to='/erp/tasks/performance' className='flex items-center'>
+            <Link
+              to='/erp/tasks/performance'
+              className='flex items-center'
+              prefetch='intent'
+            >
               <span className='hidden sm:inline'>Xem tất cả</span>
               <span className='sm:hidden'>Xem</span>
               <ArrowUpRight className='w-4 h-4' />

@@ -232,6 +232,19 @@ const getMyTaskPerformance = async (
   return performanceData;
 };
 
+const patchTask = async (
+  taskId: string,
+  payload: { op: string; value: any },
+  request: ISessionUser,
+) => {
+  const response = await fetcher(`/tasks/${taskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    request,
+  });
+  return response as ITask;
+};
+
 export {
   getTasks,
   getTaskById,
@@ -244,4 +257,5 @@ export {
   exportTasks,
   getEmployeesPerformance,
   getMyTaskPerformance,
+  patchTask,
 };

@@ -34,10 +34,11 @@ export type IExportResponse = {
 export interface IActionFunctionResponse<T = undefined> {
   success: boolean;
   toast: {
-    type: 'error' | 'success';
+    type: 'success' | 'error' | 'info' | 'warning';
     message: string;
   };
   data?: T;
+  redirectTo?: string;
 }
 
 export type IActionFunctionReturn<T = undefined> = Promise<

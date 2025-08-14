@@ -15,23 +15,33 @@ import {
 import { getOfficeIPs } from '~/services/officeIP.server';
 import Defer from '~/components/Defer';
 import AttendanceLog from '~/components/AttendanceLog';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
 import CheckInOutSection from './_components/CheckInOutSection';
 import MyAttendanceRequestList from './_components/MyAttendanceRequestList';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn<{
+  ipNotAllowed: boolean;
+  type: string;
+}> => {
   const { session, headers } = await isAuthenticated(request);
+  if (!session) return getUnauthorizedActionResponse(data, headers);
   let ipAddress = getClientIPAddress(request);
 
   if (['production'].includes(process.env.NODE_ENV as string)) {
     if (!ipAddress) {
       return data(
         {
+          success: false,
           toast: { type: 'error', message: 'Không tìm thấy địa chỉ IP' },
-          status: 400,
         },
-        { headers },
+        { headers, status: 400 },
       );
     }
   } else {
@@ -53,13 +63,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!message?.trim()) {
           return data(
             {
+              success: false,
               toast: {
                 type: 'error',
                 message: 'Vui lòng nhập lý do yêu cầu chấm công',
               },
-              status: 400,
             },
-            { headers },
+            { headers, status: 400 },
           );
         }
 
@@ -80,6 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
           return data(
             {
+              success: true,
               toast: {
                 type: 'success',
                 message: 'Yêu cầu chấm công đã được gửi thành công!',
@@ -90,18 +101,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         } catch (error: any) {
           return data(
             {
+              success: false,
               toast: {
                 type: 'error',
                 message: error.message || 'Có lỗi xảy ra khi gửi yêu cầu!',
               },
             },
-            { headers },
+            { headers, status: 500 },
           );
         }
       }
 
       // Handle regular check-in/check-out
-      const type = body.get('type') || 'check-in';
+      const type = (body.get('type') as string) || 'check-in';
       const fingerprint = (body.get('fingerprint') as string) || '';
       const longitude = parseFloat(body.get('longitude') as string) || 106;
       const latitude = parseFloat(body.get('latitude') as string) || 10;
@@ -109,10 +121,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!ipAddress) {
         return data(
           {
+            success: false,
             toast: { type: 'error', message: 'Không tìm thấy địa chỉ IP' },
-            status: 404,
           },
-          { headers },
+          { headers, status: 400 },
         );
       }
 
@@ -124,10 +136,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!allowedIPs.includes(ipAddress)) {
           return data(
             {
-              ipNotAllowed: true,
-              type,
-              fingerprint,
-              ipAddress,
+              data: { ipNotAllowed: true, type },
+              success: false,
               toast: {
                 type: 'warning',
                 message:
@@ -158,6 +168,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return data(
           {
+            success: true,
             toast: {
               type: 'success',
               message:
@@ -172,13 +183,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         console.error(error);
         return data(
           {
+            success: false,
             toast: {
               type: 'error',
               message: error.message || error.statusText,
             },
-            status: error.status || 500,
           },
-          { headers },
+          { headers, status: error.status || 500 },
         );
       }
     }
@@ -186,10 +197,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return data(
         {
+          success: false,
           toast: { type: 'error', message: 'Method not allowed' },
-          status: 405,
         },
-        { headers },
+        { headers, status: 405 },
       );
   }
 };

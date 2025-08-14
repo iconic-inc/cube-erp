@@ -63,7 +63,7 @@ const ErrorCard = ({
           'Đã xảy ra lỗi không xác định.'}
       </p>
       <Button asChild>
-        <Link to={basePath}>
+        <Link to={basePath} prefetch='intent'>
           <Home className='mr-2 h-4 w-4' />
           Trang chủ
         </Link>

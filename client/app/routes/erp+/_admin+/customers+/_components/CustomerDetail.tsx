@@ -274,7 +274,7 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4' />
                     <span className='hidden sm:inline'>
                       Chỉnh sửa thông tin
@@ -288,7 +288,10 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to={`/erp/cases/new?customerId=${customer?.id || ''}`}>
+                  <Link
+                    to={`/erp/cases/new?customerId=${customer?.id || ''}`}
+                    prefetch='intent'
+                  >
                     <Plus className='w-4 h-4' />
                     <span className='hidden sm:inline'>Thêm Hồ sơ vụ việc</span>
                     <span className='sm:hidden'>Thêm hồ sơ</span>
@@ -300,7 +303,7 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to='/erp/customers'>
+                  <Link to='/erp/customers' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>

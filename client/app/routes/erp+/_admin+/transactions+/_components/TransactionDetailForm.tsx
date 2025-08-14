@@ -1,6 +1,7 @@
 import { toast } from 'react-toastify';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 
 import { action } from '~/routes/erp+/_admin+/transactions+/new';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
@@ -8,7 +9,6 @@ import { IListResponse } from '~/interfaces/response.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { ICustomer } from '~/interfaces/customer.interface';
 import { ICaseService } from '~/interfaces/case.interface';
 import { ITransaction } from '~/interfaces/transaction.interface';
@@ -25,7 +25,7 @@ import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import TextEditor from '~/components/TextEditor';
 import { DatePicker } from '~/components/ui/date-picker';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function TransactionDetailForm({
   formId,
@@ -45,23 +45,9 @@ export default function TransactionDetailForm({
   initialCaseId?: string | null;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
-  const navigate = useNavigate();
-
-  // Generate transaction code
-  const generateTransactionCode = () => {
-    const prefix =
-      transactionType === 'income'
-        ? 'TN'
-        : transactionType === 'outcome'
-          ? 'TC'
-          : 'TD';
-
-    setCode(generateCode(prefix));
-  };
 
   // Form state
-  const [code, setCode] = useState<string>(generateCode('TN'));
+  const [code, setCode] = useState<string>('');
   const [transactionType, setTransactionType] = useState<'income' | 'outcome'>(
     'income',
   );
@@ -151,8 +137,6 @@ export default function TransactionDetailForm({
     formData.set('customer', selectedCustomer);
     formData.set('caseService', selectedCaseService);
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -190,25 +174,7 @@ export default function TransactionDetailForm({
   ]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load data on component mount
   useEffect(() => {
@@ -279,11 +245,6 @@ export default function TransactionDetailForm({
     }
   }, [type, transactionPromise]);
 
-  // Reset category when transaction type changes
-  useEffect(() => {
-    generateTransactionCode();
-  }, [transactionType]);
-
   if (!isContentReady) {
     return <LoadingCard />;
   }
@@ -321,17 +282,6 @@ export default function TransactionDetailForm({
                   placeholder='Ví dụ: TN123456'
                   className='bg-white border-gray-300 text-sm sm:text-base'
                 />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={generateTransactionCode}
-                  className='whitespace-nowrap text-xs sm:text-sm'
-                >
-                  <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
-                  <span className='hidden sm:inline'>Tự động tạo</span>
-                  <span className='sm:hidden'>Tạo mã</span>
-                </Button>
               </div>
               {errors.code && (
                 <p className='text-red-500 text-xs sm:text-sm mt-1'>
@@ -611,6 +561,7 @@ export default function TransactionDetailForm({
           <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0'>
             <Link
               to='/erp/transactions'
+              prefetch='intent'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
               <ArrowLeft className='h-4 w-4 sm:h-5' />

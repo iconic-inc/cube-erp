@@ -176,7 +176,7 @@ export default function RoleBasedSection({ userRole }: RoleBasedSectionProps) {
               className='h-auto p-4 justify-start hover:bg-muted/50'
               asChild
             >
-              <Link to={action.href}>
+              <Link to={action.href} prefetch='intent'>
                 <div className='flex items-center space-x-3 w-full'>
                   <div className={`p-2 rounded-lg ${action.color}`}>
                     <action.icon className='w-5 h-5' />

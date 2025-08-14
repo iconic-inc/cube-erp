@@ -62,6 +62,7 @@ export default function HRMEmployees() {
       sortField: 'emp_user.usr_firstName',
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/employees/${item.id}`}
           className='text-blue-600 hover:underline flex items-center'
         >

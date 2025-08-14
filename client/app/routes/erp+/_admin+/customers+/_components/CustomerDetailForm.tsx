@@ -1,14 +1,14 @@
 import { toast } from 'react-toastify';
 import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
+import { format } from 'date-fns';
 
 import { action } from '~/routes/erp+/_admin+/customers+/new';
-import { format } from 'date-fns';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { ICustomer } from '~/interfaces/customer.interface';
 import {
   Card,
@@ -21,7 +21,6 @@ import LoadingCard from '~/components/LoadingCard';
 import { SelectSearch } from '~/components/ui/SelectSearch';
 import { CUSTOMER } from '~/constants/customer.constant';
 import TextEditor from '~/components/TextEditor';
-import Hydrated from '~/components/Hydrated';
 import { DatePicker } from '~/components/ui/date-picker';
 import {
   getDistrictBySlug,
@@ -29,7 +28,7 @@ import {
   getProvinceBySlug,
   provinces,
 } from '~/utils/address.util';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function CustomerDetailForm({
   formId,
@@ -43,11 +42,9 @@ export default function CustomerDetailForm({
   action?: string;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
-  const navigate = useNavigate();
 
   // Form state
-  const [code, setCode] = useState<string>(generateCode('KH'));
+  const [code, setCode] = useState<string>('');
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -153,8 +150,6 @@ export default function CustomerDetailForm({
       formData.set('birthDate', '');
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -200,25 +195,7 @@ export default function CustomerDetailForm({
   ]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load customer data when in edit mode
   useEffect(() => {
@@ -334,17 +311,6 @@ export default function CustomerDetailForm({
                   placeholder='Ví dụ: KH123456'
                   className='bg-white border-gray-300 text-sm sm:text-base'
                 />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setCode(generateCode('KH'))}
-                  className='whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3'
-                >
-                  <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
-                  <span className='hidden sm:inline'>Tự động tạo</span>
-                  <span className='sm:hidden'>Tạo</span>
-                </Button>
               </div>
               {errors.code && (
                 <p className='text-red-500 text-sm mt-1'>{errors.code}</p>
@@ -631,6 +597,7 @@ export default function CustomerDetailForm({
         <CardFooter className='p-4 sm:p-6'>
           <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
+              prefetch='intent'
               to='/erp/customers'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
             >

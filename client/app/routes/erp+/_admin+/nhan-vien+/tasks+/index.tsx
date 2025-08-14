@@ -89,6 +89,7 @@ export default function HRMTasks() {
       sortField: 'tsk_name',
       render: (task) => (
         <Link
+          prefetch='intent'
           to={`/erp/tasks/${task.id}`}
           className='text-blue-600 hover:underline py-2'
         >
@@ -119,6 +120,7 @@ export default function HRMTasks() {
       render: (task) =>
         task.tsk_caseService ? (
           <Link
+            prefetch='intent'
             to={`/erp/cases/${task.tsk_caseService?.id}`}
             className='text-blue-600 hover:underline'
           >

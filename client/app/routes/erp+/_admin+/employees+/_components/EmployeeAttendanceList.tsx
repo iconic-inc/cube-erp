@@ -35,7 +35,10 @@ export default function EmployeeAttendanceList({
             className='bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm'
             asChild
           >
-            <Link to={`/erp/attendance/detail?employeeId=${employeeId}`}>
+            <Link
+              to={`/erp/attendance/detail?employeeId=${employeeId}`}
+              prefetch='intent'
+            >
               <span className='hidden sm:inline'>Xem tất cả</span>
               <span className='sm:hidden'>Xem tất cả</span>
             </Link>
@@ -75,6 +78,7 @@ export default function EmployeeAttendanceList({
                   </p>
                   <Button variant='outline' size='sm' asChild>
                     <Link
+                      prefetch='intent'
                       to={`/erp/attendance/detail?employeeId=${employeeId}`}
                     >
                       <span className='hidden sm:inline'>
@@ -178,6 +182,7 @@ export default function EmployeeAttendanceList({
                   <div className='p-3 sm:p-4 bg-gray-50 text-center'>
                     <Button variant='outline' size='sm' asChild>
                       <Link
+                        prefetch='intent'
                         to={`/erp/attendance/detail?employeeId=${employeeId}`}
                       >
                         <span className='hidden sm:inline'>

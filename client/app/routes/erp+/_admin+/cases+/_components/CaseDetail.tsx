@@ -97,10 +97,14 @@ export default function CaseDetail({
                         <span className='text-xs sm:text-sm text-gray-500 block'>
                           Khách hàng:
                         </span>
-                        <span className='text-sm sm:text-base font-medium break-words'>
+                        <Link
+                          to={`/erp/customers/${caseService.case_customer.id}`}
+                          className='text-sm sm:text-base font-medium break-words'
+                          prefetch='intent'
+                        >
                           {caseService.case_customer.cus_firstName}{' '}
                           {caseService.case_customer.cus_lastName}
-                        </span>
+                        </Link>
                       </div>
                     </div>
 
@@ -264,7 +268,7 @@ export default function CaseDetail({
                   asChild
                   className='justify-center sm:justify-start'
                 >
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4' />
                     <span className='hidden sm:inline'>Chỉnh sửa hồ sơ</span>
                     <span className='sm:hidden'>Chỉnh sửa</span>
@@ -276,7 +280,7 @@ export default function CaseDetail({
                   asChild
                   className='justify-center sm:justify-start'
                 >
-                  <Link to='/erp/cases'>
+                  <Link to='/erp/cases' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>

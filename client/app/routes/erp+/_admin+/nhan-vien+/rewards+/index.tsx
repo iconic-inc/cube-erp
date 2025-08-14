@@ -91,6 +91,8 @@ export default function RewardsIndex() {
       title: 'Trạng thái',
       visible: true,
       sortField: 'rw_status',
+      filterField: 'status',
+      options: Object.values(REWARD.STATUS),
       render: (item) => (
         <Badge className={getStatusBadgeClass(item.rw_status)}>
           {getStatusLabel(item.rw_status)}
@@ -148,6 +150,7 @@ export default function RewardsIndex() {
         addNewHandler={() => navigate('/erp/rewards/new')}
         exportable={false}
         name='Quỹ thưởng'
+        readOnly
       />
     </div>
   );

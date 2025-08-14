@@ -52,6 +52,8 @@ import {
 } from '~/components/ui/alert-dialog';
 import { generateFormId } from '~/utils';
 import { canAccessDocumentManagement } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -92,7 +94,6 @@ export default function DocumentDetailPage() {
   const { document, employeesPromise } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
 
   const formId = useMemo(() => generateFormId('document-edit-form'), []);
 
@@ -206,10 +207,8 @@ export default function DocumentDetailPage() {
     formData.set('whiteList', JSON.stringify(whiteList.map((emp) => emp.id)));
     formData.set('isPublic', String(isPublic));
 
-    toastIdRef.current = toast.loading('Đang cập nhật tài liệu...');
-
     // Submit the form
-    fetcher.submit(formData, { method: 'POST' });
+    fetcher.submit(formData, { method: 'PUT' });
   };
 
   useEffect(() => {
@@ -228,25 +227,7 @@ export default function DocumentDetailPage() {
   }, [isChanged]);
 
   // Handle toast notifications and redirects
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (toastData.type === 'success') {
-        navigate(`/erp/documents/${document.id}`, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate, document.id]);
+  useFetcherResponseHandler(fetcher);
 
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
@@ -270,7 +251,7 @@ export default function DocumentDetailPage() {
         actionVariant={'primary'}
       />
 
-      <fetcher.Form id={formId} method='POST' onSubmit={handleSubmit}>
+      <fetcher.Form id={formId} method='PUT' onSubmit={handleSubmit}>
         <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
           <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-xl'>
             <CardTitle className='text-white text-xl sm:text-2xl md:text-3xl font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0'>
@@ -509,6 +490,7 @@ export default function DocumentDetailPage() {
                                 visible: true,
                                 render: (item) => (
                                   <Link
+                                    prefetch='intent'
                                     to={`/erp/employees/${item.id}`}
                                     className='flex items-center space-x-3'
                                   >
@@ -572,6 +554,7 @@ export default function DocumentDetailPage() {
 
           <CardFooter className='bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-t border-gray-200 gap-3 sm:gap-0'>
             <Link
+              prefetch='intent'
               to='/erp/documents'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
@@ -676,7 +659,10 @@ export default function DocumentDetailPage() {
   );
 }
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -684,15 +670,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       await deleteDocument(params.documentId!, session!);
       return data(
         {
+          success: true,
           toast: {
-            type: 'success' as const,
+            type: 'success',
             message: 'Xóa Tài liệu thành công',
           },
+          redirectTo: `/erp/documents`,
         },
         { headers },
       );
 
-    case 'POST':
+    case 'PUT':
       const formData = await request.formData();
       const name = formData.get('name')?.toString().trim();
       // const type = formData.get('type')?.toString().trim();
@@ -705,12 +693,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       if (!name) {
         return data(
           {
+            success: false,
             toast: {
               type: 'error' as const,
               message: 'Vui lòng nhập tên tài liệu',
             },
           },
-          { status: 400, statusText: 'Bad Request' },
+          { status: 400, headers },
         );
       }
       try {
@@ -721,10 +710,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         );
         return data(
           {
+            success: true,
             toast: {
-              type: 'success' as const,
+              type: 'success',
               message: 'Cập nhật tài liệu thành công',
             },
+            redirectTo: `/erp/documents/${documentId}`,
           },
           { headers },
         );
@@ -732,26 +723,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         console.error('Error updating document:', error);
         return data(
           {
+            success: false,
             toast: {
-              type: 'error' as const,
+              type: 'error',
               message:
                 error.message ||
                 'Đã xảy ra lỗi khi cập nhật tài liệu. Vui lòng thử lại sau.',
             },
           },
-          { status: 500, statusText: 'Internal Server Error' },
+          { headers, status: 500, statusText: 'Internal Server Error' },
         );
       }
 
     default:
       return data(
         {
+          success: false,
           toast: {
-            type: 'error' as const,
+            type: 'error',
             message: 'Phương thức không hợp lệ',
           },
         },
         {
+          headers,
           status: 405,
           statusText: 'Method Not Allowed',
         },

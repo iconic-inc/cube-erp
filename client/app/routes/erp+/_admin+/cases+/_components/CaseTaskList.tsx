@@ -22,6 +22,8 @@ import {
   TASK_STATUS_BADGE_CLASSES,
 } from '~/constants/task.constant';
 import { formatDate } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { action } from '..';
 
 export default function CaseTaskList({
   caseId,
@@ -30,14 +32,7 @@ export default function CaseTaskList({
   caseId: string;
   caseTasksPromise: ILoaderDataPromise<IListResponse<ITask>>;
 }) {
-  const fetcher = useFetcher<{
-    toast?: {
-      type: 'success' | 'error';
-      message: string;
-    };
-    redirectTo?: string;
-  }>();
-  const toastIdRef = useRef<any>(null);
+  const fetcher = useFetcher<typeof action>();
   const navigate = useNavigate();
 
   const [visibleColumns, setVisibleColumns] = useState<IListColumn<ITask>[]>([
@@ -55,6 +50,7 @@ export default function CaseTaskList({
       visible: true,
       render: (task) => (
         <Link
+          prefetch='intent'
           to={`/erp/tasks/${task.id}`}
           className='text-blue-600 hover:underline py-2'
         >
@@ -113,25 +109,7 @@ export default function CaseTaskList({
     },
   ]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data.toast.type === 'success' && fetcher.data.redirectTo) {
-        navigate(fetcher.data.redirectTo);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   return (
     <Defer resolve={caseTasksPromise}>
@@ -162,7 +140,12 @@ export default function CaseTaskList({
             <CardContent className='p-2 md:p-6 space-y-4'>
               <div className='flex justify-end'>
                 <Button variant='primary' className='px-4 py-2'>
-                  <Link to={`/erp/tasks/new?caseId=${caseId}`}>Thêm Task</Link>
+                  <Link
+                    prefetch='intent'
+                    to={`/erp/tasks/new?caseId=${caseId}`}
+                  >
+                    Thêm Task
+                  </Link>
                 </Button>
               </div>
 

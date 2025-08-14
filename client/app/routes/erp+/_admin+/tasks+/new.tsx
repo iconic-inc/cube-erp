@@ -19,6 +19,7 @@ import { TASK } from '~/constants/task.constant';
 import { getCaseServiceById } from '~/services/case.server';
 import { generateFormId } from '~/utils';
 import { Save } from 'lucide-react';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -100,7 +101,9 @@ export default function NewTask() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -134,12 +137,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              task: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
-              redirectTo: null,
             },
             { headers, status: 400 },
           );
@@ -149,10 +151,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            task: res,
+            success: true,
             toast: {
               message: 'Thêm mới Task thành công!',
-              type: 'success' as ToastType,
+              type: 'success',
             },
             redirectTo: `/erp/tasks/${res.id}`,
           },
@@ -165,12 +167,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            task: null,
+            success: false,
             toast: {
               message: errorMessage,
-              type: 'error' as ToastType,
+              type: 'error',
             },
-            redirectTo: null,
           },
           { headers, status: 500 },
         );
@@ -180,9 +181,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          task: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
-          redirectTo: null,
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
         },
         { headers, status: 405 },
       );

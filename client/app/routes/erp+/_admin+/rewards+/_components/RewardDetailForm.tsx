@@ -19,6 +19,7 @@ import LoadingCard from '~/components/LoadingCard';
 import { NumericFormat } from 'react-number-format';
 import { DatePicker } from '~/components/ui/date-picker';
 import TextEditor from '~/components/TextEditor';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 interface RewardDetailFormProps {
   formId: string;
@@ -34,8 +35,6 @@ export default function RewardDetailForm({
   initialData,
 }: RewardDetailFormProps) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
-  const navigate = useNavigate();
 
   // Form state
   const [name, setName] = useState<string>('');
@@ -101,8 +100,6 @@ export default function RewardDetailForm({
       formData.set('endDate', endDate.toISOString().split('T')[0]);
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -124,25 +121,7 @@ export default function RewardDetailForm({
   }, [name, description, currentAmount, startDate, endDate]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load reward data when in edit mode
   useEffect(() => {
@@ -343,6 +322,7 @@ export default function RewardDetailForm({
         <CardFooter className='p-4 sm:p-6 pt-3 sm:pt-4 border-t border-gray-200'>
           <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0'>
             <Link
+              prefetch='intent'
               to='/erp/rewards'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >

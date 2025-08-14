@@ -4,8 +4,8 @@ import { IImage } from '~/interfaces/image.interface';
 import ImageUploader from './ImageUploader';
 import ImageMetadata from './ImageMetadata';
 import { useFetcher } from '@remix-run/react';
-import { toast } from 'react-toastify';
-import { action } from '~/routes/api+/images+/upload';
+import { action } from '~/routes/api+/images+/$id';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 interface ImagePickerProps {
   multiple?: boolean;
@@ -69,46 +69,16 @@ export default function ImagePicker({
   }, []);
 
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Loading...', {
-          autoClose: false,
-        });
-        setLoading(true);
-        break;
-
-      case 'loading':
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || ('success' as any), // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-          setLoading(false);
-
-          if (toastData.type === 'success') {
-            if (fetcher.formMethod === 'DELETE') {
-              setSelectedImages((prev) =>
-                prev.filter((img) => img.id !== fetcher.data?.imageId),
-              );
-              setImages((prev) =>
-                prev.filter((img) => img.id !== fetcher.data?.imageId),
-              );
-            }
-          }
-
-          break;
-        }
-
-        break;
-    }
-  }, [fetcher.state]);
+  const { isSubmitting } = useFetcherResponseHandler(fetcher, {
+    onSuccess(data, fetcher) {
+      if (fetcher.formMethod === 'DELETE') {
+        setSelectedImages((prev) =>
+          prev.filter((img) => img.id !== data?.imageId),
+        );
+        setImages((prev) => prev.filter((img) => img.id !== data?.imageId));
+      }
+    },
+  });
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-8 z-50'>
@@ -208,7 +178,7 @@ export default function ImagePicker({
                     }),
                   );
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
                 className='bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition'
                 type='button'
                 title='Xóa ảnh đã chọn'
@@ -221,7 +191,7 @@ export default function ImagePicker({
 
           <button
             onClick={handleConfirm}
-            disabled={loading}
+            disabled={isSubmitting}
             className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition'
             type='button'
           >

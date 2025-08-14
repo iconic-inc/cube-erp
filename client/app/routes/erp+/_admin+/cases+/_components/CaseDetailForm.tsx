@@ -44,7 +44,7 @@ import {
 } from '~/components/ui/card';
 import Defer from '~/components/Defer';
 import CustomerBrief from './CustomerBrief';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function CaseDetailForm({
   formId,
@@ -60,10 +60,9 @@ export default function CaseDetailForm({
   customerPromise?: ILoaderDataPromise<ICustomer>;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
-  const [code, setCode] = useState<string>(generateCode('HS'));
+  const [code, setCode] = useState<string>('');
   const [leadAttorney, setLeadAttorney] = useState<IEmployeeBrief | null>(null);
   const [assignees, setAssignees] = useState<IEmployeeBrief[]>([]);
   const [notes, setNotes] = useState<string>('');
@@ -180,7 +179,6 @@ export default function CaseDetailForm({
       formData.append('endDate', '');
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -204,25 +202,7 @@ export default function CaseDetailForm({
     setIsChanged(!!hasChanged);
   }, [code, leadAttorney, assignees, notes, startDate, endDate, status]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   // false by default if type is 'update', true after resolve the casePromise
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
@@ -312,17 +292,6 @@ export default function CaseDetailForm({
                 placeholder='Ví dụ: HS123456'
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={() => setCode(generateCode('HS'))}
-                className='whitespace-nowrap justify-center sm:justify-start'
-              >
-                <RotateCcw className='h-4 w-4 mr-1' />
-                <span className='hidden sm:inline'>Tự động tạo</span>
-                <span className='sm:hidden'>Tạo</span>
-              </Button>
             </div>
             {errors.code && (
               <p className='text-red-500 text-xs sm:text-sm mt-1'>
@@ -601,6 +570,7 @@ export default function CaseDetailForm({
           <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
               to='/erp/customers'
+              prefetch='intent'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
             >
               <ArrowLeft className='h-4 w-4' />

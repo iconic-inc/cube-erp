@@ -46,7 +46,10 @@ export default function CustomerCaseServiceList({
           className='bg-white text-red-700 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-fit m-auto sm:m-0'
           asChild
         >
-          <Link to={`/erp/cases/new?customerId=${customerId}`}>
+          <Link
+            to={`/erp/cases/new?customerId=${customerId}`}
+            prefetch='intent'
+          >
             <Plus className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
             <span className='hidden sm:inline'>Tạo hồ sơ mới</span>
             <span className='sm:hidden'>Tạo mới</span>
@@ -95,7 +98,10 @@ export default function CustomerCaseServiceList({
                         className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-fit'
                         asChild
                       >
-                        <Link to={`/erp/cases/${caseService.id}`}>
+                        <Link
+                          to={`/erp/cases/${caseService.id}`}
+                          prefetch='intent'
+                        >
                           <span className=''>Xem chi tiết</span>
                         </Link>
                       </Button>

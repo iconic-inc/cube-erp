@@ -1,22 +1,23 @@
 import { ActionFunctionArgs, data } from '@remix-run/node';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 import {
   attachDocumentsToCase,
   detachDocumentsFromCase,
 } from '~/services/case.server';
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const caseId = params.caseId;
   if (!caseId) {
-    return data(
-      {
-        success: false,
-        toast: {
-          message: 'ID hồ sơ không hợp lệ',
-          type: 'error',
-        },
+    return data({
+      success: false,
+      toast: {
+        message: 'ID hồ sơ không hợp lệ',
+        type: 'error',
       },
-      { headers: new Headers() },
-    );
+    });
   }
 
   const { session, headers } = await isAuthenticated(request);
@@ -85,6 +86,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       default:
         return data(
           {
+            success: false,
             toast: {
               message: 'Phương thức không hợp lệ',
               type: 'error',

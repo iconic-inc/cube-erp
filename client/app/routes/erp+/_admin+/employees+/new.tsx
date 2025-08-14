@@ -17,6 +17,7 @@ import ContentHeader from '~/components/ContentHeader';
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 import { canAccessEmployeeManagement } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -48,7 +49,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
 
   switch (request.method) {
@@ -85,8 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              employee: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
                 type: 'error' as ToastType,
@@ -100,8 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!data.password || data.password.length < 6) {
           return dataResponse(
             {
-              employee: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message: 'Mật khẩu phải có ít nhất 6 ký tự',
                 type: 'error' as ToastType,
@@ -120,8 +121,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           console.error('Invalid role format:', data.role);
           return dataResponse(
             {
-              employee: null,
-              redirectTo: null,
+              success: false,
               toast: {
                 message:
                   'Role không hợp lệ. Vui lòng chọn quyền truy cập hợp lệ.',
@@ -136,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            employee: res,
+            success: true,
             toast: {
               message: 'Thêm mới Nhân viên thành công!',
               type: 'success' as ToastType,
@@ -151,8 +151,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            employee: null,
-            redirectTo: null,
+            success: false,
             toast: {
               message: errorMessage,
               type: 'error' as ToastType,
@@ -166,7 +165,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          employee: null,
+          success: false,
           toast: { message: 'Method not allowed', type: 'error' as ToastType },
         },
         { headers },
