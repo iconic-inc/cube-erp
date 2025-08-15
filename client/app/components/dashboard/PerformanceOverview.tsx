@@ -58,7 +58,7 @@ export default function PerformanceOverview({
                       src={`/api/placeholder/40/40`}
                       alt={performer.employeeName}
                     />
-                    <AvatarFallback className='bg-red-900/10 text-red-900 font-semibold text-xs sm:text-sm'>
+                    <AvatarFallback className='bg-red-900/10 text-red-900 font-semibold text-sm sm:text-base'>
                       {performer.employeeName
                         .split(' ')
                         .map((n) => n[0])
@@ -83,7 +83,7 @@ export default function PerformanceOverview({
 
                 <div className='flex-1 min-w-0'>
                   <div className='flex items-center justify-between mb-1'>
-                    <p className='text-xs sm:text-sm font-medium text-foreground truncate'>
+                    <p className='text-sm sm:text-base font-medium text-foreground truncate'>
                       {performer.employeeName}
                     </p>
                     <Badge
@@ -116,7 +116,7 @@ export default function PerformanceOverview({
               </div>
 
               <div className='text-right shrink-0 ml-2'>
-                <p className='text-xs sm:text-sm font-semibold'>
+                <p className='text-sm sm:text-base font-semibold'>
                   {performer.completedTasks}/{performer.totalTasks}
                 </p>
                 <p className='text-xs text-muted-foreground hidden sm:block'>

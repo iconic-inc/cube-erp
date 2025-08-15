@@ -40,7 +40,7 @@ export default function CustomerTransactionList({
         <Button
           variant='secondary'
           size='sm'
-          className='bg-white text-red-700 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 mx-auto sm:m-0 w-fit'
+          className='bg-white text-red-700 hover:bg-red-50 text-sm sm:text-base px-2 sm:px-3 py-1 sm:py-2 mx-auto sm:m-0 w-fit'
           asChild
         >
           <Link
@@ -88,7 +88,7 @@ export default function CustomerTransactionList({
                                 ? 'default'
                                 : 'destructive'
                             }
-                            className={`text-xs sm:text-sm ${
+                            className={`text-sm sm:text-base ${
                               transaction.tx_type === 'income'
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
@@ -99,7 +99,7 @@ export default function CustomerTransactionList({
                           {transaction.tx_amount > transaction.tx_paid && (
                             <Badge
                               variant='outline'
-                              className='bg-yellow-50 text-yellow-700 border-yellow-300 text-xs sm:text-sm'
+                              className='bg-yellow-50 text-yellow-700 border-yellow-300 text-sm sm:text-base'
                             >
                               Còn nợ
                             </Badge>
@@ -109,7 +109,7 @@ export default function CustomerTransactionList({
                       <Button
                         variant='outline'
                         size='sm'
-                        className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-fit'
+                        className='text-sm sm:text-base px-2 sm:px-3 py-1 sm:py-2 w-fit'
                       >
                         <Link
                           prefetch='intent'
@@ -134,7 +134,7 @@ export default function CustomerTransactionList({
                           displayType='text'
                           thousandSeparator=','
                           suffix=' VNĐ'
-                          className='font-bold text-blue-700 text-xs sm:text-sm'
+                          className='font-bold text-blue-700 text-sm sm:text-base'
                         />
                       </div>
                       <div className='sm:col-span-1'>
@@ -144,7 +144,7 @@ export default function CustomerTransactionList({
                           displayType='text'
                           thousandSeparator=','
                           suffix=' VNĐ'
-                          className='font-bold text-green-700 text-xs sm:text-sm'
+                          className='font-bold text-green-700 text-sm sm:text-base'
                         />
                       </div>
                       <div>

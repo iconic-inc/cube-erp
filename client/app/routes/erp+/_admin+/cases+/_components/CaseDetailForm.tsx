@@ -294,7 +294,7 @@ export default function CaseDetailForm({
               />
             </div>
             {errors.code && (
-              <p className='text-red-500 text-xs sm:text-sm mt-1'>
+              <p className='text-red-500 text-sm sm:text-base mt-1'>
                 {errors.code}
               </p>
             )}
@@ -387,7 +387,7 @@ export default function CaseDetailForm({
               </span>
             </Label>
             {errors.assignees && (
-              <p className='text-red-500 text-xs sm:text-sm mt-2 sm:mt-4'>
+              <p className='text-red-500 text-sm sm:text-base mt-2 sm:mt-4'>
                 {errors.assignees}
               </p>
             )}
@@ -439,7 +439,7 @@ export default function CaseDetailForm({
               {!!selected.length && (
                 <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 gap-2 sm:gap-0'>
                   <div className=''>
-                    <span className='font-semibold text-xs sm:text-sm'>{`Đã chọn ${selected.length} Nhân viên để thêm`}</span>
+                    <span className='font-semibold text-sm sm:text-base'>{`Đã chọn ${selected.length} Nhân viên để thêm`}</span>
                   </div>
 
                   <div className='flex flex-wrap items-center gap-2 w-full sm:w-auto'>
@@ -448,7 +448,7 @@ export default function CaseDetailForm({
                       size='sm'
                       type='button'
                       onClick={() => setSelectedItems([])} // Clear selection
-                      className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
+                      className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-sm sm:text-base'
                     >
                       <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
                       <span>Bỏ chọn tất cả</span>
@@ -460,7 +460,7 @@ export default function CaseDetailForm({
                         handleAddAssignees(selected);
                       }}
                       type='button'
-                      className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
+                      className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-sm sm:text-base'
                     >
                       <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
                       <span>Thêm đã chọn</span>
@@ -571,7 +571,7 @@ export default function CaseDetailForm({
             <Link
               to='/erp/customers'
               prefetch='intent'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
             >
               <ArrowLeft className='h-4 w-4' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -580,7 +580,7 @@ export default function CaseDetailForm({
 
             <div className='flex space-x-2 w-full sm:w-auto'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

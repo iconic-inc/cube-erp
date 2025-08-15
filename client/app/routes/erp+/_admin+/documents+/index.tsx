@@ -108,7 +108,7 @@ export default function HRMDocuments() {
         <Link
           prefetch='intent'
           to={`/erp/documents/${item.id}`}
-          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-none'
+          className='text-blue-600 hover:underline text-sm sm:text-base block truncate max-w-[200px] sm:max-w-none'
           title={item.doc_name}
         >
           {item.doc_name}
@@ -125,7 +125,7 @@ export default function HRMDocuments() {
           href={item.doc_url}
           target='_blank'
           rel='noopener noreferrer'
-          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
+          className='text-blue-600 hover:underline text-sm sm:text-base block truncate max-w-[100px] sm:max-w-none'
           title={item.doc_url}
         >
           <span className='hidden sm:inline'>{item.doc_url}</span>
@@ -143,14 +143,14 @@ export default function HRMDocuments() {
       render: (item: IDocument) => {
         if (typeof item.doc_createdBy === 'string') {
           return (
-            <span className='text-xs sm:text-sm'>{item.doc_createdBy}</span>
+            <span className='text-sm sm:text-base'>{item.doc_createdBy}</span>
           );
         }
         return (
           <Link
             prefetch='intent'
             to={`/erp/employees/${item.doc_createdBy.id}`}
-            className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
+            className='text-blue-600 hover:underline text-sm sm:text-base block truncate max-w-[100px] sm:max-w-none'
             title={`${item.doc_createdBy.emp_user.usr_firstName} ${item.doc_createdBy.emp_user.usr_lastName}`}
           >
             <span className='hidden sm:inline'>
@@ -176,7 +176,7 @@ export default function HRMDocuments() {
       render: (item: IDocument) => {
         if (typeof item.doc_whiteList === 'string') {
           return (
-            <span className='text-xs sm:text-sm'>{item.doc_whiteList}</span>
+            <span className='text-sm sm:text-base'>{item.doc_whiteList}</span>
           );
         }
         return (

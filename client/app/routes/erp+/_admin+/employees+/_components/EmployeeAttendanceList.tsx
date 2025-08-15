@@ -32,7 +32,7 @@ export default function EmployeeAttendanceList({
           <Button
             size='sm'
             variant='secondary'
-            className='bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm'
+            className='bg-white/20 hover:bg-white/30 text-white border-white/30 text-sm sm:text-base'
             asChild
           >
             <Link
@@ -134,7 +134,7 @@ export default function EmployeeAttendanceList({
                             </Badge>
                           </div>
 
-                          <div className='grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mt-2 sm:mt-1 text-xs sm:text-sm text-gray-500'>
+                          <div className='grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mt-2 sm:mt-1 text-sm sm:text-base text-gray-500'>
                             <div className='flex items-center'>
                               <Clock className='w-3 h-3 mr-1 flex-shrink-0' />
                               <span className='truncate'>

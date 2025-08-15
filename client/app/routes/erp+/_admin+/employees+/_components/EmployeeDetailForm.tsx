@@ -311,7 +311,7 @@ export default function EmployeeDetailForm({
                       />
                     </div>
                     {errors.code && (
-                      <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                      <p className='text-red-500 text-sm sm:text-base mt-1'>
                         {errors.code}
                       </p>
                     )}
@@ -341,7 +341,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                       />
                       {errors.firstName && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.firstName}
                         </p>
                       )}
@@ -363,7 +363,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                       />
                       {errors.lastName && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.lastName}
                         </p>
                       )}
@@ -385,7 +385,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                       />
                       {errors.email && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.email}
                         </p>
                       )}
@@ -407,7 +407,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                       />
                       {errors.msisdn && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.msisdn}
                         </p>
                       )}
@@ -486,7 +486,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                       />
                       {errors.username && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.username}
                         </p>
                       )}
@@ -509,7 +509,7 @@ export default function EmployeeDetailForm({
                           className={`text-sm sm:text-base ${errors.password ? 'border-red-500' : ''}`}
                         />
                         {errors.password && (
-                          <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                          <p className='text-red-500 text-sm sm:text-base mt-1'>
                             {errors.password}
                           </p>
                         )}
@@ -541,7 +541,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.department ? 'border-red-500' : ''}`}
                       />
                       {errors.department && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.department}
                         </p>
                       )}
@@ -563,7 +563,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.position ? 'border-red-500' : ''}`}
                       />
                       {errors.position && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.position}
                         </p>
                       )}
@@ -607,7 +607,7 @@ export default function EmployeeDetailForm({
                         </SelectContent>
                       </Select>
                       {errors.roleId && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.roleId}
                         </p>
                       )}

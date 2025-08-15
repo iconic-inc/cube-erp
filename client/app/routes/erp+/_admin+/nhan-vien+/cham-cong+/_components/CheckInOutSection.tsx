@@ -89,7 +89,7 @@ export default function CheckInOutSection({
               <span className='hidden sm:inline'>Chấm công hôm nay</span>
               <span className='sm:hidden'>Chấm công</span>
             </CardTitle>
-            <p className='text-green-100 text-xs sm:text-sm mt-1'>
+            <p className='text-green-100 text-sm sm:text-base mt-1'>
               {new Date().toLocaleDateString('vi', {
                 weekday: 'long',
                 year: 'numeric',

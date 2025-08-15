@@ -36,10 +36,10 @@ export default function BriefEmployeeCard({
             alt={`${employee.emp_user.usr_firstName} ${employee.emp_user.usr_lastName} Avatar`}
           /> */}
 
-          <AvatarFallback className='text-xs sm:text-sm'>{`${employee.emp_user.usr_firstName[0]}${employee.emp_user.usr_lastName[0]}`}</AvatarFallback>
+          <AvatarFallback className='text-sm sm:text-base'>{`${employee.emp_user.usr_firstName[0]}${employee.emp_user.usr_lastName[0]}`}</AvatarFallback>
         </Avatar>
         <div className='min-w-0 flex-1'>
-          <p className='text-xs sm:text-sm md:text-base font-semibold text-gray-900 truncate'>
+          <p className='text-sm sm:text-base md:text-base font-semibold text-gray-900 truncate'>
             {employee.emp_user.usr_firstName} {employee.emp_user.usr_lastName}
           </p>
           <p className='text-xs sm:text-xs text-gray-600 truncate'>
@@ -59,7 +59,7 @@ export default function BriefEmployeeCard({
             e.stopPropagation();
             handleRemoveEmployee(employee);
           }}
-          className='px-2 sm:px-3 py-1 sm:py-2 h-fit text-xs sm:text-sm bg-red-500 hover:bg-red-600 mr-2 sm:mr-3 flex-shrink-0'
+          className='px-2 sm:px-3 py-1 sm:py-2 h-fit text-sm sm:text-base bg-red-500 hover:bg-red-600 mr-2 sm:mr-3 flex-shrink-0'
         >
           <span className='hidden sm:inline'>Bỏ chọn</span>
           <span className='sm:hidden'>Bỏ</span>

@@ -178,7 +178,7 @@ export default function CRMCaseService() {
       })),
       render: (item) => (
         <span
-          className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]} text-xs sm:text-sm whitespace-nowrap`}
+          className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]} text-sm sm:text-base whitespace-nowrap`}
         >
           {CASE_SERVICE.STATUS[item.case_status] || '-'}
         </span>
@@ -215,7 +215,7 @@ export default function CRMCaseService() {
       filterField: 'startDate',
       dateFilterable: true,
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[100px] sm:max-w-none'>
           {formatDate(item.case_startDate, 'DD/MM/YYYY')}
         </span>
       ),
@@ -228,7 +228,7 @@ export default function CRMCaseService() {
       filterField: 'endDate',
       dateFilterable: true,
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[100px] sm:max-w-none'>
           {item.case_endDate
             ? formatDate(item.case_endDate, 'DD/MM/YYYY')
             : '-'}

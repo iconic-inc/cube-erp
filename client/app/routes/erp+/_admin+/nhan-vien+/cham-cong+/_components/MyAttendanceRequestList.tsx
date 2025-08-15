@@ -55,7 +55,7 @@ export default function EmployeeAttendanceRequestList({
               </div>
             </div>
             <div className='min-w-0 flex-1'>
-              <div className='text-xs sm:text-sm font-medium truncate'>
+              <div className='text-sm sm:text-base font-medium truncate'>
                 {item.employee.emp_user.usr_firstName}{' '}
                 {item.employee.emp_user.usr_lastName}
               </div>
@@ -80,7 +80,7 @@ export default function EmployeeAttendanceRequestList({
       render: (item) => (
         <div className='flex items-center space-x-1 sm:space-x-2'>
           <Calendar className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0' />
-          <span className='text-xs sm:text-sm text-gray-600 truncate'>
+          <span className='text-sm sm:text-base text-gray-600 truncate'>
             {item.date
               ? new Date(item.date).toLocaleDateString('vi-VN')
               : 'N/A'}
@@ -96,7 +96,7 @@ export default function EmployeeAttendanceRequestList({
       render: (item) => (
         <div className='flex items-center space-x-1 sm:space-x-2'>
           <CheckCircle className='w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0' />
-          <span className='text-xs sm:text-sm text-gray-900 truncate'>
+          <span className='text-sm sm:text-base text-gray-900 truncate'>
             {item.checkInTime
               ? new Date(item.checkInTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -115,7 +115,7 @@ export default function EmployeeAttendanceRequestList({
       render: (item) => (
         <div className='flex items-center space-x-1 sm:space-x-2'>
           <XCircle className='w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0' />
-          <span className='text-xs sm:text-sm text-gray-900 truncate'>
+          <span className='text-sm sm:text-base text-gray-900 truncate'>
             {item.checkOutTime
               ? new Date(item.checkOutTime).toLocaleTimeString('vi-VN', {
                   hour: '2-digit',
@@ -133,7 +133,7 @@ export default function EmployeeAttendanceRequestList({
       sortField: 'message',
       render: (item) => (
         <AlertDialog>
-          <AlertDialogTrigger className='text-left w-full truncate hover:underline text-xs sm:text-sm'>
+          <AlertDialogTrigger className='text-left w-full truncate hover:underline text-sm sm:text-base'>
             <span className='block truncate max-w-[120px] sm:max-w-none'>
               {item.message || 'Không có lý do'}
             </span>
@@ -144,12 +144,12 @@ export default function EmployeeAttendanceRequestList({
                 Nhân viên:{' '}
                 {`${item.employee?.emp_user?.usr_firstName} ${item.employee?.emp_user?.usr_lastName}`}
               </AlertDialogTitle>
-              <AlertDialogDescription className='text-pretty break-words text-xs sm:text-sm'>
+              <AlertDialogDescription className='text-pretty break-words text-sm sm:text-base'>
                 {item.message || 'Không có lý do'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className='text-xs sm:text-sm'>
+              <AlertDialogCancel className='text-sm sm:text-base'>
                 Đóng
               </AlertDialogCancel>
             </AlertDialogFooter>

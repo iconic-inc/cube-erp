@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
 import { format } from 'date-fns';
+import { Province } from 'new-vn-provinces/provinces';
+import { Ward } from 'new-vn-provinces/wards';
+import { getWardsByProvinceId, getProvinceData } from 'new-vn-provinces/cache';
 
 import { action } from '~/routes/erp+/_admin+/customers+/new';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
@@ -22,12 +25,6 @@ import { SelectSearch } from '~/components/ui/SelectSearch';
 import { CUSTOMER } from '~/constants/customer.constant';
 import TextEditor from '~/components/TextEditor';
 import { DatePicker } from '~/components/ui/date-picker';
-import {
-  getDistrictBySlug,
-  getDistrictsByProvinceCode,
-  getProvinceBySlug,
-  provinces,
-} from '~/utils/address.util';
 import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function CustomerDetailForm({
@@ -57,27 +54,29 @@ export default function CustomerDetailForm({
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
 
   // address state
-  const [province, setProvince] = useState(provinces[0]);
-  const [districts, setDistricts] = useState(
-    getDistrictsByProvinceCode(province.code),
-  );
-  const [district, setDistrict] = useState(districts[0]);
-  const [street, setStreet] = useState('');
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>('');
+  const [selectedWardId, setSelectedWardId] = useState<string>('');
+  const [street, setStreet] = useState<string>('');
 
   // Control states
-  const [customer, setCustomer] = useState<ICustomer | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
 
   // Handle province changes
   useEffect(() => {
-    const newDistricts = getDistrictsByProvinceCode(province.code);
-    setDistricts(newDistricts);
-    if (district.provinceCode !== province.code) {
-      setDistrict(newDistricts[0] || districts[0]);
-    }
-  }, [province.code]);
+    (async () => {
+      const provincesData = await getProvinceData();
+      setProvinces(provincesData);
+
+      if (selectedProvinceId) {
+        const newWards = await getWardsByProvinceId(selectedProvinceId);
+        setWards(newWards);
+      }
+    })();
+  }, [selectedProvinceId]);
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -114,12 +113,12 @@ export default function CustomerDetailForm({
       validationErrors.source = 'Vui lòng chọn nguồn khách hàng';
     }
 
-    if (!province.slug) {
-      validationErrors.province = 'Vui lòng chọn tỉnh/thành phố';
+    if (!selectedProvinceId) {
+      validationErrors.provinceId = 'Vui lòng chọn tỉnh/thành phố';
     }
 
-    if (!district.slug) {
-      validationErrors.district = 'Vui lòng chọn quận/huyện';
+    if (!selectedWardId) {
+      validationErrors.wardId = 'Vui lòng chọn phường/xã';
     }
 
     if (!street.trim()) {
@@ -166,8 +165,8 @@ export default function CustomerDetailForm({
       lastName ||
       email ||
       msisdn ||
-      province.slug ||
-      district.slug ||
+      selectedProvinceId ||
+      selectedWardId ||
       street ||
       birthDate ||
       createdAt ||
@@ -184,8 +183,8 @@ export default function CustomerDetailForm({
     email,
     msisdn,
     street,
-    province,
-    district,
+    selectedProvinceId,
+    selectedWardId,
     createdAt,
     birthDate,
     sex,
@@ -205,7 +204,6 @@ export default function CustomerDetailForm({
           const customerData = await customerPromise;
 
           if (customerData && 'cus_code' in customerData) {
-            setCustomer(customerData);
             setCode(customerData.cus_code || '');
             setFirstName(customerData.cus_firstName || '');
             setLastName(customerData.cus_lastName || '');
@@ -216,21 +214,9 @@ export default function CustomerDetailForm({
             if (customerData.cus_address) {
               const address = customerData.cus_address;
               if (typeof address === 'object' && address !== null) {
-                // Handle address as object with province, district, street
-                const provinceData =
-                  getProvinceBySlug(address.province) || provinces[0];
-                setProvince(provinceData);
-
-                const districtsData = getDistrictsByProvinceCode(
-                  provinceData.code,
-                );
-                setDistricts(districtsData);
-
-                const districtData =
-                  districtsData.find((d) => d.slug === address.district) ||
-                  districtsData[0];
-                setDistrict(districtData);
-
+                // Handle address as object with provinceId, wardId, street
+                setSelectedProvinceId(address.provinceId || '');
+                setSelectedWardId(address.wardId || '');
                 setStreet(address.street || '');
               } else if (typeof address === 'string') {
                 // Handle address as string (fallback)
@@ -351,7 +337,7 @@ export default function CustomerDetailForm({
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.firstName && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.firstName}
                 </p>
               )}
@@ -373,7 +359,7 @@ export default function CustomerDetailForm({
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.lastName && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.lastName}
                 </p>
               )}
@@ -399,7 +385,7 @@ export default function CustomerDetailForm({
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.email && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.email}
                 </p>
               )}
@@ -421,7 +407,7 @@ export default function CustomerDetailForm({
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.msisdn && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.msisdn}
                 </p>
               )}
@@ -514,48 +500,52 @@ export default function CustomerDetailForm({
                 </Label>
                 <SelectSearch
                   options={provinces.map((p) => ({
-                    value: p.slug,
+                    value: p.idProvince,
                     label: p.name,
                   }))}
-                  value={province.slug}
-                  onValueChange={(value) => {
-                    const selectedProvince =
-                      getProvinceBySlug(value) || provinces[0];
-                    setProvince(selectedProvince);
-                    const newDistricts = getDistrictsByProvinceCode(
-                      selectedProvince.code,
-                    );
-                    setDistricts(newDistricts);
-                    setDistrict(newDistricts[0]);
+                  value={selectedProvinceId}
+                  onValueChange={async (value) => {
+                    setSelectedProvinceId(value);
+                    setSelectedWardId(''); // Reset ward when province changes
+                    const newWards = await getWardsByProvinceId(value);
+                    setWards(newWards);
                   }}
                   placeholder='Chọn tỉnh/thành phố'
-                  name='province'
+                  name='provinceId'
                   id='customer_province'
                 />
+                {errors.provinceId && (
+                  <p className='text-red-500 text-sm sm:text-base mt-1'>
+                    {errors.provinceId}
+                  </p>
+                )}
               </div>
 
               <div>
                 <Label
-                  htmlFor='customer_district'
+                  htmlFor='customer_ward'
                   className='text-gray-700 font-semibold mb-2 block'
                 >
-                  Quận/Huyện <span className='text-red-500'>*</span>
+                  Phường/Xã <span className='text-red-500'>*</span>
                 </Label>
                 <SelectSearch
-                  options={districts.map((d) => ({
-                    value: d.slug,
-                    label: d.name,
+                  options={wards.map((w) => ({
+                    value: w.idWard,
+                    label: w.name,
                   }))}
-                  value={district.slug}
+                  value={selectedWardId}
                   onValueChange={(value) => {
-                    const selectedDistrict =
-                      getDistrictBySlug(districts, value) || districts[0];
-                    setDistrict(selectedDistrict);
+                    setSelectedWardId(value);
                   }}
-                  placeholder='Chọn quận/huyện'
-                  name='district'
-                  id='customer_district'
+                  placeholder='Chọn phường/xã'
+                  name='wardId'
+                  id='customer_ward'
                 />
+                {errors.wardId && (
+                  <p className='text-red-500 text-sm sm:text-base mt-1'>
+                    {errors.wardId}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -573,6 +563,11 @@ export default function CustomerDetailForm({
                   placeholder='Nhập địa chỉ chi tiết'
                   className='bg-white border-gray-300 text-sm sm:text-base'
                 />
+                {errors.street && (
+                  <p className='text-red-500 text-sm sm:text-base mt-1'>
+                    {errors.street}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -599,7 +594,7 @@ export default function CustomerDetailForm({
             <Link
               prefetch='intent'
               to='/erp/customers'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
             >
               <ArrowLeft className='h-4 w-4' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -608,7 +603,7 @@ export default function CustomerDetailForm({
 
             <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

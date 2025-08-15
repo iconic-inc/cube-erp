@@ -177,7 +177,7 @@ export default function DocumentPicker({
                         title: 'Tên tài liệu',
                         visible: true,
                         render: (doc) => (
-                          <span className='text-xs sm:text-sm font-medium text-gray-800 break-words'>
+                          <span className='text-sm sm:text-base font-medium text-gray-800 break-words'>
                             {doc.doc_name}
                           </span>
                         ),
@@ -187,7 +187,7 @@ export default function DocumentPicker({
                         title: 'Người tạo',
                         visible: true,
                         render: (doc) => (
-                          <span className='text-xs sm:text-sm text-gray-600 break-words'>
+                          <span className='text-sm sm:text-base text-gray-600 break-words'>
                             {`${doc.doc_createdBy.emp_user?.usr_firstName} ${doc.doc_createdBy.emp_user?.usr_lastName}`}
                           </span>
                         ),
@@ -219,7 +219,7 @@ export default function DocumentPicker({
                                 : 'primary'
                             }
                             size='sm'
-                            className='text-xs sm:text-sm'
+                            className='text-sm sm:text-base'
                           >
                             <span className='hidden sm:inline'>
                               {selectedDocuments.find((d) => d.id === doc.id)

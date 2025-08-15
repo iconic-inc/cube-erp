@@ -128,7 +128,7 @@ export default function TaskPerformancePage() {
             >
               {employee.employeeName}
             </Link>
-            <p className='text-xs sm:text-sm text-gray-600 truncate'>
+            <p className='text-sm sm:text-base text-gray-600 truncate'>
               {employee.employeeCode} • {employee.department}
             </p>
             <p className='text-xs text-gray-500 truncate hidden sm:block'>
@@ -148,7 +148,7 @@ export default function TaskPerformancePage() {
           <Badge
             className={`${getPerformanceColor(
               employee.performanceScore,
-            )} font-bold text-xs sm:text-sm px-2 sm:px-3 py-1`}
+            )} font-bold text-sm sm:text-base px-2 sm:px-3 py-1`}
           >
             {Math.round(employee.performanceScore)}
           </Badge>
@@ -163,7 +163,7 @@ export default function TaskPerformancePage() {
       render: (employee) => (
         <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2'>
           <div>
-            <p className='text-xs sm:text-sm font-semibold mb-1'>
+            <p className='text-sm sm:text-base font-semibold mb-1'>
               {employee.completedTasks}/{employee.totalTasks}
             </p>
             <p className='text-xs text-gray-500'>
@@ -186,7 +186,7 @@ export default function TaskPerformancePage() {
       sortField: 'onTimeRate',
       render: (employee) => (
         <div className='space-x-1'>
-          <span className='text-xs sm:text-sm font-semibold text-green-600'>
+          <span className='text-sm sm:text-base font-semibold text-green-600'>
             {Math.round(employee.onTimeRate)}%
           </span>
         </div>
@@ -199,7 +199,7 @@ export default function TaskPerformancePage() {
       sortField: 'overdueTasks',
       render: (employee) => (
         <div className='space-x-1'>
-          <span className='text-xs sm:text-sm font-semibold text-red-600'>
+          <span className='text-sm sm:text-base font-semibold text-red-600'>
             {employee.overdueTasks}
           </span>
           <span className='text-xs text-gray-500 hidden sm:inline'>task</span>
@@ -276,7 +276,7 @@ export default function TaskPerformancePage() {
                     <div className='flex items-center'>
                       <Users className='h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0' />
                       <div className='ml-3 sm:ml-4 min-w-0'>
-                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                        <p className='text-sm sm:text-base font-medium text-gray-600'>
                           Tổng nhân viên
                         </p>
                         <p className='text-xl sm:text-2xl font-bold text-gray-900'>
@@ -292,7 +292,7 @@ export default function TaskPerformancePage() {
                     <div className='flex items-center'>
                       <Target className='h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0' />
                       <div className='ml-3 sm:ml-4 min-w-0'>
-                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                        <p className='text-sm sm:text-base font-medium text-gray-600'>
                           Tỷ lệ hoàn thành TB
                         </p>
                         <p className='text-xl sm:text-2xl font-bold text-gray-900'>
@@ -308,7 +308,7 @@ export default function TaskPerformancePage() {
                     <div className='flex items-center'>
                       <Clock className='h-6 w-6 sm:h-8 sm:w-8 text-orange-600 flex-shrink-0' />
                       <div className='ml-3 sm:ml-4 min-w-0'>
-                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                        <p className='text-sm sm:text-base font-medium text-gray-600'>
                           Tỷ lệ đúng hạn TB
                         </p>
                         <p className='text-xl sm:text-2xl font-bold text-gray-900'>
@@ -324,7 +324,7 @@ export default function TaskPerformancePage() {
                     <div className='flex items-center'>
                       <TrendingUp className='h-6 w-6 sm:h-8 sm:w-8 text-purple-600 flex-shrink-0' />
                       <div className='ml-3 sm:ml-4 min-w-0'>
-                        <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                        <p className='text-sm sm:text-base font-medium text-gray-600'>
                           Điểm hiệu suất TB
                         </p>
                         <p className='text-xl sm:text-2xl font-bold text-gray-900'>
@@ -346,7 +346,7 @@ export default function TaskPerformancePage() {
                         Bảng xếp hạng hiệu suất
                       </span>
                     </div>
-                    <Badge variant='outline' className='text-xs sm:text-sm'>
+                    <Badge variant='outline' className='text-sm sm:text-base'>
                       {data.pagination.total} nhân viên
                     </Badge>
                   </CardTitle>
@@ -378,7 +378,7 @@ export default function TaskPerformancePage() {
               {data.summary.periodStart && data.summary.periodEnd && (
                 <Card>
                   <CardContent className='p-3 sm:p-4'>
-                    <div className='flex items-center justify-center text-xs sm:text-sm text-gray-600'>
+                    <div className='flex items-center justify-center text-sm sm:text-base text-gray-600'>
                       <Calendar className='w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0' />
                       <span className='text-center'>
                         Dữ liệu từ{' '}

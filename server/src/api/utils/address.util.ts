@@ -1,87 +1,17 @@
-import pkg from 'vn-provinces';
+import { getFormattedAddress } from 'new-vn-provinces/hierarchy';
 
-interface IProvince {
-  code: string;
-  name: string;
-  slug: string;
-  unit: string;
-}
-interface IDistrict {
-  code: string;
-  name: string;
-  slug: string;
-  unit: string;
-  provinceCode: string;
-  provinceName: string;
-  fullName: string;
-}
-
-const {
-  getProvinces,
-  getDistrictsByProvinceCode: getDbyPCode,
-  getWardsByDistrictCode,
-} = pkg;
-const provinces = getProvinces() as Array<IProvince>;
-
-const toAddressString = (address: {
+type IAddress = {
+  provinceId?: string;
+  wardId?: string;
   street: string;
-  ward?: string;
-  province?: string;
-  district?: string;
-}) => {
-  // For old address format
-  if (typeof address === 'string') {
-    return address;
+};
+
+const toAddressString = (address: IAddress) => {
+  if (!address.wardId) {
+    return address.street;
   }
 
-  const { street, ward, province, district } = address;
-
-  const p = provinces?.find((p) => p.slug === province);
-  const districts = getDistrictsByProvinceCode(p?.code || '');
-  const d = districts?.find((d) => d.slug === district);
-
-  const wards = getWardsByDistrictCode(d?.code || '');
-  const w = wards?.find((w) => w.slug === ward);
-
-  if (w) {
-    return `${street}${ward ? `, ${w?.name || ''}` : ''}, ${d?.name || ''}, ${
-      p?.name || ''
-    }`;
-  }
-
-  return `${street}, ${d?.name || ''}, ${p?.name || ''}`;
+  return `${address.street}, ${getFormattedAddress(address.wardId)}`;
 };
 
-const getProvinceByCode = (code?: string) => {
-  if (!code) return null;
-
-  return provinces.find((p) => p.code === code) || null;
-};
-
-const getProvinceBySlug = (slug?: string) => {
-  return provinces.find((p) => p.slug === slug) || null;
-};
-
-const getDistrictByCode = (districts: IDistrict[], code?: string) => {
-  if (!code) return null;
-
-  return districts.find((d) => d.code === code) || null;
-};
-
-const getDistrictBySlug = (districts: IDistrict[], slug?: string) => {
-  return districts.find((d) => d.slug === slug) || null;
-};
-
-const getDistrictsByProvinceCode = (provinceCode: string) => {
-  return getDbyPCode(provinceCode) as Array<IDistrict>;
-};
-
-export {
-  provinces,
-  toAddressString,
-  getProvinceByCode,
-  getDistrictByCode,
-  getDistrictBySlug,
-  getProvinceBySlug,
-  getDistrictsByProvinceCode,
-};
+export { toAddressString };

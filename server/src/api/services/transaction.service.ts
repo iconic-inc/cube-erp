@@ -801,7 +801,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       },
       {
         $group: {
-          _id: '$customerData.cus_address.province',
+          _id: '$customerData.cus_address.provinceId',
           income: {
             $sum: {
               $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
@@ -870,7 +870,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
 
     // Format province data for charts
     const byProvince = provinceStats.map((item) => ({
-      province: item._id || 'Không xác định',
+      provinceId: item._id || 'Không xác định',
       income: item.income,
       outcome: item.outcome,
       total: item.total,

@@ -43,8 +43,8 @@ export const action = async ({
           lastName: formData.get('lastName') as string,
           email: formData.get('email') as string,
           msisdn: formData.get('msisdn') as string,
-          province: formData.get('province') as string,
-          district: formData.get('district') as string,
+          provinceId: formData.get('provinceId') as string,
+          wardId: formData.get('wardId') as string,
           street: formData.get('street') as string,
           sex: formData.get('sex') as string,
           birthDate: formData.get('birthDate') as string,
@@ -61,8 +61,8 @@ export const action = async ({
             'firstName',
             'msisdn',
             'code',
-            'province',
-            'district',
+            'provinceId',
+            'wardId',
             'street',
           ].some((field) => !data[field as keyof ICustomerCreate])
         ) {

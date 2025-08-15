@@ -276,7 +276,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                   />
                   {errors.firstName && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.firstName}
                     </p>
                   )}
@@ -299,7 +299,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                   />
                   {errors.lastName && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.lastName}
                     </p>
                   )}
@@ -322,7 +322,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                   />
                   {errors.email && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.email}
                     </p>
                   )}
@@ -347,7 +347,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                   />
                   {errors.msisdn && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.msisdn}
                     </p>
                   )}
@@ -430,7 +430,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                   />
                   {errors.username && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.username}
                     </p>
                   )}
@@ -520,7 +520,7 @@ export default function HRMProfile() {
               <Link
                 prefetch='intent'
                 to='/erp'
-                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
+                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
               >
                 <ArrowLeft className='h-4 w-4 mr-1' />
                 <span className='hidden sm:inline'>Trở về Trang chủ</span>
@@ -528,7 +528,7 @@ export default function HRMProfile() {
               </Link>
 
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

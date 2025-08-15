@@ -258,7 +258,7 @@ export default function DocumentDetailPage() {
               <span className='break-words'>{name || 'Tài liệu'}</span>
               <Badge
                 variant={isPublic ? 'default' : 'secondary'}
-                className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto ${
+                className={`text-sm sm:text-base px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto ${
                   isPublic
                     ? 'bg-green-500 text-white'
                     : 'bg-yellow-500 text-white'
@@ -292,7 +292,7 @@ export default function DocumentDetailPage() {
                   required
                 />
                 {errors.name && (
-                  <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                  <p className='text-red-500 text-sm sm:text-base mt-1'>
                     {errors.name}
                   </p>
                 )}
@@ -362,11 +362,11 @@ export default function DocumentDetailPage() {
                       {document.doc_createdBy.emp_user.usr_firstName}{' '}
                       {document.doc_createdBy.emp_user.usr_lastName}
                     </p>
-                    <p className='text-xs sm:text-sm text-gray-600 break-words'>
+                    <p className='text-sm sm:text-base text-gray-600 break-words'>
                       @{document.doc_createdBy.emp_user.usr_username} (
                       {document.doc_createdBy.emp_position})
                     </p>
-                    <p className='text-xs sm:text-sm text-gray-500 break-all'>
+                    <p className='text-sm sm:text-base text-gray-500 break-all'>
                       {document.doc_createdBy.emp_user.usr_email}
                     </p>
                   </div>
@@ -393,7 +393,7 @@ export default function DocumentDetailPage() {
                   />
                   <Badge
                     variant={isPublic ? 'default' : 'secondary'}
-                    className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full ${
+                    className={`text-sm sm:text-base px-2 sm:px-3 py-1 rounded-full ${
                       isPublic
                         ? 'bg-green-500 text-white'
                         : 'bg-yellow-500 text-white'
@@ -442,7 +442,7 @@ export default function DocumentDetailPage() {
                           {!!selectedEmployees.length && (
                             <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-3 sm:mb-4 rounded-lg gap-3 sm:gap-0'>
                               <div>
-                                <span className='font-semibold text-xs sm:text-sm'>
+                                <span className='font-semibold text-sm sm:text-base'>
                                   Đã chọn {selectedEmployees.length} nhân viên
                                   để thêm
                                 </span>
@@ -453,7 +453,7 @@ export default function DocumentDetailPage() {
                                   size='sm'
                                   type='button'
                                   onClick={() => setSelectedItems([])}
-                                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
+                                  className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-sm sm:text-base'
                                 >
                                   <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
                                   <span className='hidden sm:inline'>
@@ -467,7 +467,7 @@ export default function DocumentDetailPage() {
                                   onClick={() =>
                                     handleAddEmployees(selectedEmployees)
                                   }
-                                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
+                                  className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-sm sm:text-base'
                                 >
                                   <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
                                   <span className='hidden sm:inline'>
@@ -525,7 +525,7 @@ export default function DocumentDetailPage() {
                                   return (
                                     <Button
                                       variant='default'
-                                      className={`bg-blue-500 hover:bg-blue-400 text-xs sm:text-sm ${
+                                      className={`bg-blue-500 hover:bg-blue-400 text-sm sm:text-base ${
                                         isAdded
                                           ? 'opacity-50 cursor-not-allowed'
                                           : ''
@@ -556,7 +556,7 @@ export default function DocumentDetailPage() {
             <Link
               prefetch='intent'
               to='/erp/documents'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
               <ArrowLeft className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -582,7 +582,7 @@ export default function DocumentDetailPage() {
                     );
                   }
                 }}
-                className='text-xs sm:text-sm w-full sm:w-auto'
+                className='text-sm sm:text-base w-full sm:w-auto'
               >
                 <span className='hidden sm:inline'>Xóa tài liệu</span>
                 <span className='sm:hidden'>Xóa</span>
@@ -591,7 +591,7 @@ export default function DocumentDetailPage() {
               <Button
                 type='submit'
                 disabled={!isChanged || fetcher.state === 'submitting'}
-                className='text-xs sm:text-sm w-full sm:w-auto'
+                className='text-sm sm:text-base w-full sm:w-auto'
               >
                 {fetcher.state === 'submitting' ? (
                   <>

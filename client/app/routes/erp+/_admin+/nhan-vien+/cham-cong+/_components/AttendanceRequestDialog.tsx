@@ -50,7 +50,7 @@ export default function AttendanceRequestDialog({
 
         <div className='space-y-3 sm:space-y-4'>
           <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4'>
-            <p className='text-xs sm:text-sm text-amber-800'>
+            <p className='text-sm sm:text-base text-amber-800'>
               <span className='hidden sm:inline'>
                 Bạn đang thực hiện chấm công từ địa chỉ IP không được phép. Bạn
                 có muốn tạo yêu cầu chấm công thay thế không?

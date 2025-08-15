@@ -32,7 +32,7 @@ export default function StatsCard({
       <CardContent className='p-3 sm:p-4 md:p-6'>
         <div className='flex items-start justify-between gap-2'>
           <div className='flex-1 space-y-1 sm:space-y-2 min-w-0'>
-            <p className='text-xs sm:text-sm font-medium text-muted-foreground truncate'>
+            <p className='text-sm sm:text-base font-medium text-muted-foreground truncate'>
               {title}
             </p>
             <p className='text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate'>

@@ -57,7 +57,7 @@ export default function ListPagination({
       <div className='flex flex-col space-y-3 md:hidden'>
         {/* Results Info */}
         <div className='text-center'>
-          <span className='text-xs sm:text-sm text-gray-700'>
+          <span className='text-sm sm:text-base text-gray-700'>
             Hiển thị{' '}
             <span className='font-medium'>{(page - 1) * limit + 1}</span>-
             <span className='font-medium'>

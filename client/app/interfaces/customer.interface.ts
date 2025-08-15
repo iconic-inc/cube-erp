@@ -1,8 +1,8 @@
 import { CUSTOMER } from '~/constants/customer.constant';
 
 type IAddress = {
-  province?: string;
-  district?: string;
+  provinceId?: string;
+  wardId?: string;
   street: string;
 };
 
@@ -29,12 +29,15 @@ export interface ICustomer extends ICustomerBrief {
   updatedAt: Date;
 }
 
-export interface ICustomerCreate extends IAddress {
+export interface ICustomerCreate {
   code: string;
   firstName: string;
   lastName?: string;
   email?: string;
   msisdn: string;
+  provinceId?: string;
+  wardId?: string;
+  street: string;
   birthDate?: string;
   sex?: Values<typeof CUSTOMER.SEX>['value'];
   contactChannel?: string;

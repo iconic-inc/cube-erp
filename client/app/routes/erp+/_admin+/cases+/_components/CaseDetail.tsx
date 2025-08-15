@@ -82,7 +82,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <IdCard className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Mã hồ sơ:
                         </span>
                         <span className='text-sm sm:text-base font-medium break-all'>
@@ -94,7 +94,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <Users className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Khách hàng:
                         </span>
                         <Link
@@ -111,7 +111,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <User className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Luật sư chính:
                         </span>
                         <span className='text-sm sm:text-base font-medium break-words'>
@@ -125,11 +125,11 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <AlertCircle className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Trạng thái:
                         </span>
                         <Badge
-                          className={`text-xs sm:text-sm mt-1 ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
+                          className={`text-sm sm:text-base mt-1 ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
                         >
                           {CASE_SERVICE.STATUS[caseService.case_status]}
                         </Badge>
@@ -149,7 +149,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <Clock className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Ngày bắt đầu:
                         </span>
                         <span className='text-sm sm:text-base font-medium'>
@@ -167,7 +167,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <CheckCircle className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Ngày kết thúc:
                         </span>
                         <span className='text-sm sm:text-base font-medium'>
@@ -185,7 +185,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <Calendar className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Ngày tạo:
                         </span>
                         <span className='text-sm sm:text-base font-medium'>
@@ -203,7 +203,7 @@ export default function CaseDetail({
                     <div className='flex items-start space-x-2 sm:space-x-3'>
                       <Calendar className='w-4 h-4 text-gray-400 mt-0.5' />
                       <div className='min-w-0 flex-1'>
-                        <span className='text-xs sm:text-sm text-gray-500 block'>
+                        <span className='text-sm sm:text-base text-gray-500 block'>
                           Cập nhật lúc:
                         </span>
                         <span className='text-sm sm:text-base font-medium'>

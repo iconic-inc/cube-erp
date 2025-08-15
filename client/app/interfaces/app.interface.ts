@@ -1,5 +1,12 @@
 import { data } from '@remix-run/node';
 
+export interface ISelectSearchOption {
+  label: string;
+  value: string;
+}
+
+export type FilterOptionFunction<T> = (item: T) => ISelectSearchOption;
+
 export interface IListColumn<T> {
   key: string;
   title: string;
@@ -7,12 +14,7 @@ export interface IListColumn<T> {
   visible: boolean;
   render: (item: T) => React.ReactNode;
   filterField?: string;
-  options?:
-    | {
-        label: string;
-        value: string;
-      }[]
-    | ((item: T) => { label: string; value: string });
+  options?: ISelectSearchOption[] | FilterOptionFunction<T>;
   dateFilterable?: boolean;
 }
 

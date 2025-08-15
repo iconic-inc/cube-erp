@@ -80,7 +80,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                     <Link
                       to={`/erp/tasks/${task.id}`}
                       prefetch='intent'
-                      className='text-xs sm:text-sm font-medium text-foreground hover:text-red-900 transition-colors line-clamp-2'
+                      className='text-sm sm:text-base font-medium text-foreground hover:text-red-900 transition-colors line-clamp-2'
                     >
                       {task.tsk_name}
                     </Link>

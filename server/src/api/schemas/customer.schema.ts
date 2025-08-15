@@ -36,8 +36,8 @@ const customerBaseSchema = {
     .refine(isValidPhoneNumber, {
       message: 'Số điện thoại không hợp lệ',
     }),
-  province: z.string().trim().min(1, 'Tỉnh/Thành phố là bắt buộc'),
-  district: z.string().trim().min(1, 'Quận/Huyện là bắt buộc'),
+  provinceId: z.string().trim().min(1, 'Tỉnh/Thành phố là bắt buộc'),
+  wardId: z.string().trim().min(1, 'Quận/Huyện là bắt buộc'),
   street: z.string().trim().optional(),
   sex: z
     .enum(

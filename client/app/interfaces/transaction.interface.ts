@@ -90,7 +90,7 @@ export interface ITransactionStats {
   }>;
 
   byProvince: Array<{
-    province: string;
+    provinceId: string;
     income: number;
     outcome: number;
     total: number;

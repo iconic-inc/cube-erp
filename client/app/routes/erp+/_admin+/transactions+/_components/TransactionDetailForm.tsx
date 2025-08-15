@@ -284,7 +284,7 @@ export default function TransactionDetailForm({
                 />
               </div>
               {errors.code && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.code}
                 </p>
               )}
@@ -324,7 +324,7 @@ export default function TransactionDetailForm({
               className='bg-white border-gray-300 text-sm sm:text-base'
             />
             {errors.title && (
-              <p className='text-red-500 text-xs sm:text-sm mt-1'>
+              <p className='text-red-500 text-sm sm:text-base mt-1'>
                 {errors.title}
               </p>
             )}
@@ -372,7 +372,7 @@ export default function TransactionDetailForm({
                 id='category'
               />
               {errors.category && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.category}
                 </p>
               )}
@@ -395,7 +395,7 @@ export default function TransactionDetailForm({
                 id='paymentMethod'
               />
               {errors.paymentMethod && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.paymentMethod}
                 </p>
               )}
@@ -412,7 +412,7 @@ export default function TransactionDetailForm({
                 Số tiền <span className='text-red-500'>*</span>
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -431,12 +431,12 @@ export default function TransactionDetailForm({
                   customInput={Input}
                   className='bg-white border-gray-300 pl-6 sm:pl-8 pr-10 sm:pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base'>
                   VNĐ
                 </span>
               </div>
               {errors.amount && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.amount}
                 </p>
               )}
@@ -450,7 +450,7 @@ export default function TransactionDetailForm({
                 Đã thanh toán
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -469,13 +469,13 @@ export default function TransactionDetailForm({
                   customInput={Input}
                   className='bg-white border-gray-300 pl-6 sm:pl-8 pr-10 sm:pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base'>
                   VNĐ
                 </span>
               </div>
               {amount && parseFloat(amount) > 0 && (
                 <div className='mt-2 p-2 sm:p-3 bg-blue-50 rounded-md border border-blue-200'>
-                  <p className='text-xs sm:text-sm text-blue-700'>
+                  <p className='text-sm sm:text-base text-blue-700'>
                     <span className='font-medium'>Còn lại: </span>
                     <span className='font-bold'>
                       <NumericFormat
@@ -562,7 +562,7 @@ export default function TransactionDetailForm({
             <Link
               to='/erp/transactions'
               prefetch='intent'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
               <ArrowLeft className='h-4 w-4 sm:h-5' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -571,7 +571,7 @@ export default function TransactionDetailForm({
 
             <div className='flex space-x-2 order-1 sm:order-2'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none justify-center'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

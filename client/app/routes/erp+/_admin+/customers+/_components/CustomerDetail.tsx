@@ -23,8 +23,8 @@ import {
   Plus,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
-import { toAddressString } from '~/utils/address.util';
 import { CUSTOMER } from '~/constants/customer.constant';
+import AddressRenderer from '~/components/AddressRenderer';
 
 export default function CustomerDetail({
   customerPromise,
@@ -154,7 +154,7 @@ export default function CustomerDetail({
                       <div className='pl-5 sm:pl-0'>
                         <Badge
                           variant='secondary'
-                          className='text-xs sm:text-sm'
+                          className='text-sm sm:text-base'
                         >
                           {customer.cus_sex === 'male'
                             ? 'Nam'
@@ -173,7 +173,7 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <span className='text-sm md:text-base font-medium pl-5 sm:pl-0 break-words'>
-                        {toAddressString(customer.cus_address)}
+                        <AddressRenderer address={customer.cus_address} />
                       </span>
                     </div>
                   </div>
@@ -195,7 +195,10 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <div className='pl-5 sm:pl-0'>
-                        <Badge variant='outline' className='text-xs sm:text-sm'>
+                        <Badge
+                          variant='outline'
+                          className='text-sm sm:text-base'
+                        >
                           {getContactChannelLabel(customer.cus_contactChannel)}
                         </Badge>
                       </div>
@@ -209,7 +212,10 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <div className='pl-5 sm:pl-0'>
-                        <Badge variant='default' className='text-xs sm:text-sm'>
+                        <Badge
+                          variant='default'
+                          className='text-sm sm:text-base'
+                        >
                           {getSourceLabel(customer.cus_source)}
                         </Badge>
                       </div>

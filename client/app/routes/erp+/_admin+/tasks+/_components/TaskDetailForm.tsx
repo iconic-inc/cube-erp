@@ -328,7 +328,7 @@ export default function TaskDetailForm({
                 required
               />
               {errors.name && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.name}
                 </p>
               )}
@@ -467,7 +467,7 @@ export default function TaskDetailForm({
               />
 
               {errors.endDate && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.endDate}
                 </p>
               )}
@@ -512,7 +512,7 @@ export default function TaskDetailForm({
             )}
 
             {errors.assignees && (
-              <p className='text-red-500 text-xs sm:text-sm'>
+              <p className='text-red-500 text-sm sm:text-base'>
                 {errors.assignees}
               </p>
             )}
@@ -523,7 +523,7 @@ export default function TaskDetailForm({
                   {!!selected.length && (
                     <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg gap-2 sm:gap-0'>
                       <div>
-                        <span className='font-semibold text-xs sm:text-sm'>
+                        <span className='font-semibold text-sm sm:text-base'>
                           Đã chọn {selected.length} nhân viên để thêm
                         </span>
                       </div>
@@ -533,7 +533,7 @@ export default function TaskDetailForm({
                           size='sm'
                           type='button'
                           onClick={() => setSelectedItems([])}
-                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
+                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-sm sm:text-base'
                         >
                           <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
                           <span>Bỏ chọn tất cả</span>
@@ -542,7 +542,7 @@ export default function TaskDetailForm({
                           size='sm'
                           onClick={() => handleAddAssignees(selected)}
                           type='button'
-                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
+                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-sm sm:text-base'
                         >
                           <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
                           <span>Thêm đã chọn</span>
@@ -599,7 +599,7 @@ export default function TaskDetailForm({
                           return (
                             <Button
                               variant='default'
-                              className={`bg-blue-500 hover:bg-blue-400 text-xs sm:text-sm ${
+                              className={`bg-blue-500 hover:bg-blue-400 text-sm sm:text-base ${
                                 isAdded ? 'opacity-50 cursor-not-allowed' : ''
                               }`}
                               type='button'
@@ -625,7 +625,7 @@ export default function TaskDetailForm({
           <Link
             to='/erp/tasks'
             prefetch='intent'
-            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
+            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
             Trở về Danh sách
@@ -635,7 +635,7 @@ export default function TaskDetailForm({
             variant='primary'
             type='submit'
             disabled={!isChanged || fetcher.state === 'submitting'}
-            className='text-xs sm:text-sm w-full sm:w-auto'
+            className='text-sm sm:text-base w-full sm:w-auto'
           >
             {fetcher.state === 'submitting' ? (
               <>

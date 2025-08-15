@@ -36,7 +36,7 @@ export default function CheckInCard({
           <span className='sm:inline'>Điểm danh</span>
         </h3>
 
-        <p className='text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4'>
+        <p className='text-sm sm:text-base text-gray-500 mb-3 sm:mb-4'>
           <span className='sm:inline'>Bắt đầu ngày làm việc</span>
         </p>
 

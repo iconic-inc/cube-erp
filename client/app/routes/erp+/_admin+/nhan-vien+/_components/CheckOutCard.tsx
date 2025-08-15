@@ -34,7 +34,7 @@ export default function CheckOutCard({
         <h3 className='text-lg sm:text-xl font-semibold mb-2'>
           <span className='sm:inline'>Kết thúc</span>
         </h3>
-        <p className='text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4'>
+        <p className='text-sm sm:text-base text-gray-500 mb-3 sm:mb-4'>
           <span className='sm:inline'>Kết thúc ngày làm việc</span>
         </p>
 

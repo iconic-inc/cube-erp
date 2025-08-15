@@ -74,7 +74,7 @@ export default function HRMEmployees() {
               }
               alt={`${item.emp_user.usr_firstName} ${item.emp_user.usr_lastName}`}
             />
-            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-xs sm:text-sm'>
+            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-sm sm:text-base'>
               {item.emp_user.usr_firstName?.charAt(0).toUpperCase() || 'N/A'}
             </AvatarFallback>
           </Avatar>
@@ -82,7 +82,7 @@ export default function HRMEmployees() {
             <span className='text-sm sm:text-base font-medium truncate'>
               {item.emp_user.usr_firstName} {item.emp_user.usr_lastName}
             </span>
-            <span className='text-gray-500 text-xs sm:text-sm truncate'>
+            <span className='text-gray-500 text-sm sm:text-base truncate'>
               {item.emp_code || 'Chưa có mã'}
             </span>
           </div>
@@ -101,7 +101,7 @@ export default function HRMEmployees() {
       render: (item) => (
         <Badge
           variant='secondary'
-          className='text-xs sm:text-sm whitespace-nowrap'
+          className='text-sm sm:text-base whitespace-nowrap'
         >
           {item.emp_department || 'Chưa có phòng ban'}
         </Badge>
@@ -119,7 +119,7 @@ export default function HRMEmployees() {
       render: (item) => (
         <Badge
           variant='outline'
-          className='text-xs sm:text-sm whitespace-nowrap'
+          className='text-sm sm:text-base whitespace-nowrap'
         >
           {item.emp_position || 'Chưa có chức vụ'}
         </Badge>
@@ -131,7 +131,7 @@ export default function HRMEmployees() {
       visible: true,
       sortField: 'emp_user.usr_msisdn',
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
           {item.emp_user.usr_msisdn || 'Chưa có số điện thoại'}
         </span>
       ),
@@ -142,7 +142,7 @@ export default function HRMEmployees() {
       visible: true,
       sortField: 'emp_user.usr_email',
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[150px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[150px] sm:max-w-none'>
           {item.emp_user.usr_email || 'Chưa có email'}
         </span>
       ),

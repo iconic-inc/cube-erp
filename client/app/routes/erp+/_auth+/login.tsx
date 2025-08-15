@@ -253,7 +253,7 @@ const Login = () => {
 
           <CardFooter className='bg-gray-50/50 border-t border-gray-100'>
             <div className='w-full text-center'>
-              <p className='text-xs sm:text-sm text-gray-600'>
+              <p className='text-sm sm:text-base text-gray-600'>
                 Không có tài khoản?{' '}
                 <Link
                   to='#'
@@ -269,7 +269,7 @@ const Login = () => {
 
         {/* Footer */}
         <div className='mt-6 sm:mt-8 text-center space-y-3'>
-          <p className='text-xs sm:text-sm text-gray-500'>
+          <p className='text-sm sm:text-base text-gray-500'>
             &copy; 2025 Cube Lawfirm ERP
           </p>
         </div>
