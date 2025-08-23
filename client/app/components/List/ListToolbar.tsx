@@ -38,9 +38,13 @@ export default function ListToolbar<T>({
   items: IListResponse<T>;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get('search') || '',
-  );
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (searchParams.get('search')) {
+      setSearchTerm(searchParams.get('search')!);
+    }
+  }, [searchParams]);
 
   // State for active filters
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>(

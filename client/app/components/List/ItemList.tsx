@@ -16,6 +16,7 @@ import {
 import { Checkbox } from '../ui/checkbox';
 import ErrorCard from '../ErrorCard';
 import LoadingCard from '../LoadingCard';
+import { useEffect } from 'react';
 
 export default function ItemList<T>({
   name,
@@ -39,6 +40,21 @@ export default function ItemList<T>({
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get('sortBy') || 'createdAt';
   const sortOrder = searchParams.get('sortOrder') || 'desc';
+
+  useEffect(() => {
+    if (localStorage) {
+      const cachedQuery = localStorage.getItem(`list-query-${name}`);
+      if (cachedQuery) {
+        setSearchParams(new URLSearchParams(cachedQuery));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (localStorage) {
+      localStorage.setItem(`list-query-${name}`, searchParams.toString());
+    }
+  }, [searchParams]);
 
   const handleSelectAll = (items: T[]) => {
     if (selectedItems.length === items.length) {

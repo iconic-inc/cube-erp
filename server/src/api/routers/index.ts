@@ -34,6 +34,7 @@ router.use('/attendance-requests', require('./attendanceRequest'));
 router.use('/notifications', require('./notification'));
 router.use('/case-services', require('./caseService'));
 router.use('/documents', require('./document'));
+router.use('/document-folders', require('./documentFolder'));
 router.use('/transactions', require('./transaction'));
 router.use('/rewards', require('./reward'));
 

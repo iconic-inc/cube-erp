@@ -13,6 +13,7 @@ export * from './task.constant';
 export * from './taskInstance.constant';
 export * from './transaction.constant';
 export * from './reward.constant';
+export * from './documentFolder.constant';
 
 export const KEYTOKEN = {
   DOCUMENT_NAME: 'KeyToken',

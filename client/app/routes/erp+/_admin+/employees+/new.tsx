@@ -74,6 +74,7 @@ export const action = async ({
           status: formData.get('status') as string,
           // employee data
           code: formData.get('employeeCode') as string,
+          score: +(formData.get('score') || 0),
           position: formData.get('position') as string,
           department: formData.get('department') as string,
           joinDate: formData.get('joinDate') as string,

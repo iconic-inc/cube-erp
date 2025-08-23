@@ -18,6 +18,7 @@ import { EmployeeModel } from '@models/employee.model';
 import { USER } from '@constants/user.constant';
 import { getEmployeeByUserId } from './employee.service';
 import { sendTaskNotificationEmail } from './email.service';
+import { IMAGE } from '@constants/image.constant';
 
 // Create new Task
 const createTask = async (data: ITaskCreate) => {
@@ -1036,7 +1037,7 @@ const getEmployeesPerformance = async (query: any = {}) => {
       startDate,
       endDate,
       employeeIds,
-      sortBy = 'completionRate',
+      sortBy = 'performanceScore',
       sortOrder = 'desc',
       limit = 10,
       page = 1,
@@ -1046,6 +1047,8 @@ const getEmployeesPerformance = async (query: any = {}) => {
     const defaultEndDate = new Date();
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 30);
+    defaultStartDate.setHours(0, 0, 0, 0);
+    defaultEndDate.setHours(23, 59, 59, 999);
 
     const periodStartDate = startDate ? new Date(startDate) : defaultStartDate;
     const periodEndDate = endDate ? new Date(endDate) : defaultEndDate;
@@ -1128,6 +1131,22 @@ const getEmployeesPerformance = async (query: any = {}) => {
     pipeline.push({
       $unwind: {
         path: '$employee.emp_user',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 5.1: Lookup user avatar
+    pipeline.push({
+      $lookup: {
+        from: IMAGE.COLLECTION_NAME,
+        localField: 'employee.emp_user.usr_avatar',
+        foreignField: '_id',
+        as: 'employee.emp_user.usr_avatar',
+      },
+    });
+    pipeline.push({
+      $unwind: {
+        path: '$employee.emp_user.usr_avatar',
         preserveNullAndEmptyArrays: true,
       },
     });
@@ -1238,38 +1257,43 @@ const getEmployeesPerformance = async (query: any = {}) => {
             0,
           ],
         },
+        adminAssignedScore: {
+          $cond: [
+            {
+              $and: [
+                { $ne: ['$employee.emp_score', null] },
+                { $gte: ['$employee.emp_score', 0] },
+                { $lte: ['$employee.emp_score', 100] },
+              ],
+            },
+            { $toInt: '$employee.emp_score' },
+            0,
+          ],
+        },
+        // Calculate performance score based on weights
         performanceScore: {
           $add: [
-            // Completion rate weight: 40%
+            // Completion rate weight: 50%
             {
-              $multiply: [{ $divide: ['$completedTasks', '$totalTasks'] }, 40],
+              $multiply: [{ $divide: ['$completedTasks', '$totalTasks'] }, 50],
             },
-            // On-time rate weight: 30%
+            // Admin assigned score weight: 50%
             {
               $multiply: [
                 {
                   $cond: [
-                    { $gt: ['$completedTasks', 0] },
-                    { $divide: ['$onTimeTasks', '$completedTasks'] },
+                    {
+                      $and: [
+                        { $ne: ['$employee.emp_score', null] },
+                        { $gte: ['$employee.emp_score', 0] },
+                        { $lte: ['$employee.emp_score', 100] },
+                      ],
+                    },
+                    { $divide: ['$employee.emp_score', 100] },
                     0,
                   ],
                 },
-                30,
-              ],
-            },
-            // Priority handling weight: 20%
-            { $multiply: [{ $divide: ['$averagePriorityScore', 4] }, 20] },
-            // Task volume weight: 10%
-            {
-              $multiply: [
-                {
-                  $cond: [
-                    { $gte: ['$totalTasks', 10] },
-                    1,
-                    { $divide: ['$totalTasks', 10] },
-                  ],
-                },
-                10,
+                50,
               ],
             },
           ],
@@ -1291,7 +1315,7 @@ const getEmployeesPerformance = async (query: any = {}) => {
           ],
         },
         employeeEmail: '$employee.emp_user.usr_email',
-        employeeAvatar: '$employee.emp_user.usr_avatar',
+        employeeAvatar: '$employee.emp_user.usr_avatar.img_url',
         department: '$employee.emp_department',
         position: '$employee.emp_position',
         totalTasks: 1,
@@ -1302,6 +1326,7 @@ const getEmployeesPerformance = async (query: any = {}) => {
         onTimeRate: { $round: ['$onTimeRate', 2] },
         overdueRate: { $round: ['$overdueRate', 2] },
         performanceScore: { $round: ['$performanceScore', 2] },
+        adminAssignedScore: 1,
         averagePriorityScore: { $round: ['$averagePriorityScore', 2] },
         totalPriorityScore: 1,
         tasksByStatus: 1,
@@ -1337,6 +1362,7 @@ const getEmployeesPerformance = async (query: any = {}) => {
 
     // Execute aggregation
     const performanceData = await TaskModel.aggregate(pipeline);
+    console.log(performanceData);
 
     // Calculate summary statistics
     const summaryPipeline = [

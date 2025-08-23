@@ -16,7 +16,10 @@ const employeeBaseSchema = {
     (val) => (val ? new Date(val as string) : undefined),
     z.date({ required_error: 'Ngày vào làm là bắt buộc' })
   ),
-  score: z.number().min(0, 'Điểm số không thể âm').optional(), // Score is optional, defaults to 0 in the model
+  score: z.coerce
+    .number({ message: 'Điểm số không hợp lệ' })
+    .min(0, 'Điểm số không thể âm')
+    .optional(), // Score is optional, defaults to 0 in the model
 };
 
 // Schema for creating an employee

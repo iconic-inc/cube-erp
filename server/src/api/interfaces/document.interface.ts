@@ -1,11 +1,12 @@
 import { HydratedDocument, ObjectId } from 'mongoose';
 import { IEmployeePopulate } from './employee.interface';
 import { Model } from 'mongoose';
+import { IDocumentFolder } from './documentFolder.interface';
 
 export interface IDocumentPopulate {
   id: string;
   doc_name: string;
-  doc_type?: string;
+  doc_parent: IDocumentFolder;
   doc_description?: string;
   doc_url: string;
   doc_isPublic: boolean;
@@ -23,7 +24,7 @@ export interface IDocument
 
 export interface IDocumentCreate {
   name: string;
-  type?: string;
+  parent: ObjectId | string; // Optional parent folder ID
   description?: string;
   url: string;
   isPublic?: boolean;
@@ -46,7 +47,7 @@ export interface IDocumentQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  type?: string;
+  parent?: string;
   startDate?: string;
   endDate?: string;
   isPublic?: string;

@@ -13,6 +13,10 @@ import EmployeeAttendanceList from './_components/EmployeeAttendanceList';
 import { Edit, Pen } from 'lucide-react';
 import { canAccessEmployeeManagement } from '~/utils/permission';
 import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { getTasks } from '~/services/task.server';
+import EmployeeTaskList from './_components/EmployeeTaskList';
+import { getFirstWeekDate } from '~/utils/date.util';
+import { TODAY } from '~/constants/date.constant';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -42,7 +46,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Get employee first to get user ID for attendance
   const attendancePromise = getEmployeeById(employeeId, session!)
     .then((employee) => {
-      return getLast7DaysStats(employee.emp_user.id, session!);
+      return getLast7DaysStats(employee.emp_user.id, session!).catch((e) => {
+        console.error('Error fetching attendance stats:', e);
+        return {
+          success: false,
+          message: e.message || 'Có lỗi khi lấy thống kê chấm công',
+        };
+      });
     })
     .catch((error) => {
       console.error('Error fetching attendance stats:', error);
@@ -52,14 +62,33 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       };
     });
 
+  const taskPromise = getTasks(
+    new URLSearchParams({
+      assignee: employeeId,
+      startDateFrom: getFirstWeekDate(
+        TODAY.getDay(),
+        TODAY.getMonth(),
+        TODAY.getFullYear(),
+      ).toISOString(),
+    }),
+    session!,
+  ).catch((error) => {
+    console.error('Error fetching tasks:', error);
+    return {
+      success: false,
+      message: error.message || 'Có lỗi khi lấy danh sách công việc',
+    };
+  });
+
   return {
     employeeId,
     employeePromise,
     attendancePromise,
+    taskPromise,
   };
 };
 export default function EmployeeDetails() {
-  const { employeeId, employeePromise, attendancePromise } =
+  const { employeeId, employeePromise, attendancePromise, taskPromise } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
@@ -88,6 +117,9 @@ export default function EmployeeDetails() {
         employeeId={employeeId}
         attendancePromise={attendancePromise}
       />
+
+      {/* Employee task List Card */}
+      <EmployeeTaskList employeeId={employeeId} taskPromise={taskPromise} />
     </div>
   );
 }

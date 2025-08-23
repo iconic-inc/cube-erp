@@ -38,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           message: error.message || 'Có lỗi xảy ra khi lấy dữ liệu hiệu suất',
         };
       },
-    ),
+    ) as Promise<PerformanceData | { success: boolean; message: string }>,
   };
 };
 
@@ -58,6 +58,7 @@ interface PerformanceEmployee {
   onTimeRate: number;
   overdueRate: number;
   performanceScore: number;
+  adminAssignedScore: number;
   averagePriorityScore: number;
   rank?: number; // Add rank field
 }
@@ -207,26 +208,18 @@ export default function TaskPerformancePage() {
       ),
     },
     {
-      key: 'actions',
-      title: 'Thao tác',
+      key: 'adminAssignedScore',
+      title: 'Điểm',
       visible: true,
       render: (employee) => (
         <div className=''>
-          <Button
-            variant='outline'
-            size='sm'
-            asChild
-            className='text-xs px-2 py-1'
+          <Badge
+            className={`${getPerformanceColor(
+              employee.adminAssignedScore,
+            )} font-bold text-sm sm:text-base px-2 sm:px-3 py-1`}
           >
-            <Link
-              to={`/erp/employees/${employee.employeeId}`}
-              prefetch='intent'
-            >
-              <User className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
-              <span className='hidden sm:inline'>Chi tiết</span>
-              <span className='sm:hidden'>Xem</span>
-            </Link>
-          </Button>
+            {Math.round(employee.adminAssignedScore)}
+          </Badge>
         </div>
       ),
     },
@@ -254,19 +247,7 @@ export default function TaskPerformancePage() {
       />
 
       <Defer resolve={performanceData} fallback={<LoadingCard />}>
-        {(data: PerformanceData | { success: false; message: string }) => {
-          if (!data || 'success' in data) {
-            return (
-              <ErrorCard
-                message={
-                  data && 'message' in data && typeof data.message === 'string'
-                    ? data.message
-                    : 'Đã xảy ra lỗi khi tải dữ liệu hiệu suất'
-                }
-              />
-            );
-          }
-
+        {(data) => {
           return (
             <>
               {/* Summary Statistics */}

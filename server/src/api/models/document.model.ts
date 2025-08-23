@@ -1,6 +1,6 @@
 // filepath: /home/phanhotboy/workspace/iconic/cube-erp/server/src/api/models/document.model.ts
 import { Schema, model } from 'mongoose';
-import { DOCUMENT, USER } from '../constants';
+import { DOCUMENT, DOCUMENT_FOLDER, USER } from '../constants';
 import {
   IDocumentCreate,
   IDocumentDocument,
@@ -15,10 +15,10 @@ const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
       required: true,
       trim: true,
     },
-    doc_type: {
-      type: String,
-      enum: Object.values(DOCUMENT.TYPE),
-      default: DOCUMENT.TYPE.OTHER,
+    doc_parent: {
+      type: Schema.Types.ObjectId,
+      ref: DOCUMENT_FOLDER.DOCUMENT_NAME,
+      required: true,
     },
     doc_description: {
       type: String,

@@ -93,6 +93,7 @@ const createEmployee = async (data: IEmployeeCreate) => {
           {
             user: newUser._id,
             code: data.code,
+            score: data.score,
             position: data.position,
             department: data.department,
             joinDate: data.joinDate,
@@ -365,7 +366,7 @@ const updateEmployee = async (id: string, data: Partial<IEmployeeCreate>) => {
     const employeeUpdateData = formatAttributeName(
       removeNestedNullish<IEmployeeCreate>(
         getReturnData(data, {
-          fields: ['code', 'position', 'department', 'joinDate'],
+          fields: ['code', 'position', 'department', 'joinDate', 'score'],
         })
       ),
       USER.EMPLOYEE.PREFIX

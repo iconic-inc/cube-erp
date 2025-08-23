@@ -48,6 +48,7 @@ export default function EmployeeDetailForm({
 
   // Form state
   const [code, setCode] = useState<string>('');
+  const [score, setScore] = useState<number>(0);
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -78,6 +79,10 @@ export default function EmployeeDetailForm({
 
     if (!code.trim()) {
       validationErrors.code = 'Vui lòng nhập mã nhân viên';
+    }
+
+    if (score < 0 || score > 100) {
+      validationErrors.score = 'Điểm phải nằm trong khoảng từ 0 đến 100';
     }
 
     if (!firstName.trim()) {
@@ -133,6 +138,7 @@ export default function EmployeeDetailForm({
 
     // Add all form data
     formData.set('employeeCode', code);
+    formData.set('score', score.toString());
     formData.set('firstName', firstName);
     formData.set('lastName', lastName);
     formData.set('email', email);
@@ -169,6 +175,7 @@ export default function EmployeeDetailForm({
   useEffect(() => {
     const hasChanged =
       code ||
+      score ||
       firstName ||
       lastName ||
       email ||
@@ -182,6 +189,7 @@ export default function EmployeeDetailForm({
       position ||
       joinDate ||
       roleId ||
+      score ||
       status;
 
     setIsChanged(!!hasChanged);
@@ -216,6 +224,7 @@ export default function EmployeeDetailForm({
           if (employeeData && 'emp_code' in employeeData) {
             // setEmployee(employeeData);
             setCode(employeeData.emp_code || '');
+            setScore(employeeData.emp_score || 0);
             setFirstName(employeeData.emp_user.usr_firstName || '');
             setLastName(employeeData.emp_user.usr_lastName || '');
             setEmail(employeeData.emp_user.usr_email || '');
@@ -291,8 +300,8 @@ export default function EmployeeDetailForm({
               </CardHeader>
 
               <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
-                {/* Employee Code */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+                  {/* Employee Code */}
                   <div>
                     <Label
                       htmlFor='code'
@@ -313,6 +322,32 @@ export default function EmployeeDetailForm({
                     {errors.code && (
                       <p className='text-red-500 text-sm sm:text-base mt-1'>
                         {errors.code}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor='score'
+                      className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
+                    >
+                      Điểm (0 - 100) <span className='text-red-500'>*</span>
+                    </Label>
+                    <div className='flex gap-2'>
+                      <Input
+                        id='score'
+                        type='number'
+                        value={score}
+                        onChange={(e) =>
+                          setScore(parseInt(e.target.value) || 0)
+                        }
+                        placeholder='Nhập điểm'
+                        className={`flex-1 text-sm sm:text-base ${errors.score ? 'border-red-500' : ''}`}
+                      />
+                    </div>
+                    {errors.score && (
+                      <p className='text-red-500 text-sm sm:text-base mt-1'>
+                        {errors.score}
                       </p>
                     )}
                   </div>

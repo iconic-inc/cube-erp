@@ -16,6 +16,7 @@ import {
 import { getEmployeeByUserId } from './employee.service';
 import { DOCUMENT } from '@constants/document.constant';
 import { USER } from '@constants/user.constant';
+import { DOCUMENT_FOLDER } from '@constants/documentFolder.constant';
 
 /**
  * Create a new document
@@ -23,11 +24,16 @@ import { USER } from '@constants/user.constant';
  */
 export const createDocument = async (
   files: Express.Multer.File[],
-  userId: string
+  userId: string,
+  parent: string
 ) => {
   if (!files || !files.length) {
-    throw new BadRequestError('No file uploaded');
+    throw new BadRequestError('Không có tệp tin nào được tải lên');
   }
+  if (!parent || !isValidObjectId(parent)) {
+    throw new BadRequestError('Không có thư mục nào được chỉ định');
+  }
+
   try {
     const employee = await getEmployeeByUserId(userId);
 
@@ -38,6 +44,7 @@ export const createDocument = async (
         createdBy: employee.id,
         name: file.filename,
         whiteList: [employee.id],
+        parent,
         url: getImageUrl(`documents/${file.filename}`),
         isPublic: false,
       });
@@ -76,7 +83,7 @@ export const getDocuments = async (
       search,
       sortBy,
       sortOrder,
-      type,
+      parent,
       startDate,
       endDate,
       isPublic,
@@ -110,6 +117,16 @@ export const getDocuments = async (
       },
     });
 
+    // Stage 2.1: Lookup to populate folder information
+    pipeline.push({
+      $lookup: {
+        from: DOCUMENT_FOLDER.COLLECTION_NAME,
+        localField: 'doc_parent',
+        foreignField: '_id',
+        as: 'doc_parent',
+      },
+    });
+
     // Stage 3: Unwind createdBy array
     pipeline.push({
       $unwind: {
@@ -132,6 +149,14 @@ export const getDocuments = async (
     pipeline.push({
       $unwind: {
         path: '$doc_createdBy.emp_user',
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    // Stage 3.3: Unwind the parent array
+    pipeline.push({
+      $unwind: {
+        path: '$doc_parent',
         preserveNullAndEmptyArrays: true,
       },
     });
@@ -202,7 +227,6 @@ export const getDocuments = async (
           $or: [
             { doc_name: searchRegex },
             { doc_description: searchRegex },
-            { doc_type: searchRegex },
             {
               doc_createdBy: {
                 emp_code: searchRegex,
@@ -217,10 +241,10 @@ export const getDocuments = async (
       });
     }
 
-    // Stage 6: Filter by document type if provided
-    if (type) {
+    // Stage 6: Filter by document parent if provided
+    if (parent) {
       pipeline.push({
-        $match: { doc_type: type },
+        $match: { 'doc_parent._id': new mongoose.Types.ObjectId(parent) },
       });
     }
     if (isPublic) {
@@ -256,7 +280,10 @@ export const getDocuments = async (
       $project: {
         _id: 1,
         doc_name: 1,
-        doc_type: 1,
+        doc_parent: {
+          _id: 1,
+          fol_name: 1,
+        },
         doc_description: 1,
         doc_url: 1,
         doc_isPublic: 1,
@@ -359,6 +386,10 @@ export const getDocumentById = async (documentId: string, userId: string) => {
           path: 'emp_user',
           select: 'usr_firstName usr_lastName usr_email usr_username',
         },
+      })
+      .populate({
+        path: 'doc_parent',
+        select: 'fol_name',
       });
 
     if (!document) {
@@ -431,11 +462,11 @@ export const updateDocument = async (
 /**
  * Delete document
  * @param {string} documentId - Document ID
- * @param {string} employeeId - ID of the employee making the request
+ * @param {string} employeeUserId - user ID of the employee making the request
  */
 export const deleteDocument = async (
   documentId: string,
-  employeeId: string
+  employeeUserId: string
 ) => {
   try {
     if (!Types.ObjectId.isValid(documentId)) {
@@ -448,11 +479,14 @@ export const deleteDocument = async (
       throw new NotFoundError('Document not found');
     }
 
-    // Only creator can delete document
-    if (document.doc_createdBy.toString() !== employeeId) {
-      throw new BadRequestError(
-        'You do not have permission to delete this document'
-      );
+    const employee = await getEmployeeByUserId(employeeUserId);
+
+    // Only creator can delete non-public documents
+    if (
+      !document.doc_isPublic &&
+      document.doc_createdBy.toString() !== employee.id
+    ) {
+      throw new BadRequestError('Bạn không có quyền xóa tài liệu này');
     }
 
     // Delete file from disk

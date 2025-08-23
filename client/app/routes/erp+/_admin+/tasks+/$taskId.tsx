@@ -19,6 +19,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Fetch task details from the API
   const taskId = params.taskId as string;
+  if (!taskId) {
+    return {
+      task: new Promise<{ success: boolean; message: string }>((resolve) =>
+        resolve({ success: false, message: 'Task ID is required' }),
+      ),
+    };
+  }
   const task = getTaskById(taskId, user!).catch((error) => {
     console.error('Error fetching task:', error.message);
     return {
