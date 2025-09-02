@@ -283,7 +283,7 @@ const getEmployeeById = async (id: string) => {
     throw new NotFoundError('Employee not found');
   }
 
-  return getReturnData(employee);
+  return getReturnData<IEmployeeDetail>(employee as any);
 };
 
 const getEmployeeByUserId = async (emp_user: string) => {

@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { USER } from '../constants';
-
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string) => mongoose.isValidObjectId(id);
 
 // Helper function to validate phone number (Vietnamese format)
 const isValidPhoneNumber = (phone: string) => {

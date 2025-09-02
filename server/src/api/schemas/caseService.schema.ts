@@ -1,25 +1,76 @@
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { CASE_SERVICE } from '../constants';
 
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string) => mongoose.isValidObjectId(id);
+// Schema for case tax
+const caseTaxSchema = z.object({
+  name: z.string().min(1, 'Tên thuế là bắt buộc'),
+  mode: z.enum(['PERCENT', 'FIXED']),
+  value: z.number().min(0, 'Giá trị thuế phải lớn hơn hoặc bằng 0'),
+  scope: z.enum(['ON_BASE', 'ON_BASE_PLUS_INCIDENTALS']).default('ON_BASE'),
+});
+
+// Schema for case participant
+const caseParticipantSchema = z.object({
+  employeeId: z.string().refine(isValidObjectId, {
+    message: 'ID nhân viên không hợp lệ',
+  }),
+  role: z.string().optional(),
+  commission: z.object({
+    type: z.enum(['PERCENT_OF_GROSS', 'PERCENT_OF_NET', 'FLAT']),
+    value: z.number().min(0, 'Giá trị hoa hồng phải lớn hơn hoặc bằng 0'),
+    capAmount: z.number().min(0).optional(),
+    floorAmount: z.number().min(0).optional(),
+    eligibleOn: z.enum(['AT_CLOSURE', 'ON_PAYMENT']).default('AT_CLOSURE'),
+  }),
+});
+
+// Schema for installment plan item
+const installmentPlanItemSchema = z.object({
+  seq: z.number().int().min(1, 'Số thứ tự phải lớn hơn 0'),
+  dueDate: z.preprocess(
+    (val) => (val ? new Date(val as string) : new Date()),
+    z.date()
+  ),
+  amount: z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0'),
+  status: z
+    .enum(['PLANNED', 'DUE', 'PARTIALLY_PAID', 'PAID', 'OVERDUE'])
+    .default('PLANNED'),
+  paidAmount: z.number().min(0).default(0),
+  notes: z.string().optional(),
+});
+
+// Schema for incurred cost
+const incurredCostSchema = z.object({
+  date: z.preprocess(
+    (val) => (val ? new Date(val as string) : new Date()),
+    z.date()
+  ),
+  category: z.string().min(1, 'Danh mục chi phí là bắt buộc'),
+  description: z.string().optional(),
+  amount: z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0'),
+  vendorId: z
+    .string()
+    .refine(isValidObjectId, {
+      message: 'ID nhà cung cấp không hợp lệ',
+    })
+    .optional(),
+  attachmentUrls: z.array(z.string().url()).optional(),
+});
+
+// Schema for pricing
+const pricingSchema = z.object({
+  baseAmount: z.number().min(0, 'Số tiền cơ bản phải lớn hơn hoặc bằng 0'),
+  discounts: z.number().default(0),
+  addOns: z.number().default(0),
+  taxes: z.array(caseTaxSchema).default([]),
+});
 
 // Base schema for common case service fields
 const caseServiceBaseSchema = {
   customer: z.string().trim().refine(isValidObjectId, {
     message: 'ID khách hàng không hợp lệ',
   }),
-  leadAttorney: z.string().trim().refine(isValidObjectId, {
-    message: 'ID luật sư chính không hợp lệ',
-  }),
-  assignees: z
-    .array(
-      z.string().refine(isValidObjectId, {
-        message: 'ID người được giao không hợp lệ',
-      })
-    )
-    .optional(),
   code: z.string().trim().min(1, 'Mã Hồ sơ vụ việc là bắt buộc'),
   notes: z.string().trim().optional(),
   status: z
@@ -33,6 +84,10 @@ const caseServiceBaseSchema = {
     (val) => (val ? new Date(val as string) : undefined),
     z.date().optional()
   ),
+  pricing: pricingSchema,
+  participants: z.array(caseParticipantSchema).default([]),
+  installments: z.array(installmentPlanItemSchema).default([]),
+  incurredCosts: z.array(incurredCostSchema).default([]),
 };
 
 // Schema for creating a case service
@@ -89,12 +144,6 @@ export const caseServiceQuerySchema = z
       .string()
       .refine((val) => !val || isValidObjectId(val), {
         message: 'ID khách hàng không hợp lệ',
-      })
-      .optional(),
-    leadAttorneyId: z
-      .string()
-      .refine((val) => !val || isValidObjectId(val), {
-        message: 'ID luật sư chính không hợp lệ',
       })
       .optional(),
     employeeUserId: z
@@ -221,4 +270,50 @@ export const caseServiceImportOptionsSchema = z.object({
     .optional()
     .transform((val) => val !== 'false')
     .default('true'),
+});
+
+// Schema for creating installment
+export const createInstallmentSchema = z.object({
+  seq: z.number().int().min(1, 'Số thứ tự phải lớn hơn 0'),
+  dueDate: z.preprocess(
+    (val) => (val ? new Date(val as string) : new Date()),
+    z.date()
+  ),
+  amount: z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0'),
+  notes: z.string().optional(),
+});
+
+// Schema for adding participant
+export const addParticipantSchema = z.object({
+  employeeId: z.string().refine(isValidObjectId, {
+    message: 'ID nhân viên không hợp lệ',
+  }),
+  role: z.string().optional(),
+  commission: z.object({
+    type: z.enum(['PERCENT_OF_GROSS', 'PERCENT_OF_NET', 'FLAT']),
+    value: z.number().min(0, 'Giá trị hoa hồng phải lớn hơn hoặc bằng 0'),
+    capAmount: z.number().min(0).optional(),
+    floorAmount: z.number().min(0).optional(),
+    eligibleOn: z.enum(['AT_CLOSURE', 'ON_PAYMENT']).default('AT_CLOSURE'),
+  }),
+});
+
+// Schema for adding payment
+export const addPaymentSchema = z.object({
+  installmentId: z.string().refine(isValidObjectId, {
+    message: 'ID kỳ thanh toán không hợp lệ',
+  }),
+  amount: z.number().min(0.01, 'Số tiền thanh toán phải lớn hơn 0'),
+  paymentDate: z.preprocess(
+    (val) => (val ? new Date(val as string) : new Date()),
+    z.date().optional()
+  ),
+  notes: z.string().optional(),
+});
+
+// Schema for updating participants
+export const updateParticipantsSchema = z.object({
+  participants: z
+    .array(caseParticipantSchema)
+    .min(1, 'Phải có ít nhất một người tham gia'),
 });

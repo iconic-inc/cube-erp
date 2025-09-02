@@ -40,21 +40,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     };
   });
 
-  // Load customers and employees for form selection
-  const employeesPromise = getEmployees(
-    new URLSearchParams([['limit', '1000']]),
-    session!,
-  ).catch((error) => {
-    console.error('Error fetching employees:', error);
-    return { success: false, message: 'Có lỗi khi lấy danh sách nhân viên' };
-  });
-
-  return { caseId, casePromise, employeesPromise };
+  return { caseId, casePromise };
 };
 
 export default function () {
-  const { caseId, casePromise, employeesPromise } =
-    useLoaderData<typeof loader>();
+  const { caseId, casePromise } = useLoaderData<typeof loader>();
 
   const formId = useMemo(
     () => generateFormId(`case-detail-form-${caseId}`),
@@ -80,12 +70,7 @@ export default function () {
       />
 
       {/* Case Service Details Card */}
-      <CaseDetailForm
-        formId={formId}
-        casePromise={casePromise}
-        type='update'
-        employeesPromise={employeesPromise}
-      />
+      <CaseDetailForm formId={formId} casePromise={casePromise} type='update' />
     </div>
   );
 }
@@ -114,23 +99,46 @@ export const action = async ({
         }
 
         const formData = await request.formData();
+
+        // Parse pricing data
+        const pricingData = formData.get('pricing') as string;
+        const pricing = pricingData ? JSON.parse(pricingData) : undefined;
+
+        // Parse participants data
+        const participantsData = formData.get('participants') as string;
+        const participants = participantsData
+          ? JSON.parse(participantsData)
+          : undefined;
+
+        // Parse installments data
+        const installmentsData = formData.get('installments') as string;
+        const installments = installmentsData
+          ? JSON.parse(installmentsData)
+          : undefined;
+
+        // Parse incurred costs data
+        const incurredCostsData = formData.get('incurredCosts') as string;
+        const incurredCosts = incurredCostsData
+          ? JSON.parse(incurredCostsData)
+          : undefined;
+
         const data: ICaseServiceUpdate = {
           code: formData.get('code') as string,
-          leadAttorney: formData.get('leadAttorney') as string,
-          assignees: (formData.getAll('assignees') as string[]) || [],
           notes: (formData.get('notes') as string) || undefined,
           status:
             (formData.get('status') as keyof typeof CASE_SERVICE.STATUS) ||
             undefined,
           startDate: (formData.get('startDate') as string) || undefined,
           endDate: (formData.get('endDate') as string) || undefined,
+          pricing,
+          participants,
+          installments,
+          incurredCosts,
         };
 
         // Kiểm tra dữ liệu bắt buộc
         if (
-          ['code', 'leadAttorney'].some(
-            (field) => !data[field as keyof ICaseServiceUpdate],
-          )
+          ['code'].some((field) => !data[field as keyof ICaseServiceUpdate])
         ) {
           return dataResponse(
             {
@@ -142,6 +150,38 @@ export const action = async ({
             },
             { headers },
           );
+        }
+
+        // Validate pricing data if provided
+        if (data.pricing && data.pricing.baseAmount < 0) {
+          return dataResponse(
+            {
+              success: false,
+              toast: {
+                message: 'Giá cơ bản không thể âm',
+                type: 'error',
+              },
+            },
+            { headers, status: 400 },
+          );
+        }
+
+        // Validate installments sequence numbers are unique if provided
+        if (data.installments && data.installments.length > 0) {
+          const sequences = data.installments.map((inst) => inst.seq);
+          const uniqueSequences = new Set(sequences);
+          if (sequences.length !== uniqueSequences.size) {
+            return dataResponse(
+              {
+                success: false,
+                toast: {
+                  message: 'Số thứ tự các kỳ thanh toán phải duy nhất',
+                  type: 'error',
+                },
+              },
+              { headers, status: 400 },
+            );
+          }
         }
 
         const res = await updateCaseService(caseId, data, session!);

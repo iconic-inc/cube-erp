@@ -1,7 +1,7 @@
 import { deleteEmployee, getEmployeeById } from '~/services/employee.server';
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
-import { data, useLoaderData, useNavigate } from '@remix-run/react';
+import { data, redirect, useLoaderData, useNavigate } from '@remix-run/react';
 import { getLast7DaysStats } from '~/services/attendance.server';
 import {
   getUnauthorizedActionResponse,
@@ -20,14 +20,14 @@ import { TODAY } from '~/constants/date.constant';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
+  const employeeId = params.employeeId;
 
   if (!canAccessEmployeeManagement(session?.user.usr_role)) {
-    throw new Response('Bạn không có quyền truy cập vào trang này.', {
-      status: 403,
-    });
+    // throw new Response('Bạn không có quyền truy cập vào trang này.', {
+    //   status: 403,
+    // });
+    return redirect(`/erp/nhan-vien/employees/${employeeId}`);
   }
-
-  const employeeId = params.employeeId;
 
   if (!employeeId) {
     throw new Response('Employee ID is required', { status: 400 });

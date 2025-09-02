@@ -15,7 +15,20 @@ import {
   detachDocumentFromCase,
   attachDocumentToCase,
   getCaseServiceTasks,
+  getCaseServiceOverview,
+  createInstallment,
+  addParticipant,
+  addPayment,
+  updateCaseServiceParticipant,
+  updateCaseServiceIncurredCost,
+  updateCaseServiceInstallment,
 } from '@services/caseService.service';
+
+const patchCaseServiceHandler = {
+  updateCaseServiceParticipant,
+  updateCaseServiceIncurredCost,
+  updateCaseServiceInstallment,
+};
 
 export class CaseServiceController {
   /**
@@ -36,7 +49,7 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service fetched successfully',
-      metadata: await getCaseServiceById(req.params.id),
+      metadata: await getCaseServiceById(req.params.id, req.user.userId),
     });
   }
 
@@ -219,6 +232,71 @@ export class CaseServiceController {
       res,
       message: 'Case services fetched successfully',
       metadata: caseServices,
+    });
+  };
+
+  /**
+   * Get case service overview
+   */
+  static getCaseServiceOverview = async (req: Request, res: Response) => {
+    const overview = await getCaseServiceOverview(req.params.id);
+    return OK({
+      res,
+      message: 'Case service overview fetched successfully',
+      metadata: overview,
+    });
+  };
+
+  /**
+   * Create installment for a case service
+   */
+  static createInstallment = async (req: Request, res: Response) => {
+    const installments = await createInstallment(req.params.id, req.body);
+    return OK({
+      res,
+      message: 'Installment created successfully',
+      metadata: installments,
+    });
+  };
+
+  /**
+   * Add participant to a case service
+   */
+  static addParticipant = async (req: Request, res: Response) => {
+    const participants = await addParticipant(req.params.id, req.body);
+    return OK({
+      res,
+      message: 'Participant added successfully',
+      metadata: participants,
+    });
+  };
+
+  /**
+   * Add payment to a case service installment
+   */
+  static addPayment = async (req: Request, res: Response) => {
+    const payment = await addPayment(req.params.id, req.body);
+    return OK({
+      res,
+      message: 'Payment added successfully',
+      metadata: payment,
+    });
+  };
+
+  static patchCaseService = async (req: Request, res: Response) => {
+    const action = req.body.op as keyof typeof patchCaseServiceHandler;
+    if (!patchCaseServiceHandler[action]) {
+      throw new BadRequestError(`Invalid action: ${action}`);
+    }
+
+    const result = await patchCaseServiceHandler[action](
+      req.params.id,
+      JSON.parse(req.body.value)
+    );
+    return OK({
+      res,
+      message: 'Cập nhật hồ sơ vụ việc thành công',
+      metadata: result,
     });
   };
 }

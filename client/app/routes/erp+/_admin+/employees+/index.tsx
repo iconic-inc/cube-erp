@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
-import { Link, useLoaderData, useNavigate } from '@remix-run/react';
+import { Link, redirect, useLoaderData, useNavigate } from '@remix-run/react';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
@@ -27,9 +27,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
 
   if (!canAccessEmployeeManagement(user?.user.usr_role)) {
-    throw new Response('Bạn không có quyền truy cập vào trang này.', {
-      status: 403,
-    });
+    // throw new Response('Bạn không có quyền truy cập vào trang này.', {
+    //   status: 403,
+    // });
+    return redirect('/erp/nhan-vien/employees');
   }
 
   const url = new URL(request.url);
@@ -160,7 +161,7 @@ export default function HRMEmployees() {
         actionContent={
           <>
             <Plus className='w-4 h-4' />
-            <span className='hidden sm:inline'>Thêm Nhân viên</span>
+            <span className='hidden sm:inline'>Thêm nhân sự</span>
             <span className='sm:hidden'>Thêm</span>
           </>
         }

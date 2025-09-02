@@ -608,7 +608,7 @@ export default function DocumentDetailForm({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
+              <AlertDialogTitle>Xác nhận Thêm nhân sự</AlertDialogTitle>
               <AlertDialogDescription>
                 Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào danh
                 sách truy cập không?

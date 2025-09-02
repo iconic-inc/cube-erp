@@ -1,17 +1,12 @@
-import {
-  LoaderFunctionArgs,
-  redirect,
-  ActionFunctionArgs,
-  data,
-} from '@remix-run/node';
+import { LoaderFunctionArgs, ActionFunctionArgs, data } from '@remix-run/node';
 
 import { deleteTask, getTaskById, patchTask } from '~/services/task.server';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import TaskDetail from './_components/TaskDetail';
-import { Edit, Pencil } from 'lucide-react';
-import { IActionFunctionReturn } from '../../../../interfaces/app.interface';
+import { Edit } from 'lucide-react';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -21,12 +16,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const taskId = params.taskId as string;
   if (!taskId) {
     return {
-      task: new Promise<{ success: boolean; message: string }>((resolve) =>
-        resolve({ success: false, message: 'Task ID is required' }),
-      ),
+      task: {
+        success: false,
+        message: 'Có lỗi xảy ra khi lấy thông tin công việc',
+      },
+      taskId: null,
+      participants: {
+        success: false,
+        message: 'Có lỗi xảy ra khi lấy danh sách người tham gia',
+      },
     };
   }
-  const task = getTaskById(taskId, user!).catch((error) => {
+  const task = await getTaskById(taskId, user!).catch((error) => {
     console.error('Error fetching task:', error.message);
     return {
       success: false,
@@ -35,11 +36,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     };
   });
 
-  return { task };
+  return { taskId, task };
 };
 
 export default function TaskDetailPage() {
-  const { task } = useLoaderData<typeof loader>();
+  const { taskId, task } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
@@ -60,7 +61,7 @@ export default function TaskDetailPage() {
         backHandler={() => navigate('/erp/tasks')}
       />
 
-      <TaskDetail taskPromise={task} />
+      <TaskDetail task={task} taskId={taskId!} />
     </div>
   );
 }

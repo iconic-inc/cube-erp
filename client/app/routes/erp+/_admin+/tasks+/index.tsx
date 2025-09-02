@@ -107,21 +107,6 @@ export default function HRMTasks() {
       ),
     },
     {
-      key: 'tsk_assignees',
-      title: 'Người thực hiện',
-      visible: true,
-      sortField: 'tsk_assignees',
-      filterField: 'assignee',
-      options: [],
-      render: (task) => (
-        <span>
-          {task.tsk_assignees
-            .map(({ emp_user: user }) => `${user?.usr_firstName}`)
-            .join(', ')}
-        </span>
-      ),
-    },
-    {
       key: 'tsk_caseService',
       title: 'Mã Hồ sơ',
       visible: true,

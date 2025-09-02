@@ -83,22 +83,6 @@ export default function CRMCaseService() {
 
       setVisibleColumns((prevColumns) =>
         prevColumns.map((col) => {
-          if (col.key === 'leadAttorney' && !isResolveError(employeesData)) {
-            return {
-              ...col,
-              options: employeesData.data.length
-                ? employeesData.data.map((emp: IEmployeeBrief) => ({
-                    value: emp.id,
-                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
-                  }))
-                : [
-                    {
-                      value: '',
-                      label: 'Không có nhân viên',
-                    },
-                  ],
-            };
-          }
           if (col.key === 'customer' && !isResolveError(customersData)) {
             return {
               ...col,
@@ -180,29 +164,6 @@ export default function CRMCaseService() {
           {CASE_SERVICE.STATUS[item.case_status] || '-'}
         </span>
       ),
-    },
-    {
-      title: 'Luật sư chính',
-      key: 'leadAttorney',
-      visible: true,
-      sortField: 'case_leadAttorney.emp_user.usr_firstName',
-      filterField: 'leadAttorneyId',
-      options: [],
-      render: (item) =>
-        item.case_leadAttorney ? (
-          <Link
-            prefetch='intent'
-            to={`/erp/employees/${item.case_leadAttorney.id}`}
-            className='text-blue-600 hover:underline block w-full h-full'
-          >
-            <span className='text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
-              {item.case_leadAttorney.emp_user.usr_firstName}{' '}
-              {item.case_leadAttorney.emp_user.usr_lastName}
-            </span>
-          </Link>
-        ) : (
-          <span className='text-gray-500 text-sm sm:text-base'>N/A</span>
-        ),
     },
     {
       title: 'Ngày bắt đầu',

@@ -1,10 +1,7 @@
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { USER } from '../constants';
 import { userBaseSchema } from './user.schema';
-
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string) => mongoose.isValidObjectId(id);
 
 // Base schema for employee-specific fields
 const employeeBaseSchema = {

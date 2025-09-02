@@ -59,19 +59,6 @@ export default function CaseTaskList({
       ),
     },
     {
-      key: 'tsk_assignees',
-      title: 'Người thực hiện',
-      visible: true,
-      sortField: 'tsk_assignees',
-      render: (task) => (
-        <span>
-          {task.tsk_assignees
-            .map(({ emp_user: user }) => `${user?.usr_firstName}`)
-            .join(', ')}
-        </span>
-      ),
-    },
-    {
       key: 'tsk_startDate',
       title: 'Ngày bắt đầu',
       visible: true,

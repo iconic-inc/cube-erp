@@ -58,6 +58,7 @@ import TextRenderer from '~/components/TextRenderer';
 import { canAccessRewardManagement } from '~/utils/permission';
 import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { Label } from '~/components/ui/label';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -442,13 +443,10 @@ export default function RewardDetail() {
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-3 sm:space-y-4'>
+            <Label htmlFor='deduct-amount' className='text-sm sm:text-sm'>
+              Số tiền khấu trừ <span className='text-red-500'>*</span>
+            </Label>
             <NumericInput
-              label={
-                <>
-                  <span className='text-sm sm:text-sm'>Số tiền khấu trừ</span>{' '}
-                  <span className='text-red-500'>*</span>
-                </>
-              }
               value={deductAmount}
               onValueChange={setDeductAmount}
               required

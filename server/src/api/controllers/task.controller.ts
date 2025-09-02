@@ -11,6 +11,7 @@ import { BadRequestError } from '../core/errors';
 
 const patchTaskHandler = {
   markAsCompleted: taskService.maskTaskAsCompleted,
+  updateAssigneeList: taskService.updateAssigneeList,
 };
 
 export class TaskController {
@@ -164,7 +165,7 @@ export class TaskController {
     }
 
     const { id } = req.params;
-    const task = await patchTaskHandler[action](id);
+    const task = await patchTaskHandler[action](id, JSON.parse(req.body.value));
     return OK({
       res,
       message: 'Cập nhật Task thành công',

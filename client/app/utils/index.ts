@@ -173,6 +173,20 @@ function generateCode(prefix: string, length: number = 6): string {
   return result;
 }
 
+function formatAttributeName<T extends Object = Object>(attrs: T, prefix = '') {
+  const attributes = (Object.keys(attrs) as Array<keyof typeof attrs>).reduce(
+    (acc, key) => {
+      return Object.assign(acc, {
+        [`${key === 'id' || key === '_id' ? '' : prefix}${key as string}`]:
+          attrs[key],
+      });
+    },
+    {},
+  ) as T;
+
+  return attributes;
+}
+
 export {
   toAgeString,
   toCurrencyString,
@@ -193,4 +207,5 @@ export {
   calculateAge,
   getValueByPath,
   generateFormId,
+  formatAttributeName,
 };

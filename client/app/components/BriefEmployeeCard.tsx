@@ -1,3 +1,4 @@
+import { Link } from '@remix-run/react';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -38,17 +39,20 @@ export default function BriefEmployeeCard({
 
           <AvatarFallback className='text-sm sm:text-base'>{`${employee.emp_user.usr_firstName[0]}${employee.emp_user.usr_lastName[0]}`}</AvatarFallback>
         </Avatar>
-        <div className='min-w-0 flex-1'>
-          <p className='text-sm sm:text-base md:text-base font-semibold text-gray-900 truncate'>
-            {employee.emp_user.usr_firstName} {employee.emp_user.usr_lastName}
-          </p>
-          <p className='text-xs sm:text-xs text-gray-600 truncate'>
-            @{employee.emp_user.usr_username} ({employee.emp_position})
-          </p>
-          <p className='text-xs text-gray-500 truncate break-all'>
-            {employee.emp_user.usr_email}
-          </p>
-        </div>
+
+        <Link to={`/erp/employees/${employee.id}`}>
+          <div className='min-w-0 flex-1'>
+            <p className='text-sm sm:text-base md:text-base font-semibold text-gray-900 truncate'>
+              {employee.emp_user.usr_firstName} {employee.emp_user.usr_lastName}
+            </p>
+            <p className='text-xs sm:text-xs text-gray-600 truncate'>
+              @{employee.emp_user.usr_username} ({employee.emp_position})
+            </p>
+            <p className='text-xs text-gray-500 truncate break-all'>
+              {employee.emp_user.usr_email}
+            </p>
+          </div>
+        </Link>
       </CardContent>
 
       {handleRemoveEmployee && (

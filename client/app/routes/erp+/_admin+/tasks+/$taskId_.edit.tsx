@@ -29,13 +29,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   searchParams.set('sortBy', 'createdAt');
   searchParams.set('sortOrder', 'desc');
 
-  const employeesPromise = getEmployees(searchParams, auth!).catch((e) => {
-    console.error('Error fetching employees:', e);
-    return {
-      success: false,
-      message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
-    };
-  });
   const taskPromise = getTaskById(taskId, auth!).catch((e) => {
     console.error('Error fetching task:', e);
     return {
@@ -46,13 +39,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Trả về dữ liệu cần thiết cho trang TaskEdit
   return {
-    employeesPromise,
     taskPromise,
   };
 };
 
 export default function TaskEdit() {
-  const { employeesPromise, taskPromise } = useLoaderData<typeof loader>();
+  const { taskPromise } = useLoaderData<typeof loader>();
   const formId = useMemo(() => generateFormId('task-update-form'), []);
 
   return (
@@ -80,7 +72,6 @@ export default function TaskEdit() {
         <TaskDetailForm
           formId={formId}
           type='update'
-          employees={employeesPromise}
           taskPromise={taskPromise}
         />
       </div>
@@ -112,30 +103,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     case 'PUT': {
       try {
         const formData = await request.formData();
-
-        // Lấy danh sách assignees (có thể có nhiều giá trị)
-        const assignees = formData.getAll('assignees') as string[];
+        console.log(formData.getAll('assignees'));
 
         // Tạo dữ liệu từ form
         const data: ITaskUpdate = {
           name: formData.get('name') as string,
-          assignees,
           description: formData.get('description') as string,
           startDate: formData.get('startDate') as string,
           endDate: formData.get('endDate') as string,
           status: formData.get('status') as keyof typeof TASK.STATUS,
           priority: formData.get('priority') as keyof typeof TASK.PRIORITY,
           caseOrder: +(formData.get('caseOrder') as string) || 0,
+          assignees: formData.getAll('assignees') as string[],
         };
 
         // Kiểm tra dữ liệu bắt buộc
-        if (
-          !data.name ||
-          !data.endDate ||
-          !data.assignees?.length ||
-          !data.status ||
-          !data.priority
-        ) {
+        if (!data.name || !data.endDate || !data.status || !data.priority) {
           return dataResponse(
             {
               task: null,

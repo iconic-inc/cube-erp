@@ -2,9 +2,6 @@ import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
 import { REWARD } from '../constants/reward.constant';
 
-// Helper function to validate MongoDB ObjectId
-const isValidMongoId = (id: string) => isValidObjectId(id);
-
 // Reward  Schemas
 const rewardBaseSchema = {
   name: z.string().trim().min(1, 'Tên quỹ thưởng là bắt buộc'),
@@ -59,7 +56,7 @@ export const deductToRewardSchema = z.object({
         .string()
         .pipe(z.coerce.number().min(1, 'Số tiền khấu trừ phải lớn hơn 0'))
     ),
-  rewardId: z.string().trim().refine(isValidMongoId, {
+  rewardId: z.string().trim().refine(isValidObjectId, {
     message: 'ID quỹ thưởng không hợp lệ',
   }),
   description: z.string().trim().optional(),
@@ -82,7 +79,7 @@ export const employeeRewardStatsQuerySchema = z.object({
   employeeId: z
     .string()
     .trim()
-    .refine(isValidMongoId, {
+    .refine(isValidObjectId, {
       message: 'ID nhân viên không hợp lệ',
     })
     .optional(),

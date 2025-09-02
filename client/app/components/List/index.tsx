@@ -83,6 +83,7 @@ export default function List<T>({
       <div className='overflow-x-auto'>
         <ItemList<T>
           name={name}
+          isLoadCachedQuery={showToolbar}
           itemsPromise={itemsPromise}
           selectedItems={selectedItems}
           setSelectedItems={setSelectedItems}

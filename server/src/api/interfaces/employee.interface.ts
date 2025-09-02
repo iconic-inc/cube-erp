@@ -1,5 +1,6 @@
 import { HydratedDocument, Model, Types } from 'mongoose';
 import { IUserCreate, IUserDetail, IUserPopulate } from './user.interface';
+import { ITaskPopulate } from './task.interface';
 
 export interface IEmployeePopulate {
   id: string;

@@ -120,7 +120,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                       </span>
                     </div>
 
-                    {task.tsk_assignees && task.tsk_assignees.length > 0 && (
+                    {/* {task.tsk_assignees && task.tsk_assignees.length > 0 && (
                       <div className='flex items-center space-x-1'>
                         <User className='w-3 h-3' />
                         <span className='hidden sm:inline'>
@@ -130,7 +130,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                           {task.tsk_assignees.length}
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   {task.tsk_caseService && (

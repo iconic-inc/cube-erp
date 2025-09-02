@@ -10,50 +10,38 @@ export type ITransactionCategory =
 
 export interface ITransactionPopulate {
   id: string;
-  tx_code: string;
   tx_type: Values<typeof TRANSACTION.TYPE>;
-  tx_title: string;
   tx_amount: number;
-  tx_paid: number;
   tx_paymentMethod: Values<typeof TRANSACTION.PAYMENT_METHOD>;
   tx_category: ITransactionCategory;
   tx_description?: string;
   tx_createdBy: IEmployeePopulate;
   tx_customer?: ICustomerPopulate;
-  tx_caseService?: ICaseServicePopulate;
   tx_date: string;
 }
 
 export interface ITransaction {
   id: string;
-  tx_code: string;
   tx_type: Values<typeof TRANSACTION.TYPE>;
-  tx_title: string;
   tx_amount: number;
-  tx_paid: number;
   tx_paymentMethod: Values<typeof TRANSACTION.PAYMENT_METHOD>;
   tx_category: ITransactionCategory;
   tx_description?: string;
   tx_createdBy: Types.ObjectId;
   tx_customer?: Types.ObjectId;
-  tx_caseService?: Types.ObjectId;
   tx_date: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface ITransactionCreate {
-  code: ITransaction['tx_code'];
   type: ITransaction['tx_type'];
-  title: ITransaction['tx_title'];
   amount: number;
-  paid?: number;
   paymentMethod: ITransaction['tx_paymentMethod'];
   category: ITransaction['tx_category'];
   description?: ITransaction['tx_description'];
   createdBy?: string;
   customer?: string;
-  caseService?: string;
   date?: string; // Optional, defaults to current date
 }
 
@@ -84,7 +72,6 @@ export interface ITransactionQuery {
   startDate?: string;
   endDate?: string;
   customerId?: string;
-  caseServiceId?: string;
   createdById?: string;
   amountMin?: number;
   amountMax?: number;

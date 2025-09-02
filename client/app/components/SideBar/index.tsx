@@ -194,7 +194,12 @@ const getNavItems = (user: IUser) => {
     });
   }
 
-  const otherItems = [];
+  const otherItems = [
+    {
+      title: 'Nhân sự',
+      url: '/erp/nhan-vien/employees',
+    },
+  ];
   // Document Management - Role-based access
   // Rewards - Available to all
   if (canAccessRewardManagement(user?.usr_role)) {

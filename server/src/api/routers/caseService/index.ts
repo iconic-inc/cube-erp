@@ -16,6 +16,10 @@ import {
   caseServiceImportOptionsSchema,
   documentIdsSchema,
   caseDocumentIdsSchema,
+  createInstallmentSchema,
+  addParticipantSchema,
+  addPaymentSchema,
+  updateParticipantsSchema,
 } from '@schemas/caseService.schema';
 
 const router = Router();
@@ -111,6 +115,45 @@ router.delete(
   validateSchema(caseServiceBulkDeleteSchema),
   hasPermission('caseService', 'deleteAny'),
   CaseServiceController.bulkDeleteCaseServices
+);
+
+router.get(
+  '/:id/overview',
+  validateObjectId('id'),
+  hasPermission('caseService', 'readAny'),
+  CaseServiceController.getCaseServiceOverview
+);
+
+router.post(
+  '/:id/installments',
+  validateObjectId('id'),
+  validateSchema(createInstallmentSchema),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.createInstallment
+);
+
+router.post(
+  '/:id/participants',
+  validateObjectId('id'),
+  validateSchema(addParticipantSchema),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.addParticipant
+);
+
+router.post(
+  '/:id/payments',
+  validateObjectId('id'),
+  validateSchema(addPaymentSchema),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.addPayment
+);
+
+// Update case service participants
+router.patch(
+  '/:id',
+  validateObjectId('id'),
+  hasPermission('caseService', 'updateAny'),
+  CaseServiceController.patchCaseService
 );
 
 module.exports = router;

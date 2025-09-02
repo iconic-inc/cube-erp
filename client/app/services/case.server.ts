@@ -6,6 +6,12 @@ import {
   ICaseService,
   ICaseServiceCreate,
   ICaseServiceUpdate,
+  IInstallmentCreate,
+  IParticipantCreate,
+  IPaymentCreate,
+  IPaymentResponse,
+  InstallmentPlanItem,
+  CaseParticipant,
 } from '~/interfaces/case.interface';
 import { ITask } from '~/interfaces/task.interface';
 
@@ -227,6 +233,101 @@ const getMyCaseServices = async (
   return response;
 };
 
+// Get case service overview
+const getCaseServiceOverview = async (id: string, request: ISessionUser) => {
+  const response = await fetcher<ICaseService>(
+    `/case-services/${id}/overview`,
+    {
+      request,
+    },
+  );
+  return response;
+};
+
+// Create an installment for a case service
+const createInstallment = async (
+  caseId: string,
+  installmentData: IInstallmentCreate,
+  request: ISessionUser,
+) => {
+  try {
+    const response = await fetcher<InstallmentPlanItem[]>(
+      `/case-services/${caseId}/installments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(installmentData),
+        request,
+      },
+    );
+    return response;
+  } catch (error) {
+    console.error('Error creating installment:', error);
+    throw error;
+  }
+};
+
+// Add a participant to a case service
+const addParticipant = async (
+  caseId: string,
+  participantData: IParticipantCreate,
+  request: ISessionUser,
+) => {
+  try {
+    const response = await fetcher<CaseParticipant[]>(
+      `/case-services/${caseId}/participants`,
+      {
+        method: 'POST',
+        body: JSON.stringify(participantData),
+        request,
+      },
+    );
+    return response;
+  } catch (error) {
+    console.error('Error adding participant:', error);
+    throw error;
+  }
+};
+
+// Add a payment to a case service installment
+const addPayment = async (
+  caseId: string,
+  paymentData: IPaymentCreate,
+  request: ISessionUser,
+) => {
+  try {
+    const response = await fetcher<IPaymentResponse>(
+      `/case-services/${caseId}/payments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(paymentData),
+        request,
+      },
+    );
+    return response;
+  } catch (error) {
+    console.error('Error adding payment:', error);
+    throw error;
+  }
+};
+
+const patchCaseService = async (
+  caseId: string,
+  actionData: { op: string; [key: string]: any },
+  request: ISessionUser,
+) => {
+  try {
+    const response = await fetcher<ICaseService>(`/case-services/${caseId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(actionData),
+      request,
+    });
+    return response;
+  } catch (error) {
+    console.error('Error patching case service:', error);
+    throw error;
+  }
+};
+
 export {
   getCaseServices,
   getCaseServiceById,
@@ -241,4 +342,9 @@ export {
   getCaseServiceTasks,
   getCaseServiceDocuments,
   getMyCaseServices,
+  getCaseServiceOverview,
+  createInstallment,
+  addParticipant,
+  addPayment,
+  patchCaseService,
 };

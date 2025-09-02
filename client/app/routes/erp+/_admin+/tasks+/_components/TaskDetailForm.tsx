@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
 
 import { action } from '~/routes/erp+/_admin+/tasks+/new';
-import { format } from 'date-fns';
 import { TASK } from '~/constants/task.constant';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IListResponse } from '~/interfaces/response.interface';
@@ -11,7 +10,6 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
-import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
 import { ArrowLeft, Plus, Save, XCircle } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
@@ -33,8 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 import { ICaseService } from '~/interfaces/case.interface';
 import {
   Card,
@@ -43,20 +40,19 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import Defer from '~/components/Defer';
 import CaseServiceBrief from './CaseServiceBrief';
 import { useERPLoaderData } from '~/lib';
 import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { Separator } from '~/components/ui/separator';
+import EmployeePicker from '~/components/EmployeePicker';
 
 export default function TaskDetailForm({
   formId,
-  employees,
   type,
   taskPromise,
   casePromise,
 }: {
   formId: string;
-  employees: ILoaderDataPromise<IListResponse<IEmployeeBrief>>;
   type: 'create' | 'update';
   taskPromise?: ILoaderDataPromise<ITask>;
   casePromise?: ILoaderDataPromise<ICaseService>;
@@ -103,25 +99,6 @@ export default function TaskDetailForm({
       );
       setEmployeeToRemove(null);
     }
-  };
-
-  const handleAddAssignees = (employees: IEmployeeBrief[]) => {
-    if (employees.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
-      return;
-    }
-
-    // Check if any of the selected employees are already in the whitelist
-    const newAssignees = employees.filter(
-      (emp) => !assignees.some((assignee) => assignee.id === emp.id),
-    );
-
-    if (newAssignees.length === 0) {
-      toast.error('Tất cả nhân viên đã có trong danh sách truy cập.');
-      return;
-    }
-
-    setEmployeesToAdd(newAssignees);
   };
 
   const confirmAddAssignees = () => {
@@ -229,7 +206,7 @@ export default function TaskDetailForm({
             setStatus(
               (task.tsk_status as keyof typeof TASK.STATUS) || 'not_started',
             );
-            setCaseService(task.tsk_caseService || null);
+            setCaseService((task.tsk_caseService as any) || null);
             setCaseOrder(task.tsk_caseOrder || 0);
 
             // Convert string dates to Date objects
@@ -240,11 +217,7 @@ export default function TaskDetailForm({
             if (task.tsk_endDate) {
               setEndDate(new Date(task.tsk_endDate));
             }
-
-            // Set assignees if available
-            if (task.tsk_assignees && Array.isArray(task.tsk_assignees)) {
-              setAssignees(task.tsk_assignees);
-            }
+            setAssignees(task.tsk_assignees);
           } else {
             console.error('Task data is not in the expected format:', task);
             toast.error('Không thể tải dữ liệu task. Vui lòng thử lại sau.');
@@ -265,12 +238,6 @@ export default function TaskDetailForm({
           const caseData = await casePromise;
           if (caseData && 'id' in caseData) {
             setCaseService(caseData);
-            setAssignees([
-              ...(caseData.case_assignees || []),
-              ...(caseData.case_leadAttorney
-                ? [caseData.case_leadAttorney]
-                : []),
-            ]);
             setStartDate(new Date(caseData.case_startDate));
           } else {
             console.error('Case data is not in the expected format:', caseData);
@@ -284,6 +251,8 @@ export default function TaskDetailForm({
       loadCase();
     }
   }, [type, taskPromise, casePromise]);
+
+  const [openEmployeePicker, setOpenEmployeePicker] = useState(false);
 
   return (
     <fetcher.Form
@@ -364,19 +333,16 @@ export default function TaskDetailForm({
             >
               Mô tả
             </Label>
-            <Hydrated>
-              {() => (
-                <div className='h-[250px] sm:h-[200px]'>
-                  <TextEditor
-                    name='description'
-                    value={description}
-                    isReady={isContentReady}
-                    onChange={handleDescriptionChange}
-                    placeholder='Nhập mô tả chi tiết cho Task'
-                  />
-                </div>
-              )}
-            </Hydrated>
+
+            <div className='h-[250px] sm:h-[200px]'>
+              <TextEditor
+                name='description'
+                value={description}
+                isReady={isContentReady}
+                onChange={handleDescriptionChange}
+                placeholder='Nhập mô tả chi tiết cho Task'
+              />
+            </div>
           </div>
 
           {/* Priority, Status, Dates */}
@@ -474,30 +440,58 @@ export default function TaskDetailForm({
             </div>
           </div>
 
-          {/* Case Service Selection */}
-          {!caseService && type === 'create' && (
-            <div className='flex items-center justify-center py-4 sm:py-6 border-t border-gray-200'>
-              <Button
-                variant='primary'
-                type='button'
-                asChild
-                className='text-sm sm:text-base'
-              >
-                <Link prefetch='intent' to={`/erp/cases`}>
-                  Chọn hồ sơ liên quan
-                </Link>
-              </Button>
-            </div>
-          )}
+          <Separator />
 
           {/* Assignees */}
           <div className='space-y-4'>
-            <Label className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'>
-              <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
-              {assignees.length === 0 && (
-                <span className='text-red-500 ml-1'>*</span>
-              )}
-            </Label>
+            <div className='flex justify-between items-center'>
+              <Label className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'>
+                <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
+                {assignees.length === 0 && (
+                  <span className='text-red-500 ml-1'>*</span>
+                )}
+              </Label>
+
+              <Button
+                variant={'primary'}
+                type='button'
+                onClick={() => setOpenEmployeePicker(true)}
+              >
+                Thêm nhân sự
+              </Button>
+            </div>
+
+            {openEmployeePicker && (
+              <EmployeePicker
+                onClose={() => setOpenEmployeePicker(false)}
+                employeeGetter={async () => {
+                  try {
+                    const response = await fetch(
+                      `/api/data?getter=getEmployees&limit=10000&page=1`,
+                    );
+                    const data: IListResponse<IEmployee> =
+                      await response.json();
+
+                    return {
+                      ...data,
+                      data: data.data.filter(
+                        (employee) =>
+                          !assignees.some(
+                            (assignee) => assignee.id === employee.id,
+                          ),
+                      ),
+                    };
+                  } catch (error) {
+                    console.error('Error fetching documents:', error);
+                    toast.error('Có lỗi xảy ra khi tải nhân viên');
+                    return { data: [], pagination: {} as any };
+                  }
+                }}
+                onSelect={(employees: IEmployee[]) => {
+                  setAssignees((prev) => [...prev, ...employees]);
+                }}
+              />
+            )}
 
             {assignees.length > 0 && (
               <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4'>
@@ -516,108 +510,6 @@ export default function TaskDetailForm({
                 {errors.assignees}
               </p>
             )}
-
-            <Defer resolve={employees}>
-              {(employeeData) => (
-                <div className='sm:p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                  {!!selected.length && (
-                    <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg gap-2 sm:gap-0'>
-                      <div>
-                        <span className='font-semibold text-sm sm:text-base'>
-                          Đã chọn {selected.length} nhân viên để thêm
-                        </span>
-                      </div>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          type='button'
-                          onClick={() => setSelectedItems([])}
-                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-sm sm:text-base'
-                        >
-                          <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
-                          <span>Bỏ chọn tất cả</span>
-                        </Button>
-                        <Button
-                          size='sm'
-                          onClick={() => handleAddAssignees(selected)}
-                          type='button'
-                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-sm sm:text-base'
-                        >
-                          <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
-                          <span>Thêm đã chọn</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  <ItemList<IEmployeeBrief>
-                    addNewHandler={() => navigate('/erp/employees/new')}
-                    itemsPromise={employeeData}
-                    name='Nhân viên'
-                    visibleColumns={[
-                      {
-                        key: 'emp_user.usr_firstName',
-                        title: 'Tên nhân viên',
-                        visible: true,
-                        render: (item) => (
-                          <a
-                            href={`/erp/employees/${item.id}`}
-                            className='flex items-center space-x-3'
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            <span>
-                              {item.emp_user.usr_firstName}{' '}
-                              {item.emp_user.usr_lastName}
-                            </span>
-                          </a>
-                        ),
-                      },
-                      {
-                        key: 'emp_user.usr_username',
-                        title: 'Tài khoản',
-                        visible: true,
-                        render: (item) => item.emp_user.usr_username,
-                      },
-                      {
-                        key: 'emp_position',
-                        title: 'Chức vụ',
-                        visible: true,
-                        render: (item) => item.emp_position,
-                      },
-                      {
-                        key: 'action',
-                        title: 'Hành động',
-                        visible: true,
-                        render: (item) => {
-                          const isAdded = !!assignees.find(
-                            (selectedAssignee) =>
-                              selectedAssignee.id === item.id,
-                          );
-
-                          return (
-                            <Button
-                              variant='default'
-                              className={`bg-blue-500 hover:bg-blue-400 text-sm sm:text-base ${
-                                isAdded ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                              type='button'
-                              onClick={() => handleAddAssignees([item])}
-                              disabled={isAdded}
-                            >
-                              {isAdded ? 'Đã thêm' : 'Thêm'}
-                            </Button>
-                          );
-                        },
-                      },
-                    ]}
-                    selectedItems={selected}
-                    setSelectedItems={setSelectedItems}
-                  />
-                </div>
-              )}
-            </Defer>
           </div>
         </CardContent>
 
@@ -681,7 +573,7 @@ export default function TaskDetailForm({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận Thêm nhân sự</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào danh
               sách người thực hiện không?

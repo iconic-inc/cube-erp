@@ -4,12 +4,13 @@ import {
   ICaseServiceQuery,
   ICaseServiceUpdate,
   ICaseServiceResponse,
+  InstallmentPlanItem,
+  IncurredCost,
+  CaseParticipant,
 } from '../interfaces/caseService.interface';
-import { BadRequestError, NotFoundError } from '../core/errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../core/errors';
 import { DocumentModel } from '@models/document.model';
 import { DocumentCaseModel } from '@models/documentCase.model';
-import { CustomerModel } from '@models/customer.model';
-import { EmployeeModel } from '@models/employee.model';
 import { IDocumentQuery } from '../interfaces/document.interface';
 import {
   getReturnList,
@@ -21,19 +22,18 @@ import { getEmployeeByUserId } from './employee.service';
 import { CaseServiceModel } from '@models/caseService.model';
 import { CASE_SERVICE, TASK } from '../constants';
 import { CUSTOMER } from '../constants/customer.constant';
-import { USER } from '../constants/user.constant';
-import { TaskTemplateModel } from '@models/taskTemplate.model';
 import { TaskModel } from '@models/task.model';
 import '@utils/date.util'; // Ensure date utilities are loaded
-import { getTasks } from './task.service';
-import { sendTaskNotificationEmail } from './email.service';
+import { createTasksFromTemplate, getTasks } from './task.service';
 
 // Import modules for export functionality
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
 import { serverConfig } from '@configs/config.server';
-import { format, parse } from 'date-fns';
+import { parse } from 'date-fns';
+import { EmployeeModel } from '@models/employee.model';
+import { ITask } from '../interfaces/task.interface';
 
 const getCaseServices = async (
   query: ICaseServiceQuery = {}
@@ -57,7 +57,6 @@ const getCaseServices = async (
       startDate,
       endDate,
       customerId,
-      leadAttorneyId,
       employeeUserId,
     } = query;
 
@@ -108,21 +107,52 @@ const getCaseServices = async (
       matchConditions.case_customer = new Types.ObjectId(customerId);
     }
 
-    // Add lead attorney filter if provided
-    if (leadAttorneyId) {
-      matchConditions.case_leadAttorney = new Types.ObjectId(leadAttorneyId);
-    }
-
-    // Add employee filter if provided (matches either lead attorney or assignees)
+    // Add employee filter if provided (using participant model)
     if (employeeId) {
-      const employeeObjectId = new Types.ObjectId(employeeId);
+      // Find case services where the employee is a participant in any related task
+      const participantTasks = await TaskModel.aggregate([
+        {
+          $lookup: {
+            from: 'case_participants',
+            localField: '_id',
+            foreignField: 'ptt_task',
+            as: 'case_participants',
+          },
+        },
+        {
+          $match: {
+            case_participants: {
+              $elemMatch: {
+                ptt_employee: new Types.ObjectId(employeeId),
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            tsk_caseService: 1,
+          },
+        },
+      ]);
 
-      // Add a complex condition to match cases where the employee is either lead attorney or assignee
-      matchConditions.$or = [
-        ...(matchConditions.$or || []),
-        { case_leadAttorney: employeeObjectId },
-        { case_assignees: { $in: [employeeObjectId] } },
-      ];
+      const caseServiceIds = participantTasks
+        .map((task) => task.tsk_caseService)
+        .filter((id) => id); // Remove null/undefined values
+
+      if (caseServiceIds.length > 0) {
+        matchConditions._id = { $in: caseServiceIds };
+      } else {
+        // If no tasks found for this employee, return empty result
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          },
+        };
+      }
     }
 
     // Add match stage if we have any conditions
@@ -140,58 +170,9 @@ const getCaseServices = async (
       },
     });
 
-    // Stage 3: Lookup lead attorney information with nested user lookup
-    pipeline.push({
-      $lookup: {
-        from: USER.EMPLOYEE.COLLECTION_NAME,
-        localField: 'case_leadAttorney',
-        foreignField: '_id',
-        as: 'case_leadAttorney',
-        pipeline: [
-          {
-            $lookup: {
-              from: USER.COLLECTION_NAME,
-              localField: 'emp_user',
-              foreignField: '_id',
-              as: 'emp_user',
-            },
-          },
-          {
-            $unwind: { path: '$emp_user', preserveNullAndEmptyArrays: true },
-          },
-        ],
-      },
-    });
-
-    // Stage 4: Lookup assignees information with nested user lookup
-    pipeline.push({
-      $lookup: {
-        from: USER.EMPLOYEE.COLLECTION_NAME,
-        localField: 'case_assignees',
-        foreignField: '_id',
-        as: 'case_assignees',
-        pipeline: [
-          {
-            $lookup: {
-              from: USER.COLLECTION_NAME,
-              localField: 'emp_user',
-              foreignField: '_id',
-              as: 'emp_user',
-            },
-          },
-          {
-            $unwind: { path: '$emp_user', preserveNullAndEmptyArrays: true },
-          },
-        ],
-      },
-    });
-
     // Stage 5: Unwind the arrays to work with single documents
     pipeline.push({
       $unwind: { path: '$case_customer', preserveNullAndEmptyArrays: true },
-    });
-    pipeline.push({
-      $unwind: { path: '$case_leadAttorney', preserveNullAndEmptyArrays: true },
     });
 
     // Stage 6: Add search filter if provided (after lookups for richer search)
@@ -205,14 +186,6 @@ const getCaseServices = async (
             { 'case_customer.cus_firstName': searchRegex },
             { 'case_customer.cus_lastName': searchRegex },
             { 'case_customer.cus_code': searchRegex },
-            { 'case_leadAttorney.emp_user.usr_firstName': searchRegex },
-            { 'case_leadAttorney.emp_user.usr_lastName': searchRegex },
-            { 'case_leadAttorney.emp_user.usr_username': searchRegex },
-            { 'case_leadAttorney.emp_code': searchRegex },
-            { 'case_assignees.emp_user.usr_firstName': searchRegex },
-            { 'case_assignees.emp_user.usr_lastName': searchRegex },
-            { 'case_assignees.emp_user.usr_username': searchRegex },
-            { 'case_assignees.emp_code': searchRegex },
           ],
         },
       });
@@ -229,38 +202,6 @@ const getCaseServices = async (
           cus_code: 1,
         },
         case_code: 1,
-        case_leadAttorney: {
-          _id: 1,
-          emp_user: {
-            _id: 1,
-            usr_username: 1,
-            usr_email: 1,
-            usr_firstName: 1,
-            usr_lastName: 1,
-          },
-          emp_code: 1,
-          emp_position: 1,
-          emp_department: 1,
-        },
-        case_assignees: {
-          $map: {
-            input: '$case_assignees',
-            as: 'assignee',
-            in: {
-              _id: '$$assignee._id',
-              emp_user: {
-                _id: '$$assignee.emp_user._id',
-                usr_username: '$$assignee.emp_user.usr_username',
-                usr_email: '$$assignee.emp_user.usr_email',
-                usr_firstName: '$$assignee.emp_user.usr_firstName',
-                usr_lastName: '$$assignee.emp_user.usr_lastName',
-              },
-              emp_code: '$$assignee.emp_code',
-              emp_position: '$$assignee.emp_position',
-              emp_department: '$$assignee.emp_department',
-            },
-          },
-        },
         case_notes: 1,
         case_status: 1,
         case_startDate: 1,
@@ -315,7 +256,7 @@ const getCaseServices = async (
   }
 };
 
-const getCaseServiceById = async (id: string) => {
+const getCaseServiceById = async (id: string, employeeUserId: string) => {
   if (!Types.ObjectId.isValid(id)) {
     throw new BadRequestError('ID Hồ sơ vụ việc không hợp lệ');
   }
@@ -326,24 +267,31 @@ const getCaseServiceById = async (id: string) => {
         path: 'case_customer',
         select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
       },
-      {
-        path: 'case_leadAttorney',
-        select: 'emp_user emp_code emp_position emp_department',
-        populate: {
-          path: 'emp_user',
-          select: 'usr_username usr_email usr_firstName usr_lastName',
-        },
-      },
-      {
-        path: 'case_assignees',
-        select: 'emp_user emp_code emp_position emp_department',
-        populate: {
-          path: 'emp_user',
-          select: 'usr_username usr_email usr_firstName usr_lastName',
-        },
-      },
     ])
+    .populate({
+      path: 'case_participants.employeeId',
+      select: 'emp_code emp_user',
+      populate: {
+        path: 'emp_user',
+        select: 'usr_firstName usr_lastName usr_email',
+      },
+    })
     .lean();
+  if (!caseService) {
+    throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
+  }
+
+  const employee = await getEmployeeByUserId(employeeUserId);
+  const isAdmin = employee.emp_user.usr_role?.slug === 'admin';
+  const isParticipant = caseService.case_participants.some(
+    (participant) =>
+      participant.employeeId.toString() === employee.id.toString()
+  );
+  if (!isAdmin && !isParticipant) {
+    throw new ForbiddenError(
+      'Bạn không có quyền truy cập vào Hồ sơ vụ việc này'
+    );
+  }
   if (!caseService) {
     throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
   }
@@ -351,121 +299,272 @@ const getCaseServiceById = async (id: string) => {
   return getReturnData(caseService);
 };
 
+// Helper function to calculate totals cache
+const calculateTotalsCache = (caseServiceData: {
+  pricing?: ICaseServiceCreate['pricing'];
+  installments?: ICaseServiceCreate['installments'];
+  incurredCosts?: ICaseServiceCreate['incurredCosts'];
+  participants?: ICaseServiceCreate['participants'];
+}) => {
+  const {
+    pricing,
+    installments = [],
+    incurredCosts = [],
+    participants = [],
+  } = caseServiceData;
+
+  // Calculate scheduled amount (sum of installments)
+  const scheduled = installments.reduce(
+    (sum: number, installment: any) => sum + (installment.amount || 0),
+    0
+  );
+
+  // Calculate paid amount (sum of paid amounts in installments)
+  const paid = installments.reduce(
+    (sum: number, installment: any) => sum + (installment.paidAmount || 0),
+    0
+  );
+
+  // Calculate outstanding (scheduled - paid)
+  const outstanding = scheduled - paid;
+
+  // Calculate tax computed based on pricing
+  let taxComputed = 0;
+  if (pricing && pricing.taxes) {
+    const baseForTax =
+      // pricing.scope === 'ON_BASE_PLUS_INCIDENTALS'
+      (+pricing.baseAmount || 0) +
+      (+pricing.addOns! || 0) +
+      (+pricing.discounts! || 0);
+    // incurredCosts.reduce(
+    //   (sum: number, cost: any) => sum + (cost.amount || 0),
+    //   0
+    // )
+    // : (pricing.baseAmount || 0) +
+    //   (pricing.addOns || 0) +
+    //   (pricing.discounts || 0);
+
+    taxComputed = pricing.taxes.reduce((sum: number, tax: any) => {
+      if (tax.mode === 'PERCENT') {
+        return sum + (baseForTax * (tax.value || 0)) / 100;
+      } else {
+        return sum + (tax.value || 0);
+      }
+    }, 0);
+  }
+
+  // Calculate incurred cost total
+  const incurredCostTotal = incurredCosts.reduce(
+    (sum: number, cost: any) => sum + (cost.amount || 0),
+    0
+  );
+
+  // Calculate commission total based on participant commissions
+  const baseAmount = pricing?.baseAmount || 0;
+  const addOns = pricing?.addOns || 0;
+  const discounts = pricing?.discounts || 0;
+
+  // Calculate gross amount (before taxes and costs)
+  const grossAmount = baseAmount + addOns + discounts;
+
+  // Calculate net amount (after taxes and incurred costs but before commissions)
+  const netAmount = grossAmount - taxComputed - incurredCostTotal;
+
+  let commissionTotal = 0;
+  const commissionBreakdown: Array<{
+    employeeId: string;
+    role?: string;
+    commission: {
+      type: string;
+      value: number;
+    };
+    calculatedAmount: number;
+    baseAmount: number; // The amount the commission was calculated on
+  }> = [];
+
+  if (participants && participants.length > 0) {
+    participants.forEach((participant: any) => {
+      if (!participant.commission) return;
+
+      const { type, value } = participant.commission;
+      let commissionAmount = 0;
+      let calculationBase = 0;
+
+      switch (type) {
+        case 'PERCENT_OF_GROSS':
+          calculationBase = grossAmount;
+          commissionAmount = (grossAmount * value) / 100;
+          break;
+        case 'PERCENT_OF_NET':
+          calculationBase = netAmount;
+          commissionAmount = (netAmount * value) / 100;
+          break;
+        case 'FLAT':
+          calculationBase = value;
+          commissionAmount = value;
+          break;
+        default:
+          calculationBase = 0;
+          commissionAmount = 0;
+      }
+
+      commissionBreakdown.push({
+        employeeId:
+          participant.employeeId?.toString() || participant.employeeId,
+        role: participant.role,
+        commission: { type, value },
+        calculatedAmount: commissionAmount,
+        baseAmount: calculationBase,
+      });
+
+      commissionTotal += commissionAmount;
+    });
+  }
+  const netFinal =
+    baseAmount +
+    addOns +
+    discounts -
+    taxComputed -
+    incurredCostTotal -
+    commissionTotal;
+
+  // Find next due date
+  const now = new Date();
+  const upcomingInstallments = installments
+    .filter(
+      (installment: any) =>
+        installment.status !== 'PAID' && new Date(installment.dueDate) >= now
+    )
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    );
+  const nextDueDate =
+    upcomingInstallments.length > 0
+      ? new Date(upcomingInstallments[0].dueDate)
+      : null;
+
+  // Count overdue installments
+  const overdueCount = installments.filter(
+    (installment: any) =>
+      installment.status !== 'PAID' && new Date(installment.dueDate) < now
+  ).length;
+
+  return {
+    // Payment tracking
+    scheduled,
+    paid,
+    outstanding,
+
+    // Cost breakdown
+    grossAmount, // Base + addons + discounts
+    taxComputed,
+    incurredCostTotal,
+    commissionTotal,
+    netFinal, // Final amount after all deductions
+
+    // Commission details
+    commissionBreakdown,
+
+    // Schedule information
+    nextDueDate,
+    overdueCount,
+  };
+};
+
 const createCaseService = async (caseServiceData: ICaseServiceCreate) => {
-  const [foundCase, taskTemplate] = await Promise.all([
-    CaseServiceModel.findOne({
-      case_code: caseServiceData.code,
-    }),
-    TaskTemplateModel.findOne({ tpl_key: 'default' }).lean(),
-  ]);
+  const foundCase = await CaseServiceModel.findOne({
+    case_code: caseServiceData.code,
+  });
   if (foundCase) {
     throw new BadRequestError('Mã Hồ sơ vụ việc đã tồn tại');
   }
-  if (!taskTemplate) {
-    throw new NotFoundError('Không tìm thấy mẫu công việc mặc định');
+
+  // Clean up temporary IDs from nested arrays before saving
+  const cleanedData = { ...caseServiceData };
+
+  // Clean installments - remove _id field for new entries or if it's a temporary ID
+  if (cleanedData.installments) {
+    cleanedData.installments = cleanedData.installments.map((installment) => {
+      // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
+      if (
+        installment._id &&
+        (installment._id.toString().startsWith('temp_') ||
+          !Types.ObjectId.isValid(installment._id))
+      ) {
+        const { _id, ...cleanedInstallment } = installment;
+        return getReturnData(cleanedInstallment) as InstallmentPlanItem;
+      }
+      return getReturnData(installment);
+    }) as InstallmentPlanItem[];
   }
+
+  // Clean incurred costs - remove _id field for new entries or if it's a temporary ID
+  if (cleanedData.incurredCosts) {
+    cleanedData.incurredCosts = cleanedData.incurredCosts.map((cost) => {
+      // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
+      if (
+        cost._id &&
+        (cost._id.toString().startsWith('temp_') ||
+          !Types.ObjectId.isValid(cost._id))
+      ) {
+        const { _id, ...cleanedCost } = cost;
+        return getReturnData(cleanedCost) as IncurredCost;
+      }
+      return getReturnData(cost);
+    }) as IncurredCost[];
+  }
+
+  // Calculate totals cache
+  const totalsCache = calculateTotalsCache(cleanedData);
+  cleanedData.totalsCache = totalsCache;
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const [caseService] = await CaseServiceModel.create(
-      [formatAttributeName(caseServiceData, CASE_SERVICE.PREFIX)],
+      [formatAttributeName(cleanedData, CASE_SERVICE.PREFIX)],
       { session }
     );
     if (!caseService) {
       throw new BadRequestError('Không thể tạo Hồ sơ vụ việc');
     }
 
-    for (const step of taskTemplate.tpl_steps) {
-      const [task] = await TaskModel.create(
-        [
-          formatAttributeName(
-            {
-              ...step,
-              _id: undefined, // Remove _id to avoid conflicts
-              name: `${caseServiceData.code} - ${step.name}`,
-              caseService: caseService._id,
-              startDate: new Date().addDays(step.caseOrder - 1), // Default start date is relative to case order (0-6)
-              endDate: new Date().addDays(step.caseOrder), // Default end date is one day after start date (1-7)
-              assignees: [
-                ...(caseServiceData.assignees || []),
-                caseServiceData.leadAttorney,
-              ],
-            },
-            TASK.PREFIX
-          ),
-        ],
-        { session }
+    // Create tasks from template
+    await createTasksFromTemplate('default', caseService, session);
+
+    // If participants are provided, assign them to all created tasks
+    if (cleanedData.participants && cleanedData.participants.length > 0) {
+      const participantEmployeeIds = cleanedData.participants.map((p) =>
+        p.employeeId.toString()
       );
-      if (!task) {
-        throw new BadRequestError('Không thể tạo công việc');
-      }
 
-      // Get the created task with populated data for email notification
-      const populatedTask = await TaskModel.findById(task._id)
-        .populate({
-          path: 'tsk_assignees',
-          select: 'emp_code emp_position emp_department emp_user',
-          populate: {
-            path: 'emp_user',
-            select:
-              'usr_firstName usr_lastName usr_email usr_avatar usr_username',
-          },
-        })
-        .populate({
-          path: 'tsk_caseService',
-          select:
-            'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
-          populate: {
-            path: 'case_customer',
-            select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
-          },
-        })
-        .session(session);
+      // Update task assignees after tasks are created
+      // Note: We do this after transaction commit to avoid issues
+      session.commitTransaction();
 
-      // Send email notifications to assignees
-      if (populatedTask && populatedTask.tsk_assignees) {
-        const emailPromises = populatedTask.tsk_assignees.map(
-          async (assignee: any) => {
-            if (assignee.emp_user?.usr_email) {
-              try {
-                await sendTaskNotificationEmail(assignee.emp_user.usr_email, {
-                  taskId: populatedTask._id.toString(),
-                  taskName: populatedTask.tsk_name,
-                  taskDescription:
-                    populatedTask.tsk_description || 'Không có mô tả',
-                  priority: populatedTask.tsk_priority,
-                  startDate: new Date(
-                    populatedTask.tsk_startDate
-                  ).toLocaleString('vi-VN'),
-                  endDate: new Date(populatedTask.tsk_endDate).toLocaleString(
-                    'vi-VN'
-                  ),
-                  employeeName: `${assignee.emp_user.usr_firstName || ''} ${
-                    assignee.emp_user.usr_lastName || ''
-                  }`.trim(),
-                });
-              } catch (emailError) {
-                console.error(
-                  `Failed to send email to ${assignee.emp_user.usr_email}:`,
-                  emailError
-                );
-                // Don't throw error to prevent transaction rollback due to email failures
-              }
-            }
-          }
+      try {
+        await updateTaskAssigneesForCase(
+          caseService._id.toString(),
+          participantEmployeeIds
         );
-
-        // Execute email notifications (but don't wait for them to complete to avoid blocking the transaction)
-        Promise.allSettled(emailPromises).catch((error) => {
-          console.error('Error sending some task notification emails:', error);
-        });
+        console.log(
+          `Assigned ${participantEmployeeIds.length} participants to tasks for new case service ${caseService._id}`
+        );
+      } catch (taskUpdateError) {
+        console.error(
+          'Error assigning participants to tasks for new case:',
+          taskUpdateError
+        );
+        // Don't fail the whole operation if task assignment fails
       }
-    }
-    await session.commitTransaction();
 
-    return getReturnData(caseService);
+      return getReturnData(caseService);
+    } else {
+      await session.commitTransaction();
+      return getReturnData(caseService);
+    }
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -505,50 +604,64 @@ const updateCaseService = async (id: string, data: ICaseServiceUpdate) => {
       data.endDate = new Date().toISOString();
     }
 
+    // Clean up temporary IDs from nested arrays before updating
+    const cleanedData = { ...data };
+
+    // Clean installments - remove _id field for new entries or if it's a temporary ID
+    if (cleanedData.installments) {
+      cleanedData.installments = cleanedData.installments.map((installment) => {
+        // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
+        if (
+          installment._id &&
+          (installment._id.toString().startsWith('temp_') ||
+            !Types.ObjectId.isValid(installment._id))
+        ) {
+          const { _id, ...cleanedInstallment } = installment;
+          return getReturnData(cleanedInstallment) as InstallmentPlanItem;
+        }
+        return getReturnData(installment);
+      }) as InstallmentPlanItem[];
+    }
+
+    // Clean incurred costs - remove _id field for new entries or if it's a temporary ID
+    if (cleanedData.incurredCosts) {
+      cleanedData.incurredCosts = cleanedData.incurredCosts.map((cost) => {
+        // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
+        if (
+          cost._id &&
+          (cost._id.toString().startsWith('temp_') ||
+            !Types.ObjectId.isValid(cost._id))
+        ) {
+          const { _id, ...cleanedCost } = cost;
+          return getReturnData(cleanedCost) as IncurredCost;
+        }
+        return getReturnData(cost);
+      }) as IncurredCost[];
+    }
+
+    // Calculate totals cache
+    const totalsCache = calculateTotalsCache(cleanedData);
+    cleanedData!.totalsCache = totalsCache;
+
     const updatedCaseService = await CaseServiceModel.findByIdAndUpdate(
       id,
       {
         $set: formatAttributeName(
           removeNestedNullish({
-            ...data,
-            customer: data.customer,
-            leadAttorney: data.leadAttorney,
-            assignees: data.assignees,
-            code: data.code,
-            notes: data.notes,
-            status: data.status,
-            startDate: data.startDate
-              ? new Date(data.startDate).toISOString()
+            ...cleanedData,
+            customer: cleanedData.customer,
+            code: cleanedData.code,
+            notes: cleanedData.notes,
+            status: cleanedData.status,
+            startDate: cleanedData.startDate
+              ? new Date(cleanedData.startDate).toISOString()
               : undefined,
           }),
           CASE_SERVICE.PREFIX
         ),
       },
       { new: true }
-    )
-      .populate([
-        {
-          path: 'case_customer',
-          select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
-        },
-        {
-          path: 'case_leadAttorney',
-          select: 'emp_user emp_code emp_position emp_department',
-          populate: {
-            path: 'emp_user',
-            select: 'usr_username usr_email usr_firstName usr_lastName',
-          },
-        },
-        {
-          path: 'case_assignees',
-          select: 'emp_user emp_code emp_position emp_department',
-          populate: {
-            path: 'emp_user',
-            select: 'usr_username usr_email usr_firstName usr_lastName',
-          },
-        },
-      ])
-      .lean();
+    ).lean();
 
     if (!updatedCaseService) {
       throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc sau khi cập nhật');
@@ -570,23 +683,51 @@ const updateCaseService = async (id: string, data: ICaseServiceUpdate) => {
   }
 };
 
-const deleteCaseService = async (id: string) => {};
+const deleteCaseService = async (id: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const caseService = await CaseServiceModel.findById(id).session(session);
+    if (!caseService) {
+      throw new NotFoundError('Không tìm thấy Hồ sơ vụ việc');
+    }
+    // Delete document associations
+    await DocumentCaseModel.deleteMany({ caseService: id }, { session });
+
+    // Delete related tasks
+    await TaskModel.deleteMany({ tsk_caseService: id }, { session });
+
+    // Delete the case service
+    await CaseServiceModel.findByIdAndDelete(id, { session });
+
+    await session.commitTransaction();
+    return getReturnData(caseService);
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
 
 const bulkDeleteCaseServices = async (ids: string[]) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    // Delete case services
     await CaseServiceModel.deleteMany({ _id: { $in: ids } }, { session });
+
+    // Delete document associations
     await DocumentCaseModel.deleteMany(
       { caseService: { $in: ids } },
       { session }
     );
+
+    // Delete related tasks
     await TaskModel.deleteMany({ tsk_caseService: { $in: ids } }, { session });
-    await DocumentCaseModel.deleteMany(
-      { caseService: { $in: ids } },
-      { session }
-    );
+
     await session.commitTransaction();
     return { success: true, message: 'Bulk delete successful' };
   } catch (error) {
@@ -684,15 +825,6 @@ const importCaseServices = async (
           continue;
         }
 
-        if (!caseServiceData.leadAttorney) {
-          results.errors.push({
-            row: rowNumber,
-            error: 'Thiếu thông tin luật sư chính',
-            data: row,
-          });
-          continue;
-        }
-
         // Check for existing case service
         const existingCaseService = await CaseServiceModel.findOne({
           case_code: caseServiceData.code,
@@ -709,8 +841,6 @@ const importCaseServices = async (
               formatAttributeName(
                 {
                   customer: caseServiceData.customer,
-                  leadAttorney: caseServiceData.leadAttorney,
-                  assignees: caseServiceData.assignees,
                   notes: caseServiceData.notes,
                   status: caseServiceData.status,
                   startDate: caseServiceData.startDate,
@@ -736,8 +866,6 @@ const importCaseServices = async (
                 {
                   code: caseServiceData.code,
                   customer: caseServiceData.customer,
-                  leadAttorney: caseServiceData.leadAttorney,
-                  assignees: caseServiceData.assignees,
                   notes: caseServiceData.notes,
                   status: caseServiceData.status,
                   startDate: caseServiceData.startDate,
@@ -750,35 +878,8 @@ const importCaseServices = async (
           );
 
           if (newCaseService) {
-            // Create default tasks for the new case service
-            const taskTemplate = await TaskTemplateModel.findOne({
-              tpl_key: 'default',
-            }).lean();
-
-            if (taskTemplate) {
-              for (const step of taskTemplate.tpl_steps) {
-                await TaskModel.create(
-                  [
-                    formatAttributeName(
-                      {
-                        ...step,
-                        _id: undefined,
-                        name: `${caseServiceData.code} - ${step.name}`,
-                        caseService: newCaseService._id,
-                        startDate: new Date().addDays(step.caseOrder - 1),
-                        endDate: new Date().addDays(step.caseOrder),
-                        assignees: [
-                          ...(caseServiceData.assignees || []),
-                          caseServiceData.leadAttorney,
-                        ],
-                      },
-                      TASK.PREFIX
-                    ),
-                  ],
-                  { session }
-                );
-              }
-            }
+            // Create default tasks for the new case service using the template system
+            await createTasksFromTemplate('default', newCaseService, session);
           }
           results.imported++;
         }
@@ -860,57 +961,57 @@ const exportCaseServicesToXLSX = async (query: ICaseServiceQuery = {}) => {
     const filePath = path.join(exportDir, fileName);
 
     // Map case service data for Excel
-    const excelData = caseServicesList.map((caseService) => {
-      return {
-        'Mã hồ sơ': caseService.case_code || '',
-        'Khách hàng': caseService.case_customer
-          ? `${caseService.case_customer.cus_firstName} ${caseService.case_customer.cus_lastName}`
-          : '',
-        'Mã khách hàng': caseService.case_customer?.cus_code || '',
-        'Luật sư chính': caseService.case_leadAttorney
-          ? `${caseService.case_leadAttorney.emp_user.usr_firstName} ${caseService.case_leadAttorney.emp_user.usr_lastName}`
-          : '',
-        'Mã luật sư': caseService.case_leadAttorney?.emp_code || '',
-        'Phòng ban': caseService.case_leadAttorney?.emp_department || '',
-        'Chức vụ': caseService.case_leadAttorney?.emp_position || '',
-        'Người được phân công': caseService.case_assignees
-          ? caseService.case_assignees
-              .map(
-                (assignee) =>
-                  `${assignee.emp_user.usr_firstName} ${assignee.emp_user.usr_lastName}`
-              )
-              .join(', ')
-          : '',
-        'Trạng thái': caseService.case_status || '',
-        'Ghi chú': caseService.case_notes || '',
-        'Ngày bắt đầu': caseService.case_startDate
-          ? new Date(caseService.case_startDate).toLocaleDateString('vi-VN')
-          : '',
-        'Ngày kết thúc': caseService.case_endDate
-          ? new Date(caseService.case_endDate).toLocaleDateString('vi-VN')
-          : '',
-        'Thời gian tạo': caseService.createdAt
-          ? new Date(caseService.createdAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })
-          : '',
-        'Cập nhật lần cuối': caseService.updatedAt
-          ? new Date(caseService.updatedAt).toLocaleDateString('vi-VN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })
-          : '',
-      };
-    });
+    const excelData = await Promise.all(
+      caseServicesList.map(async (caseService) => {
+        // Get assignees for this case service through participants
+        let assigneeNames = '';
+        try {
+          assigneeNames = caseService.case_participants
+            .map((p) => p.employeeId)
+            .join(', ');
+        } catch (error) {
+          console.error('Error fetching assignees for case service:', error);
+        }
+
+        return {
+          'Mã hồ sơ': caseService.case_code || '',
+          'Khách hàng': caseService.case_customer
+            ? `${caseService.case_customer.cus_firstName} ${caseService.case_customer.cus_lastName}`
+            : '',
+          'Mã khách hàng': caseService.case_customer?.cus_code || '',
+          'Luật sư chính': '',
+          'Người được phân công': assigneeNames,
+          'Trạng thái': caseService.case_status || '',
+          'Ghi chú': caseService.case_notes || '',
+          'Ngày bắt đầu': caseService.case_startDate
+            ? new Date(caseService.case_startDate).toLocaleDateString('vi-VN')
+            : '',
+          'Ngày kết thúc': caseService.case_endDate
+            ? new Date(caseService.case_endDate).toLocaleDateString('vi-VN')
+            : '',
+          'Thời gian tạo': caseService.createdAt
+            ? new Date(caseService.createdAt).toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+            : '',
+          'Cập nhật lần cuối': caseService.updatedAt
+            ? new Date(caseService.updatedAt).toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+            : '',
+        };
+      })
+    );
 
     // Create worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -1133,7 +1234,6 @@ const getCaseServiceDocuments = async (
       search,
       sortBy,
       sortOrder = 'desc',
-      type,
       startDate,
       endDate,
     } = query;
@@ -1318,13 +1418,6 @@ const getCaseServiceDocuments = async (
             { 'createdBy.emp_code': searchRegex },
           ],
         },
-      });
-    }
-
-    // Stage 17: Filter by document type if provided
-    if (type) {
-      pipeline.push({
-        $match: { 'document.doc_type': type },
       });
     }
 
@@ -1538,13 +1631,11 @@ const mapExcelRowToCaseService = async (row: any) => {
   }
 
   // Find lead attorney by code or name
-  let leadAttorneyId;
   if (row['Mã luật sư']) {
     const { EmployeeModel } = await import('@models/employee.model');
     const attorney = await EmployeeModel.findOne({
       emp_code: row['Mã luật sư'],
     });
-    leadAttorneyId = attorney?._id;
   } else if (row['Luật sư chính']) {
     // Try to find by name if code is not provided
     const { EmployeeModel } = await import('@models/employee.model');
@@ -1561,10 +1652,6 @@ const mapExcelRowToCaseService = async (row: any) => {
           usr_lastName: lastName,
         },
       });
-
-      if (attorney?.emp_user) {
-        leadAttorneyId = attorney._id;
-      }
     }
   }
 
@@ -1601,13 +1688,483 @@ const mapExcelRowToCaseService = async (row: any) => {
   return {
     code: row['Mã hồ sơ'] || '',
     customer: customerId,
-    leadAttorney: leadAttorneyId,
     assignees: assigneeIds,
     notes: row['Ghi chú'] || '',
     status: row['Trạng thái'] || CASE_SERVICE.STATUS.OPEN,
     startDate,
     endDate,
   };
+};
+
+/**
+ * Get case service overview including totals, installments, participants, etc.
+ */
+const getCaseServiceOverview = async (caseServiceId: string) => {
+  const caseService = await CaseServiceModel.findById(caseServiceId)
+    .populate('case_customer', 'cus_name cus_phone cus_email')
+    .populate({
+      path: 'case_participants.employeeId',
+      populate: {
+        path: 'emp_user',
+        select: 'usr_firstName usr_lastName usr_email',
+      },
+    })
+    .select(
+      'case_pricing case_installments case_participants case_incurredCosts case_totalsCache case_status case_startDate case_endDate case_notes'
+    )
+    .lean();
+
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+
+  return getReturnData(caseService);
+};
+
+/**
+ * Create a new installment for a case service
+ */
+const createInstallment = async (
+  caseServiceId: string,
+  installmentData: {
+    seq: number;
+    dueDate: Date;
+    amount: number;
+    notes?: string;
+  }
+) => {
+  const caseService = await CaseServiceModel.findById(caseServiceId);
+
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+
+  // Check if sequence number already exists
+  const existingInstallment = caseService.case_installments.find(
+    (inst) => inst.seq === installmentData.seq
+  );
+
+  if (existingInstallment) {
+    throw new BadRequestError(
+      'Installment with this sequence number already exists'
+    );
+  }
+
+  caseService.case_installments.push({
+    seq: installmentData.seq,
+    dueDate: installmentData.dueDate,
+    amount: installmentData.amount,
+    status: 'PLANNED',
+    paidAmount: 0,
+    notes: installmentData.notes,
+  } as any);
+
+  // Sort installments by sequence
+  caseService.case_installments.sort((a, b) => a.seq - b.seq);
+
+  await caseService.save();
+  return caseService.case_installments;
+};
+
+/**
+ * Add a participant to a case service
+ */
+const addParticipant = async (
+  caseServiceId: string,
+  participantData: {
+    employeeId: string;
+    role?: string;
+    commission: {
+      type: 'PERCENT_OF_GROSS' | 'PERCENT_OF_NET' | 'FLAT';
+      value: number;
+    };
+  }
+) => {
+  const caseService = await CaseServiceModel.findById(caseServiceId);
+
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+
+  // Check if participant already exists
+  const existingParticipant = caseService.case_participants.find(
+    (participant) =>
+      participant.employeeId.toString() === participantData.employeeId
+  );
+
+  if (existingParticipant) {
+    throw new BadRequestError('Employee is already a participant in this case');
+  }
+
+  caseService.case_participants.push({
+    employeeId: new Types.ObjectId(participantData.employeeId),
+    role: participantData.role,
+    commission: participantData.commission,
+  } as any);
+
+  await caseService.save();
+  return caseService.case_participants;
+};
+
+/**
+ * Add a payment to a case service installment
+ */
+const addPayment = async (
+  caseServiceId: string,
+  paymentData: {
+    installmentId: string;
+    amount: number;
+    paymentDate?: Date;
+    notes?: string;
+  }
+) => {
+  const caseService = await CaseServiceModel.findById(caseServiceId);
+
+  if (!caseService) {
+    throw new NotFoundError('Case service not found');
+  }
+
+  const installment = caseService.case_installments.id(
+    paymentData.installmentId
+  );
+
+  if (!installment) {
+    throw new NotFoundError('Installment not found');
+  }
+
+  const newPaidAmount = installment.paidAmount + paymentData.amount;
+
+  if (newPaidAmount > installment.amount) {
+    throw new BadRequestError('Payment amount exceeds installment amount');
+  }
+
+  installment.paidAmount = newPaidAmount;
+
+  // Update status based on payment
+  if (newPaidAmount === installment.amount) {
+    installment.status = 'PAID';
+  } else if (newPaidAmount > 0) {
+    installment.status = 'PARTIALLY_PAID';
+  }
+
+  await caseService.save();
+  return {
+    installment,
+    payment: {
+      amount: paymentData.amount,
+      paymentDate: paymentData.paymentDate || new Date(),
+      notes: paymentData.notes,
+    },
+  };
+};
+
+/**
+ * Helper function to update task assignees for all tasks in a case service
+ * @param caseServiceId - The case service ID
+ * @param participantEmployeeIds - Array of employee IDs to assign to all tasks
+ * @param options - Additional options for the update
+ */
+const updateTaskAssigneesForCase = async (
+  caseServiceId: string,
+  participantEmployeeIds: string[],
+  options: { skipNotifications?: boolean } = {}
+) => {
+  try {
+    // Find all tasks associated with this case service
+    const tasks = await TaskModel.find({ tsk_caseService: caseServiceId });
+
+    if (tasks.length === 0) {
+      console.log(`No tasks found for case service ${caseServiceId}`);
+      return {
+        tasksUpdated: 0,
+        totalTasks: 0,
+        assignees: participantEmployeeIds,
+      };
+    }
+
+    // Convert employee IDs to ObjectIds
+    const assigneeObjectIds = participantEmployeeIds.map(
+      (id) => new Types.ObjectId(id)
+    );
+
+    // Update all tasks to have the same assignees as the case participants
+    const updateResult = await TaskModel.updateMany(
+      { tsk_caseService: caseServiceId },
+      {
+        $set: {
+          tsk_assignees: assigneeObjectIds,
+        },
+      }
+    );
+
+    console.log(
+      `Updated ${updateResult.modifiedCount} tasks for case service ${caseServiceId} with ${participantEmployeeIds.length} assignees`
+    );
+
+    // Note: We don't call syncAllCaseServiceParticipants here to avoid circular updates
+    // since we're updating tasks based on participants, not the other way around
+
+    return {
+      tasksUpdated: updateResult.modifiedCount,
+      totalTasks: tasks.length,
+      assignees: participantEmployeeIds,
+    };
+  } catch (error) {
+    console.error('Error updating task assignees for case:', error);
+    throw new Error(
+      `Failed to update task assignees for case service: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+};
+
+/**
+ * Update case service participants
+ * This function updates the case service participants with the provided participants data
+ * @param caseServiceId - The case service ID to update participants for
+ * @param caseParticipants - Array of CaseParticipant objects to update/add
+ */
+const updateCaseServiceParticipant = async (
+  caseServiceId: string,
+  caseParticipants: CaseParticipant[]
+) => {
+  try {
+    if (!Types.ObjectId.isValid(caseServiceId)) {
+      throw new BadRequestError('Invalid case service ID');
+    }
+
+    // Find the case service
+    const caseService = await CaseServiceModel.findById(caseServiceId);
+    if (!caseService) {
+      throw new NotFoundError('Case service not found');
+    }
+
+    // Store old participants for comparison
+    const oldParticipantIds = caseService.case_participants.map((p) =>
+      p.employeeId.toString()
+    );
+
+    if (!caseParticipants || caseParticipants.length === 0) {
+      // If no participants provided, update tasks to remove all assignees
+      await updateTaskAssigneesForCase(caseServiceId, []);
+
+      // Clear participants
+      caseService.case_participants = [];
+      caseService.case_totalsCache = calculateTotalsCache({
+        pricing: caseService.case_pricing,
+        installments: caseService.case_installments,
+        incurredCosts: caseService.case_incurredCosts,
+        participants: caseService.case_participants,
+      });
+      await caseService.save();
+
+      return {
+        success: true,
+        message: 'All participants removed and tasks updated',
+        participants: caseService.case_participants,
+      };
+    }
+
+    // Validate participant employee IDs exist
+    const participantEmployeeIds = caseParticipants.map((p) =>
+      p.employeeId.toString()
+    );
+
+    const existingEmployees = await EmployeeModel.find({
+      _id: { $in: participantEmployeeIds },
+    });
+
+    if (existingEmployees.length !== participantEmployeeIds.length) {
+      const foundIds = existingEmployees.map((emp) => emp._id.toString());
+      const notFoundIds = participantEmployeeIds.filter(
+        (id) => !foundIds.includes(id)
+      );
+      throw new BadRequestError(
+        `Employee(s) not found: ${notFoundIds.join(', ')}`
+      );
+    }
+
+    // Update the case service participants
+    caseService.case_participants = caseParticipants;
+    caseService.case_totalsCache = calculateTotalsCache({
+      pricing: caseService.case_pricing,
+      installments: caseService.case_installments,
+      incurredCosts: caseService.case_incurredCosts,
+      participants: caseService.case_participants,
+    });
+    await caseService.save();
+
+    // Update task assignees to match the new participants
+    await updateTaskAssigneesForCase(caseServiceId, participantEmployeeIds);
+
+    // Determine what changed for better messaging
+    const newParticipantIds = participantEmployeeIds;
+    const addedIds = newParticipantIds.filter(
+      (id) => !oldParticipantIds.includes(id)
+    );
+    const removedIds = oldParticipantIds.filter(
+      (id) => !newParticipantIds.includes(id)
+    );
+
+    let message = 'Participants updated successfully';
+    if (addedIds.length > 0 && removedIds.length > 0) {
+      message = `Participants updated: ${addedIds.length} added, ${removedIds.length} removed. Tasks assignees updated accordingly.`;
+    } else if (addedIds.length > 0) {
+      message = `${addedIds.length} participant(s) added and assigned to all case tasks.`;
+    } else if (removedIds.length > 0) {
+      message = `${removedIds.length} participant(s) removed and unassigned from all case tasks.`;
+    } else {
+      message = 'Participant details updated. Task assignments unchanged.';
+    }
+
+    return getReturnData({
+      success: true,
+      message,
+      participants: caseService.case_participants,
+      totalParticipants: caseService.case_participants.length,
+      changesApplied: {
+        added: addedIds.length,
+        removed: removedIds.length,
+        tasksUpdated: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error in updateCaseServiceParticipant:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      'Unknown error occurred while updating case service participants'
+    );
+  }
+};
+
+const updateCaseServiceInstallment = async (
+  caseId: string,
+  payload: InstallmentPlanItem[]
+) => {
+  try {
+    if (!Types.ObjectId.isValid(caseId)) {
+      throw new BadRequestError('Invalid case service ID');
+    }
+
+    // Find the case service
+    const caseService = await CaseServiceModel.findById(caseId);
+    if (!caseService) {
+      throw new NotFoundError('Case service not found');
+    }
+
+    if (!payload || payload.length === 0) {
+      return {
+        success: true,
+        message: 'No installments provided to update',
+        installments: caseService.case_installments,
+      };
+    }
+
+    // Clean up temporary IDs from installments before updating
+    const cleanedInstallments = payload.map((installment) => {
+      if (installment.id) {
+        const { id, ...cleanedInstallment } = installment;
+        return getReturnData(cleanedInstallment) as InstallmentPlanItem;
+      }
+      return getReturnData(installment);
+    }) as InstallmentPlanItem[];
+
+    // Update the case service installments
+    caseService.case_installments = cleanedInstallments;
+
+    // Recalculate totals cache with updated installments
+    caseService.case_totalsCache = calculateTotalsCache({
+      pricing: caseService.case_pricing,
+      installments: caseService.case_installments,
+      incurredCosts: caseService.case_incurredCosts,
+      participants: caseService.case_participants,
+    });
+
+    await caseService.save();
+
+    return getReturnData({
+      success: true,
+      message: 'Installments updated successfully',
+      installments: caseService.case_installments,
+      totalInstallments: caseService.case_installments.length,
+      totalsCache: caseService.case_totalsCache,
+    });
+  } catch (error) {
+    console.error('Error in updateCaseServiceInstallment:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      'Unknown error occurred while updating case service installments'
+    );
+  }
+};
+
+const updateCaseServiceIncurredCost = async (
+  caseId: string,
+  payload: IncurredCost[]
+) => {
+  try {
+    if (!Types.ObjectId.isValid(caseId)) {
+      throw new BadRequestError('Invalid case service ID');
+    }
+
+    // Find the case service
+    const caseService = await CaseServiceModel.findById(caseId);
+    if (!caseService) {
+      throw new NotFoundError('Case service not found');
+    }
+
+    if (!payload || payload.length === 0) {
+      return {
+        success: true,
+        message: 'No incurred costs provided to update',
+        incurredCosts: caseService.case_incurredCosts,
+      };
+    }
+
+    // Clean up temporary IDs from incurred costs before updating
+    const cleanedIncurredCosts = payload.map((cost) => {
+      // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
+      if (cost.id) {
+        const { id, ...cleanedCost } = cost;
+        return getReturnData(cleanedCost) as IncurredCost;
+      }
+      return getReturnData(cost);
+    }) as IncurredCost[];
+
+    // Update the case service incurred costs
+    caseService.case_incurredCosts = cleanedIncurredCosts;
+
+    // Recalculate totals cache with updated incurred costs
+    caseService.case_totalsCache = calculateTotalsCache({
+      pricing: caseService.case_pricing,
+      installments: caseService.case_installments,
+      incurredCosts: caseService.case_incurredCosts,
+      participants: caseService.case_participants,
+    });
+
+    await caseService.save();
+
+    return getReturnData({
+      success: true,
+      message: 'Incurred costs updated successfully',
+      incurredCosts: caseService.case_incurredCosts,
+      totalIncurredCosts: caseService.case_incurredCosts.length,
+      totalsCache: caseService.case_totalsCache,
+    });
+  } catch (error) {
+    console.error('Error in updateCaseServiceIncurredCost:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      'Unknown error occurred while updating case service incurred costs'
+    );
+  }
 };
 
 export {
@@ -1623,4 +2180,12 @@ export {
   attachDocumentToCase,
   detachDocumentFromCase,
   getCaseServiceDocuments,
+  getCaseServiceOverview,
+  createInstallment,
+  addParticipant,
+  addPayment,
+  updateCaseServiceParticipant,
+  updateCaseServiceInstallment,
+  updateCaseServiceIncurredCost,
+  updateTaskAssigneesForCase,
 };

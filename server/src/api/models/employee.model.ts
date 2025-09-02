@@ -46,6 +46,19 @@ employeeSchema.statics.build = (attrs: IEmployeeCreate) => {
   return EmployeeModel.create(formatAttributeName(attrs, USER.EMPLOYEE.PREFIX));
 };
 
+employeeSchema.pre('findOneAndDelete', async function (next) {
+  // Note: Participants are now embedded in CaseServiceModel, so no cascade delete needed
+  next();
+});
+employeeSchema.pre('deleteOne', async function (next) {
+  // Note: Participants are now embedded in CaseServiceModel, so no cascade delete needed
+  next();
+});
+employeeSchema.pre('deleteMany', async function (next) {
+  // Note: Participants are now embedded in CaseServiceModel, so no cascade delete needed
+  next();
+});
+
 export const EmployeeModel = model<IEmployeeDocument, IEmployeeModel>(
   USER.EMPLOYEE.DOCUMENT_NAME,
   employeeSchema

@@ -1,11 +1,5 @@
-import {
-  Link,
-  useLoaderData,
-  data as dataResponse,
-  useFetcher,
-} from '@remix-run/react';
+import { useLoaderData, data as dataResponse } from '@remix-run/react';
 import { useMemo, useEffect, useRef } from 'react';
-import { toast } from 'react-toastify';
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { isAuthenticated } from '~/services/auth.server';
@@ -13,8 +7,10 @@ import { createTask } from '~/services/task.server';
 import { ITaskCreate } from '~/interfaces/task.interface';
 import TaskDetailForm from './_components/TaskDetailForm';
 import ContentHeader from '~/components/ContentHeader';
-import { parseAuthCookie } from '~/services/cookie.server';
-import { getEmployees } from '~/services/employee.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import { TASK } from '~/constants/task.constant';
 import { getCaseServiceById } from '~/services/case.server';
 import { generateFormId } from '~/utils';
@@ -28,24 +24,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
   const url = new URL(request.url);
   const caseId = url.searchParams.get('caseId');
-  const page = Number(url.searchParams.get('page')) || 1;
-  const limit = Number(url.searchParams.get('limit')) || 100;
-
-  const employeesPromise = getEmployees(
-    new URLSearchParams([
-      ['page', page.toString()],
-      ['limit', limit.toString()],
-      ['sortBy', 'createdAt'],
-      ['sortOrder', 'desc'],
-    ]),
-    auth!,
-  ).catch((e) => {
-    console.error('Error fetching employees:', e);
-    return {
-      success: false,
-      message: 'Xảy ra lỗi khi lấy danh sách nhân viên',
-    };
-  });
 
   const casePromise = caseId
     ? getCaseServiceById(caseId, auth!).catch((e) => {
@@ -59,13 +37,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Trả về dữ liệu cần thiết cho trang NewTask
   return {
-    employeesPromise,
     casePromise,
   };
 };
 
 export default function NewTask() {
-  const { employeesPromise, casePromise } = useLoaderData<typeof loader>();
+  const { casePromise } = useLoaderData<typeof loader>();
 
   const formId = useMemo(() => generateFormId('task-detail-form'), []);
   return (
@@ -91,7 +68,6 @@ export default function NewTask() {
       {/* Form Container */}
       <div className='mt-4 sm:mt-8'>
         <TaskDetailForm
-          employees={employeesPromise}
           formId={formId}
           type='create'
           casePromise={casePromise}
@@ -105,19 +81,18 @@ export const action = async ({
   request,
 }: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
+  if (!session) {
+    return getUnauthorizedActionResponse(dataResponse, headers);
+  }
 
   switch (request.method) {
     case 'POST': {
       try {
         const formData = await request.formData();
 
-        // Lấy danh sách assignees (có thể có nhiều giá trị)
-        const assignees = formData.getAll('assignees') as string[];
-
         // Tạo dữ liệu từ form
         const data: ITaskCreate = {
           name: formData.get('name') as string,
-          assignees,
           description: formData.get('description') as string,
           startDate: formData.get('startDate') as string,
           endDate: formData.get('endDate') as string,
@@ -125,16 +100,11 @@ export const action = async ({
           priority: formData.get('priority') as keyof typeof TASK.PRIORITY,
           caseService: formData.get('caseService') as string,
           caseOrder: +(formData.get('caseOrder') as string) || 0,
+          assignees: formData.getAll('assignees') as string[],
         };
 
         // Kiểm tra dữ liệu bắt buộc
-        if (
-          !data.name ||
-          !data.endDate ||
-          !data.assignees?.length ||
-          !data.status ||
-          !data.priority
-        ) {
+        if (!data.name || !data.endDate || !data.status || !data.priority) {
           return dataResponse(
             {
               success: false,

@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 import { TaskModel } from '../models/task.model';
 import { BadRequestError, NotFoundError } from '../core/errors';
 import {
@@ -19,6 +19,9 @@ import { USER } from '@constants/user.constant';
 import { getEmployeeByUserId } from './employee.service';
 import { sendTaskNotificationEmail } from './email.service';
 import { IMAGE } from '@constants/image.constant';
+import { TaskTemplateModel } from '@models/taskTemplate.model';
+import { ICaseService } from '../interfaces/caseService.interface';
+import { CaseServiceModel } from '@models/caseService.model';
 
 // Create new Task
 const createTask = async (data: ITaskCreate) => {
@@ -658,8 +661,7 @@ const taskAssigneesPopulate = {
 };
 const taskCaseServicePopulate = {
   path: 'tsk_caseService',
-  select:
-    'case_code case_customer case_leadAttorney case_status case_startDate case_endDate',
+  select: 'case_code case_customer case_status case_startDate case_endDate',
   populate: {
     path: 'case_customer',
     select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
@@ -680,6 +682,7 @@ const getTaskById = async (id: string) => {
 
 // Update Task
 const updateTask = async (id: string, data: ITaskUpdate) => {
+  console.log('-----------------updating task with data: ', data);
   const task = await TaskModel.findByIdAndUpdate(
     id,
     {
@@ -688,6 +691,7 @@ const updateTask = async (id: string, data: ITaskUpdate) => {
           ...data,
           startDate: data.startDate?.toString(),
           endDate: data.endDate?.toString(),
+          assignees: data.assignees,
         }),
         TASK.PREFIX
       ),
@@ -1488,6 +1492,269 @@ const maskTaskAsCompleted = async (taskId: string) => {
   return getReturnData(updatedTask);
 };
 
+const createTasksFromTemplate = async (
+  templateKey: string,
+  caseService: ICaseService,
+  session: ClientSession
+) => {
+  const taskTemplate = await TaskTemplateModel.findOne({
+    tpl_key: templateKey,
+  });
+  if (!taskTemplate) {
+    throw new BadRequestError('Không tìm thấy mẫu công việc');
+  }
+
+  for (const step of taskTemplate.tpl_steps) {
+    const [task] = await TaskModel.create(
+      [
+        formatAttributeName(
+          {
+            ...step,
+            _id: undefined, // Remove _id to avoid conflicts
+            caseOrder: step.caseOrder,
+            name: `${caseService.case_code} - ${step.name}`,
+            caseService: caseService._id,
+            startDate: new Date().addDays(step.caseOrder - 1), // Default start date is relative to case order (0-6)
+            endDate: new Date().addDays(step.caseOrder), // Default end date is one day after start date (1-7)
+            assignees: [
+              ...(caseService.case_participants || []).map(
+                (participant) => participant.employeeId
+              ),
+            ],
+            priority: TASK.PRIORITY.MEDIUM, // Default priority
+          },
+          TASK.PREFIX
+        ),
+      ],
+      { session }
+    );
+    if (!task) {
+      throw new BadRequestError('Không thể tạo công việc');
+    }
+
+    // Get the created task with populated data for email notification
+    const populatedTask = await TaskModel.findById(task._id)
+      .populate({
+        path: 'tsk_assignees',
+        select: 'emp_code emp_position emp_department emp_user',
+        populate: {
+          path: 'emp_user',
+          select:
+            'usr_firstName usr_lastName usr_email usr_avatar usr_username',
+        },
+      })
+      .populate({
+        path: 'tsk_caseService',
+        select:
+          'case_code case_customer case_status case_startDate case_endDate',
+        populate: {
+          path: 'case_customer',
+          select: 'cus_firstName cus_lastName cus_email cus_msisdn cus_code',
+        },
+      })
+      .session(session);
+
+    // Send email notifications to assignees
+    if (populatedTask && populatedTask.tsk_assignees) {
+      const emailPromises = populatedTask.tsk_assignees.map(
+        async (assignee: any) => {
+          if (assignee.emp_user?.usr_email) {
+            try {
+              await sendTaskNotificationEmail(assignee.emp_user.usr_email, {
+                taskId: populatedTask._id.toString(),
+                taskName: populatedTask.tsk_name,
+                taskDescription:
+                  populatedTask.tsk_description || 'Không có mô tả',
+                priority: populatedTask.tsk_priority,
+                startDate: new Date(populatedTask.tsk_startDate).toLocaleString(
+                  'vi-VN'
+                ),
+                endDate: new Date(populatedTask.tsk_endDate).toLocaleString(
+                  'vi-VN'
+                ),
+                employeeName: `${assignee.emp_user.usr_firstName || ''} ${
+                  assignee.emp_user.usr_lastName || ''
+                }`.trim(),
+              });
+            } catch (emailError) {
+              console.error(
+                `Failed to send email to ${assignee.emp_user.usr_email}:`,
+                emailError
+              );
+              // Don't throw error to prevent transaction rollback due to email failures
+            }
+          }
+        }
+      );
+
+      // Execute email notifications (but don't wait for them to complete to avoid blocking the transaction)
+      Promise.allSettled(emailPromises).catch((error) => {
+        console.error('Error sending some task notification emails:', error);
+      });
+    }
+  }
+};
+
+const updateAssigneeList = async (
+  taskId: string,
+  payload: { assigneeIds: string[] }
+) => {
+  const updatedTask = await TaskModel.findByIdAndUpdate(
+    taskId,
+    {
+      $set: {
+        tsk_assignees: payload.assigneeIds.map((id) => new Types.ObjectId(id)),
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedTask) {
+    throw new BadRequestError('Không thể cập nhật danh sách người được giao');
+  }
+  if (updatedTask.tsk_caseService)
+    await syncAllCaseServiceParticipants(updatedTask.tsk_caseService as any);
+
+  return updatedTask;
+};
+
+/**
+ * Sync all participants for a case service based on all task assignees
+ * This is a utility function to manually sync participants when needed
+ * @param caseServiceId - The case service ID to sync participants for
+ */
+const syncAllCaseServiceParticipants = async (caseServiceId: string) => {
+  try {
+    if (!Types.ObjectId.isValid(caseServiceId)) {
+      throw new BadRequestError('Invalid case service ID');
+    }
+
+    // Find the case service
+    const caseService = await CaseServiceModel.findById(caseServiceId);
+    if (!caseService) {
+      throw new NotFoundError('Case service not found');
+    }
+
+    // Get all unique assignees from ALL tasks associated with this case service
+    const allTaskAssignees = await TaskModel.aggregate([
+      {
+        $match: {
+          tsk_caseService: new Types.ObjectId(caseServiceId),
+        },
+      },
+      {
+        $unwind: '$tsk_assignees',
+      },
+      {
+        $group: {
+          _id: '$tsk_assignees',
+        },
+      },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'employee',
+        },
+      },
+      {
+        $unwind: {
+          path: '$employee',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          employeeId: '$_id',
+          employee: 1,
+        },
+      },
+    ]);
+
+    if (!allTaskAssignees || allTaskAssignees.length === 0) {
+      return getReturnData({
+        success: true,
+        message: 'No task assignees found to sync',
+        participants: caseService.case_participants,
+      });
+    }
+
+    const allAssigneeIds = allTaskAssignees.map((assignee) =>
+      assignee.employeeId.toString()
+    );
+
+    // Get current participants
+    const currentParticipants = caseService.case_participants || [];
+    const currentParticipantIds = currentParticipants.map((p) =>
+      p.employeeId.toString()
+    );
+
+    // Find new assignees that are not yet participants
+    const newAssigneeIds = allAssigneeIds.filter(
+      (assigneeId) => !currentParticipantIds.includes(assigneeId)
+    );
+
+    // Find participants who are no longer task assignees (only those with ASSIGNEE role)
+    const participantsToRemove = currentParticipants.filter(
+      (participant) =>
+        participant.role === 'ASSIGNEE' &&
+        !allAssigneeIds.includes(participant.employeeId.toString())
+    );
+
+    // Add new participants with default commission settings
+    const newParticipants = newAssigneeIds.map((assigneeId) => ({
+      employeeId: new Types.ObjectId(assigneeId),
+      role: 'ASSIGNEE', // Default role for task assignees
+      commission: {
+        type: 'PERCENT_OF_NET' as const,
+        value: 0, // Default 0% commission, can be updated later
+        eligibleOn: 'AT_CLOSURE' as const,
+      },
+    }));
+
+    // Add new participants
+    if (newParticipants.length > 0) {
+      caseService.case_participants.push(...newParticipants);
+    }
+
+    // Remove participants who are no longer task assignees
+    if (participantsToRemove.length > 0) {
+      caseService.case_participants = caseService.case_participants.filter(
+        (participant) =>
+          !participantsToRemove.some(
+            (toRemove) =>
+              toRemove.employeeId.toString() ===
+              participant.employeeId.toString()
+          )
+      );
+    }
+
+    // Save changes if any modifications were made
+    if (newParticipants.length > 0 || participantsToRemove.length > 0) {
+      await caseService.save();
+    }
+
+    return getReturnData({
+      success: true,
+      message: `Successfully synced participants: ${newParticipants.length} added, ${participantsToRemove.length} removed`,
+      participants: caseService.case_participants,
+      newParticipants: newParticipants.length,
+      removedParticipants: participantsToRemove.length,
+      totalParticipants: caseService.case_participants.length,
+    });
+  } catch (error) {
+    console.error('Error in syncAllCaseServiceParticipants:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      'Unknown error occurred while syncing case service participants'
+    );
+  }
+};
+
 export {
   createTask,
   getTasks,
@@ -1503,4 +1770,6 @@ export {
   getMyTaskById,
   getMyPerformance,
   maskTaskAsCompleted,
+  createTasksFromTemplate,
+  updateAssigneeList,
 };

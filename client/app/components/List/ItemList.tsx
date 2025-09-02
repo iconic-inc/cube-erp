@@ -27,6 +27,7 @@ export default function ItemList<T>({
   addNewHandler,
   showPagination = true,
   readOnly = false,
+  isLoadCachedQuery,
 }: {
   name: string;
   itemsPromise: ILoaderDataPromise<IListResponse<T>>;
@@ -36,13 +37,14 @@ export default function ItemList<T>({
   addNewHandler?: () => void;
   showPagination?: boolean;
   readOnly?: boolean;
+  isLoadCachedQuery?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get('sortBy') || 'createdAt';
   const sortOrder = searchParams.get('sortOrder') || 'desc';
 
   useEffect(() => {
-    if (localStorage) {
+    if (localStorage && isLoadCachedQuery) {
       const cachedQuery = localStorage.getItem(`list-query-${name}`);
       if (cachedQuery) {
         setSearchParams(new URLSearchParams(cachedQuery));

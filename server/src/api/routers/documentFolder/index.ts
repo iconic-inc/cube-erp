@@ -16,7 +16,7 @@ router.use(authenticationV2);
  */
 router.get(
   '/',
-  hasPermission('documentFolder', 'readAny'),
+  // hasPermission('documentFolder', 'readAny'),
   DocumentFolderController.getDocumentFolders
 );
 
@@ -28,7 +28,7 @@ router.get(
 router.get(
   '/:id',
   validateObjectId('id'),
-  hasPermission('documentFolder', 'readAny'),
+  // hasPermission('documentFolder', 'readAny'),
   DocumentFolderController.getDocumentFolderById
 );
 
@@ -39,7 +39,7 @@ router.get(
  */
 router.post(
   '/',
-  hasPermission('documentFolder', 'createAny'),
+  // hasPermission('documentFolder', 'createAny'),
   DocumentFolderController.createDocumentFolder
 );
 
@@ -51,7 +51,7 @@ router.post(
 router.put(
   '/:id',
   validateObjectId('id'),
-  hasPermission('documentFolder', 'updateAny'),
+  // hasPermission('documentFolder', 'updateAny'),
   DocumentFolderController.updateDocumentFolder
 );
 
@@ -62,7 +62,7 @@ router.put(
  */
 router.delete(
   '/bulk',
-  hasPermission('documentFolder', 'deleteAny'),
+  // hasPermission('documentFolder', 'deleteAny'),
   DocumentFolderController.bulkDeleteFolders
 );
 
@@ -74,7 +74,7 @@ router.delete(
 router.delete(
   '/:id',
   validateObjectId('id'),
-  hasPermission('documentFolder', 'deleteAny'),
+  // hasPermission('documentFolder', 'deleteAny'),
   DocumentFolderController.deleteDocumentFolder
 );
 

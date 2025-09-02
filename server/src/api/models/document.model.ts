@@ -7,6 +7,7 @@ import {
   IDocumentModel,
 } from '../interfaces/document.interface';
 import { formatAttributeName } from '../utils';
+import { DocumentCaseModel } from './documentCase.model';
 
 const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
   {
@@ -52,6 +53,23 @@ const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
 documentSchema.statics.build = (attrs: IDocumentCreate) => {
   return DocumentModel.create(formatAttributeName(attrs, DOCUMENT.PREFIX));
 };
+
+const cascadeDelete = async (documentId: string) => {
+  await DocumentCaseModel.deleteMany({ document: documentId });
+};
+
+documentSchema.pre('findOneAndDelete', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
+documentSchema.pre('deleteOne', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
+documentSchema.pre('deleteMany', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
 
 export const DocumentModel = model<IDocumentDocument, IDocumentModel>(
   DOCUMENT.DOCUMENT_NAME,

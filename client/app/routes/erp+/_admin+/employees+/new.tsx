@@ -148,7 +148,7 @@ export const action = async ({
         );
       } catch (error: any) {
         console.error('Error creating employee:', error);
-        let errorMessage = error.message || 'Có lỗi xảy ra khi thêm Nhân viên';
+        let errorMessage = error.message || 'Có lỗi xảy ra khi Thêm nhân sự';
 
         return dataResponse(
           {
@@ -192,7 +192,7 @@ export default function NewEmployee() {
     <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}
       <ContentHeader
-        title='Thêm Nhân viên mới'
+        title='Thêm nhân sự mới'
         actionContent={
           <>
             <Save className='inline' />

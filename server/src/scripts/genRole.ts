@@ -199,7 +199,6 @@ const ROLES = [
       },
     ],
   },
-
   {
     name: 'Cộng tác viên',
     slug: 'collaborator',
