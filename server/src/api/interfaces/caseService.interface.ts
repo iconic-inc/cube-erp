@@ -24,9 +24,7 @@ export interface CaseParticipant {
   commission: {
     type: 'PERCENT_OF_GROSS' | 'PERCENT_OF_NET' | 'FLAT';
     value: number; // percent (0-100) or flat amount in case currency
-    // capAmount?: number; // optional cap
-    // floorAmount?: number; // optional floor
-    // eligibleOn: 'AT_CLOSURE' | 'ON_PAYMENT'; // when to recognize
+    transactionId: string | Types.ObjectId; // for audit trail
   };
 }
 
@@ -35,6 +33,7 @@ export interface CaseTax {
   mode: 'PERCENT' | 'FIXED';
   value: number; // percent (e.g., 10) or fixed amount
   scope: 'ON_BASE' | 'ON_BASE_PLUS_INCIDENTALS'; // tax base selection
+  transactionId: string | Types.ObjectId;
 }
 
 export interface IncurredCost {
@@ -43,6 +42,7 @@ export interface IncurredCost {
   category: string; // e.g., "Lab Fee", "Shipping"
   description?: string;
   amount: number; // positive number in case currency
+  transactionId: string | Types.ObjectId;
 }
 
 export interface InstallmentPlanItem {
@@ -53,6 +53,7 @@ export interface InstallmentPlanItem {
   status: InstallmentStatus;
   paidAmount: number; // derived/updated as payments apply
   notes?: string;
+  transactionId: string | Types.ObjectId;
 }
 
 export interface ICaseServicePopulate {

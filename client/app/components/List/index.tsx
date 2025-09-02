@@ -37,10 +37,10 @@ export default function List<T>({
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
 
   return (
-    <Card className='overflow-hidden'>
+    <Card className='overflow-hidden animate-in slide-in-from-bottom-4 fade-in-0 duration-500'>
       {/* Item Toolbar */}
       {showToolbar && (
-        <div className='border-b border-gray-200'>
+        <div className='border-b border-gray-200 animate-in slide-in-from-top-2 duration-400 delay-100'>
           <Defer resolve={itemsPromise}>
             {(items) => {
               return (
@@ -60,7 +60,7 @@ export default function List<T>({
 
       {/* Bulk Action Bar (Visible when rows selected) */}
       {!readOnly && selectedItems.length > 0 && (
-        <div className='border-b border-gray-200 bg-blue-50'>
+        <div className='border-b border-gray-200 bg-blue-50 animate-in slide-in-from-top-3 duration-300'>
           <ListBulkActionBar
             name={name}
             selectedItems={selectedItems}
@@ -80,7 +80,7 @@ export default function List<T>({
         />
       )}
 
-      <div className='overflow-x-auto'>
+      <div className='overflow-x-auto animate-in fade-in-0 duration-600 delay-300'>
         <ItemList<T>
           name={name}
           isLoadCachedQuery={showToolbar}

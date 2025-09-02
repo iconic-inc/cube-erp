@@ -20,6 +20,7 @@ export const TRANSACTION = {
       RETAINER_FEE: 'retainer_fee', // Phí giữ chân luật sư
       SUCCESS_BONUS: 'success_bonus', // Phí thành công vụ việc
       DOCUMENT_DRAFTING: 'document_drafting', // Phí soạn thảo văn bản
+      INSTALLMENT_PAYMENT: 'installment_payment', // Thu tiền trả góp từ khách hàng
       OTHER: 'other_income', // Khác
     },
 
@@ -27,13 +28,16 @@ export const TRANSACTION = {
     OUTCOME: {
       STAFF_SALARY: 'staff_salary', // Lương nhân viên
       INCIDENTAL_EXPENSE: 'incidental_expense', // Chi phí phát sinh
+      OPERATIONAL_EXPENSE: 'operational_expense', // Chi phí vận hành
       OFFICE_RENT: 'office_rent', // Tiền thuê văn phòng
       UTILITIES: 'utilities', // Điện nước, internet
       MARKETING: 'marketing', // Quảng cáo, tiếp thị
       TAX: 'tax', // Thuế
+      TAX_PAYMENT: 'tax_payment', // Thanh toán thuế cho hồ sơ vụ việc
       EQUIPMENT: 'equipment', // Mua sắm thiết bị
       TRAINING_EXPENSE: 'training_expense', // Chi phí đào tạo
       REWARD: 'reward', // Thưởng
+      COMMISSION_PAYMENT: 'commission_payment', // Thanh toán hoa hồng cho nhân viên
       OTHER: 'other_outcome', // Khác
     },
   },

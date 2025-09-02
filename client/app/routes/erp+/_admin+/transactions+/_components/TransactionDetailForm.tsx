@@ -26,6 +26,7 @@ import { TRANSACTION } from '~/constants/transaction.constant';
 import TextEditor from '~/components/TextEditor';
 import { DatePicker } from '~/components/ui/date-picker';
 import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { isResolveError } from '~/lib';
 
 export default function TransactionDetailForm({
   formId,
@@ -47,38 +48,25 @@ export default function TransactionDetailForm({
   const fetcher = useFetcher<typeof action>({ key: formId });
 
   // Form state
-  const [code, setCode] = useState<string>('');
   const [transactionType, setTransactionType] = useState<'income' | 'outcome'>(
     'income',
   );
   const [title, setTitle] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
-  const [paid, setPaid] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<string>(
     initialCustomerId || '',
   );
-  const [selectedCaseService, setSelectedCaseService] = useState<string>(
-    initialCaseId || '',
-  );
   const [date, setDate] = useState<Date>(new Date());
 
   // Control states
   const [customersList, setCustomersList] = useState<ICustomer[]>([]);
-  const [caseServicesList, setCaseServicesList] = useState<ICaseService[]>([]);
   const [transaction, setTransaction] = useState<ITransaction | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
-
-  // Calculate remaining balance
-  const calculateBalance = (): number => {
-    const totalAmount = parseFloat(amount) || 0;
-    const paidAmount = parseFloat(paid) || 0;
-    return Math.max(0, totalAmount - paidAmount);
-  };
 
   // Ensure numeric values for form submission
   const getNumericValue = (value: string): string => {
@@ -91,10 +79,6 @@ export default function TransactionDetailForm({
 
     // Validation
     const validationErrors: Record<string, string> = {};
-
-    if (!code.trim()) {
-      validationErrors.code = 'Vui lòng nhập mã giao dịch';
-    }
 
     if (!title.trim()) {
       validationErrors.title = 'Vui lòng nhập tiêu đề giao dịch';
@@ -126,16 +110,13 @@ export default function TransactionDetailForm({
     const formData = new FormData(e.currentTarget);
 
     // Use the raw numeric values for submission
-    formData.set('code', code);
     formData.set('type', transactionType);
     formData.set('title', title);
     formData.set('amount', getNumericValue(amount)); // Ensure numeric value
-    formData.set('paid', getNumericValue(paid)); // Ensure numeric value
     formData.set('paymentMethod', paymentMethod);
     formData.set('category', category);
     formData.set('description', description);
     formData.set('customer', selectedCustomer);
-    formData.set('caseService', selectedCaseService);
 
     // Submit the form
     if (type === 'create') {
@@ -148,28 +129,22 @@ export default function TransactionDetailForm({
   // Monitor form changes
   useEffect(() => {
     const hasChanged =
-      code ||
       title ||
       amount ||
-      paid ||
       paymentMethod ||
       category ||
       description ||
       selectedCustomer ||
-      transactionType ||
-      selectedCaseService;
+      transactionType;
 
     setIsChanged(!!hasChanged);
   }, [
-    code,
     title,
     amount,
-    paid,
     paymentMethod,
     category,
     description,
     selectedCustomer,
-    selectedCaseService,
     transactionType,
   ]);
 
@@ -184,16 +159,6 @@ export default function TransactionDetailForm({
         const customersData = await customers;
         if (customersData && 'data' in customersData && customersData.data) {
           setCustomersList(customersData.data);
-        }
-
-        // Load case services
-        const caseServicesData = await caseServices;
-        if (
-          caseServicesData &&
-          'data' in caseServicesData &&
-          caseServicesData.data
-        ) {
-          setCaseServicesList(caseServicesData.data);
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -211,18 +176,15 @@ export default function TransactionDetailForm({
         try {
           const transactionData = await transactionPromise;
 
-          if (transactionData && 'tx_code' in transactionData) {
+          if (!isResolveError(transactionData)) {
             setTransaction(transactionData);
-            setCode(transactionData.tx_code || '');
             setTransactionType(transactionData.tx_type || 'income');
             setTitle(transactionData.tx_title || '');
             setAmount(transactionData.tx_amount?.toString() || '');
-            setPaid(transactionData.tx_paid?.toString() || '');
             setPaymentMethod(transactionData.tx_paymentMethod || '');
             setCategory(transactionData.tx_category || '');
             setDescription(transactionData.tx_description || '');
             setSelectedCustomer(transactionData.tx_customer?.id || '');
-            setSelectedCaseService(transactionData.tx_caseService?.id || '');
             setDate(new Date(transactionData.tx_date || Date.now()));
           } else {
             console.error(
@@ -259,33 +221,32 @@ export default function TransactionDetailForm({
       <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200 mx-2 sm:mx-0'>
         <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-xl'>
           <CardTitle className='text-white text-xl sm:text-2xl md:text-3xl font-bold break-words'>
-            {code || 'Mã giao dịch'}
+            {title || 'Tiêu đề giao dịch'}
           </CardTitle>
         </CardHeader>
 
         <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Transaction Code */}
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+            {/* Title */}
             <div>
               <Label
-                htmlFor='code'
+                htmlFor='title'
                 className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
               >
-                Mã giao dịch <span className='text-red-500'>*</span>
+                Tiêu đề giao dịch <span className='text-red-500'>*</span>
               </Label>
-              <div className='flex flex-col sm:flex-row gap-2'>
-                <Input
-                  id='code'
-                  name='code'
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder='Ví dụ: TN123456'
-                  className='bg-white border-gray-300 text-sm sm:text-base'
-                />
-              </div>
-              {errors.code && (
+              <Input
+                id='title'
+                name='title'
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder='Nhập tiêu đề giao dịch'
+                className='bg-white border-gray-300 text-sm sm:text-base'
+              />
+              {errors.title && (
                 <p className='text-red-500 text-sm sm:text-base mt-1'>
-                  {errors.code}
+                  {errors.title}
                 </p>
               )}
             </div>
@@ -305,29 +266,6 @@ export default function TransactionDetailForm({
                 onChange={(date) => setDate(date)}
               />
             </div>
-          </div>
-
-          {/* Title */}
-          <div>
-            <Label
-              htmlFor='title'
-              className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
-            >
-              Tiêu đề giao dịch <span className='text-red-500'>*</span>
-            </Label>
-            <Input
-              id='title'
-              name='title'
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder='Nhập tiêu đề giao dịch'
-              className='bg-white border-gray-300 text-sm sm:text-base'
-            />
-            {errors.title && (
-              <p className='text-red-500 text-sm sm:text-base mt-1'>
-                {errors.title}
-              </p>
-            )}
           </div>
 
           {/* Transaction Type and Category */}
@@ -441,57 +379,6 @@ export default function TransactionDetailForm({
                 </p>
               )}
             </div>
-
-            <div>
-              <Label
-                htmlFor='paid'
-                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
-              >
-                Đã thanh toán
-              </Label>
-              <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base z-10'>
-                  ₫
-                </span>
-                <NumericFormat
-                  id='paid'
-                  name='paid'
-                  value={paid}
-                  onValueChange={(values) => {
-                    setPaid(values.value);
-                  }}
-                  placeholder='0'
-                  thousandSeparator=','
-                  decimalSeparator='.'
-                  decimalScale={2}
-                  allowNegative={false}
-                  allowLeadingZeros={false}
-                  customInput={Input}
-                  className='bg-white border-gray-300 pl-6 sm:pl-8 pr-10 sm:pr-12 text-right font-medium text-sm sm:text-base'
-                />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base'>
-                  VNĐ
-                </span>
-              </div>
-              {amount && parseFloat(amount) > 0 && (
-                <div className='mt-2 p-2 sm:p-3 bg-blue-50 rounded-md border border-blue-200'>
-                  <p className='text-sm sm:text-base text-blue-700'>
-                    <span className='font-medium'>Còn lại: </span>
-                    <span className='font-bold'>
-                      <NumericFormat
-                        value={calculateBalance()}
-                        displayType='text'
-                        thousandSeparator=','
-                        decimalScale={2}
-                        fixedDecimalScale={false}
-                        prefix='₫'
-                        suffix=' VNĐ'
-                      />
-                    </span>
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Customer and Case Service */}
@@ -513,26 +400,6 @@ export default function TransactionDetailForm({
                 placeholder='Chọn khách hàng'
                 name='customer'
                 id='customer'
-              />
-            </div>
-
-            <div>
-              <Label
-                htmlFor='caseService'
-                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
-              >
-                Hồ sơ vụ việc
-              </Label>
-              <SelectSearch
-                options={caseServicesList.map((caseService) => ({
-                  value: caseService.id,
-                  label: `${caseService.case_code} - ${caseService.case_customer.cus_firstName} ${caseService.case_customer.cus_lastName}`,
-                }))}
-                value={selectedCaseService}
-                onValueChange={(value) => setSelectedCaseService(value)}
-                placeholder='Chọn Hồ sơ vụ việc'
-                name='caseService'
-                id='caseService'
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { CASE_SERVICE, CUSTOMER, USER } from '../constants';
+import { CASE_SERVICE, CUSTOMER, TRANSACTION, USER } from '../constants';
 import {
   ICaseServiceCreate,
   ICaseServiceModel,
@@ -18,6 +18,10 @@ const CaseTaxSchema = new Schema<CaseTax>(
     name: { type: String, required: true },
     mode: { type: String, enum: ['PERCENT', 'FIXED'], required: true },
     value: { type: Number, required: true, min: 0 },
+    transactionId: {
+      type: Schema.Types.ObjectId,
+      ref: TRANSACTION.DOCUMENT_NAME,
+    },
   },
   { _id: false }
 );
@@ -27,7 +31,6 @@ const ParticipantSchema = new Schema<CaseParticipant>(
     employeeId: {
       type: Schema.Types.ObjectId,
       ref: USER.EMPLOYEE.DOCUMENT_NAME,
-      required: true,
       index: true,
     },
     role: String,
@@ -38,6 +41,10 @@ const ParticipantSchema = new Schema<CaseParticipant>(
         required: true,
       },
       value: { type: Number, required: true, min: 0 },
+      transactionId: {
+        type: Schema.Types.ObjectId,
+        ref: TRANSACTION.DOCUMENT_NAME,
+      },
     },
   },
   { _id: false }
@@ -56,6 +63,10 @@ const InstallmentSchema = new Schema<InstallmentPlanItem>(
     },
     paidAmount: { type: Number, default: 0, min: 0 },
     notes: String,
+    transactionId: {
+      type: Schema.Types.ObjectId,
+      ref: TRANSACTION.DOCUMENT_NAME,
+    },
   },
   { _id: true }
 );
@@ -66,6 +77,10 @@ const IncurredCostSchema = new Schema<IncurredCost>(
     category: { type: String, required: true },
     description: String,
     amount: { type: Number, required: true, min: 0 },
+    transactionId: {
+      type: Schema.Types.ObjectId,
+      ref: TRANSACTION.DOCUMENT_NAME,
+    },
   },
   { _id: true }
 );

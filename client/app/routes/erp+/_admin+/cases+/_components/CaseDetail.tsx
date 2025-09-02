@@ -80,17 +80,17 @@ export default function CaseDetail({
   }
 
   return (
-    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
-      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl'>
+    <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl'>
+      <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 rounded-t-xl animate-in slide-in-from-top-3 duration-400'>
         <div className='flex items-center space-x-3 sm:space-x-4'>
-          <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center'>
+          <div className='w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center animate-in scale-in-0 duration-500 delay-200 transition-transform hover:scale-110'>
             <FileText className='w-6 h-6 sm:w-8 sm:h-8 text-white' />
           </div>
-          <div className='min-w-0 flex-1'>
+          <div className='min-w-0 flex-1 animate-in slide-in-from-left-3 duration-500 delay-100'>
             <CardTitle className='text-white text-xl sm:text-2xl lg:text-3xl font-bold truncate'>
               {caseService.case_code}
             </CardTitle>
-            <p className='text-yellow-300 text-sm sm:text-base lg:text-lg truncate'>
+            <p className='text-yellow-300 text-sm sm:text-base lg:text-lg truncate animate-in slide-in-from-left-2 duration-400 delay-300'>
               Khách hàng: {caseService.case_customer.cus_firstName}{' '}
               {caseService.case_customer.cus_lastName}
             </p>
@@ -98,18 +98,18 @@ export default function CaseDetail({
         </div>
       </CardHeader>
 
-      <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
+      <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in-0 duration-600 delay-200'>
         {/* Basic Information */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
-          <div className='space-y-3 sm:space-y-4'>
-            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
-              <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+          <div className='space-y-3 sm:space-y-4 animate-in slide-in-from-left-2 duration-500 delay-300'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center transition-colors duration-200 hover:text-primary'>
+              <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2 transition-transform duration-200 hover:scale-110' />
               Thông tin cơ bản
             </h3>
 
             <div className='space-y-2 sm:space-y-3'>
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <IdCard className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-left-1 duration-400 delay-400 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <IdCard className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Mã hồ sơ:
@@ -120,15 +120,15 @@ export default function CaseDetail({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <Users className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-left-1 duration-400 delay-450 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <Users className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Khách hàng:
                   </span>
                   <Link
                     to={`/erp/customers/${caseService.case_customer.id}`}
-                    className='text-sm sm:text-base font-medium break-words'
+                    className='text-sm sm:text-base font-medium break-words transition-all duration-200 hover:text-primary hover:underline'
                     prefetch='intent'
                   >
                     {caseService.case_customer.cus_firstName}{' '}
@@ -137,14 +137,14 @@ export default function CaseDetail({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <AlertCircle className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-left-1 duration-400 delay-500 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <AlertCircle className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Trạng thái:
                   </span>
                   <Badge
-                    className={`text-sm sm:text-base mt-1 ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
+                    className={`text-sm sm:text-base mt-1 transition-all duration-200 hover:scale-105 ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
                   >
                     {CASE_SERVICE.STATUS[caseService.case_status]}
                   </Badge>
@@ -154,15 +154,15 @@ export default function CaseDetail({
           </div>
 
           {/* Case Timeline */}
-          <div className='space-y-3 sm:space-y-4'>
-            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
-              <Calendar className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+          <div className='space-y-3 sm:space-y-4 animate-in slide-in-from-right-2 duration-500 delay-350'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center transition-colors duration-200 hover:text-primary'>
+              <Calendar className='w-4 h-4 sm:w-5 sm:h-5 mr-2 transition-transform duration-200 hover:scale-110' />
               Thông tin thời gian
             </h3>
 
             <div className='space-y-2 sm:space-y-3'>
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <Clock className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-right-1 duration-400 delay-450 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <Clock className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Ngày bắt đầu:
@@ -179,8 +179,8 @@ export default function CaseDetail({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <CheckCircle className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-right-1 duration-400 delay-500 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <CheckCircle className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-green-500' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Ngày kết thúc:
@@ -197,8 +197,8 @@ export default function CaseDetail({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <Calendar className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-right-1 duration-400 delay-550 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <Calendar className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Ngày tạo:
@@ -215,8 +215,8 @@ export default function CaseDetail({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-2 sm:space-x-3'>
-                <Calendar className='w-4 h-4 text-gray-400 mt-0.5' />
+              <div className='flex items-start space-x-2 sm:space-x-3 animate-in slide-in-from-right-1 duration-400 delay-600 transition-all duration-200 hover:bg-gray-50 rounded-lg p-2 -ml-2'>
+                <Calendar className='w-4 h-4 text-gray-400 mt-0.5 transition-colors duration-200 hover:text-primary' />
                 <div className='min-w-0 flex-1'>
                   <span className='text-sm sm:text-base text-gray-500 block'>
                     Cập nhật lúc:
@@ -238,12 +238,12 @@ export default function CaseDetail({
 
         {/* Notes */}
         {caseService.case_notes && (
-          <div className='space-y-2 sm:space-y-3'>
-            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
-              <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+          <div className='space-y-2 sm:space-y-3 animate-in slide-in-from-bottom-3 fade-in-0 duration-500 delay-400'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center transition-colors duration-200 hover:text-primary'>
+              <FileText className='w-4 h-4 sm:w-5 sm:h-5 mr-2 transition-transform duration-200 hover:scale-110' />
               Ghi chú
             </h3>
-            <div className='bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200'>
+            <div className='bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 transition-all duration-200 hover:bg-gray-100 hover:shadow-md'>
               <TextRenderer content={caseService.case_notes} />
             </div>
           </div>
@@ -251,15 +251,15 @@ export default function CaseDetail({
 
         {/* Financial Summary */}
         {caseService.case_totalsCache && (
-          <div className='space-y-3 sm:space-y-4'>
-            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center'>
-              <PieChart className='w-4 h-4 sm:w-5 sm:h-5 mr-2' />
+          <div className='space-y-3 sm:space-y-4 animate-in slide-in-from-bottom-3 fade-in-0 duration-500 delay-450'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-900 flex items-center transition-colors duration-200 hover:text-primary'>
+              <PieChart className='w-4 h-4 sm:w-5 sm:h-5 mr-2 transition-transform duration-200 hover:scale-110 hover:rotate-12' />
               Tổng quan tài chính
             </h3>
-            <div className='bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200'>
+            <div className='bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200 transition-all duration-300 hover:bg-green-100 hover:shadow-lg animate-in scale-in-0 duration-400 delay-500'>
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4'>
-                <div className='flex items-center space-x-2'>
-                  <DollarSign className='w-4 h-4 text-green-600' />
+                <div className='flex items-center space-x-2 animate-in slide-in-from-left-1 duration-300 delay-550 transition-all duration-200 hover:scale-105'>
+                  <DollarSign className='w-4 h-4 text-green-600 transition-transform duration-200 hover:scale-125' />
                   <div>
                     <span className='text-xs text-gray-500 block'>
                       Giá cơ bản
@@ -274,8 +274,8 @@ export default function CaseDetail({
                 </div>
 
                 {caseService.case_pricing.discounts !== 0 && (
-                  <div className='flex items-center space-x-2'>
-                    <TrendingUp className='w-4 h-4 text-red-600' />
+                  <div className='flex items-center space-x-2 animate-in slide-in-from-left-1 duration-300 delay-600 transition-all duration-200 hover:scale-105'>
+                    <TrendingUp className='w-4 h-4 text-red-600 transition-transform duration-200 hover:scale-125' />
                     <div>
                       <span className='text-xs text-gray-500 block'>
                         Giảm giá
@@ -291,8 +291,8 @@ export default function CaseDetail({
                 )}
 
                 {caseService.case_pricing.addOns !== 0 && (
-                  <div className='flex items-center space-x-2'>
-                    <PieChart className='w-4 h-4 text-blue-600' />
+                  <div className='flex items-center space-x-2 animate-in slide-in-from-left-1 duration-300 delay-650 transition-all duration-200 hover:scale-105'>
+                    <PieChart className='w-4 h-4 text-blue-600 transition-transform duration-200 hover:scale-125 hover:rotate-12' />
                     <div>
                       <span className='text-xs text-gray-500 block'>
                         Phụ phí
@@ -309,8 +309,8 @@ export default function CaseDetail({
 
                 {caseService.case_pricing.taxes &&
                   caseService.case_pricing.taxes.length > 0 && (
-                    <div className='flex items-center space-x-2'>
-                      <Calculator className='w-4 h-4 text-purple-600' />
+                    <div className='flex items-center space-x-2 animate-in slide-in-from-left-1 duration-300 delay-700 transition-all duration-200 hover:scale-105'>
+                      <Calculator className='w-4 h-4 text-purple-600 transition-transform duration-200 hover:scale-125' />
                       <div>
                         <span className='text-xs text-gray-500 block'>
                           Thuế
@@ -342,10 +342,10 @@ export default function CaseDetail({
               </div>
             </div>
 
-            <div className='bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200'>
+            <div className='bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200 transition-all duration-300 hover:bg-blue-100 hover:shadow-lg animate-in scale-in-0 duration-400 delay-550'>
               {/* Progress bar for payment completion */}
               {caseService.case_totalsCache.scheduled > 0 && (
-                <div className='mb-4'>
+                <div className='mb-4 animate-in slide-in-from-bottom-2 duration-400 delay-600'>
                   <div className='flex justify-between text-sm text-gray-600 mb-1'>
                     <span>Tiến độ thanh toán</span>
                     <span>
@@ -401,10 +401,10 @@ export default function CaseDetail({
               {/* Additional financial metrics if available */}
               {(caseService.case_totalsCache.incurredCostTotal > 0 ||
                 caseService.case_totalsCache.commissionTotal > 0) && (
-                <div className='mt-4 pt-4 border-t border-blue-200'>
+                <div className='mt-4 pt-4 border-t border-blue-200 animate-in slide-in-from-bottom-2 duration-400 delay-650'>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                     {caseService.case_totalsCache.incurredCostTotal > 0 && (
-                      <div className='text-center p-2 bg-red-50 rounded-lg'>
+                      <div className='text-center p-2 bg-red-50 rounded-lg transition-all duration-200 hover:bg-red-100 hover:scale-105 animate-in scale-in-0 duration-300 delay-700'>
                         <div className='text-sm font-medium text-red-600'>
                           {caseService.case_totalsCache.incurredCostTotal.toLocaleString(
                             'vi-VN',
@@ -418,7 +418,7 @@ export default function CaseDetail({
                     )}
 
                     {caseService.case_totalsCache.commissionTotal > 0 && (
-                      <div className='text-center p-2 bg-yellow-50 rounded-lg border border-yellow-400'>
+                      <div className='text-center p-2 bg-yellow-50 rounded-lg border border-yellow-400 transition-all duration-200 hover:bg-yellow-100 hover:scale-105 animate-in scale-in-0 duration-300 delay-750'>
                         <div className='text-sm font-medium text-yellow-600'>
                           {caseService.case_totalsCache.commissionTotal.toLocaleString(
                             'vi-VN',
@@ -434,9 +434,9 @@ export default function CaseDetail({
 
               {/* Next due date alert */}
               {caseService.case_totalsCache.nextDueDate && (
-                <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
+                <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg transition-all duration-200 hover:bg-yellow-100 hover:shadow-md animate-in slide-in-from-left-2 duration-400 delay-800'>
                   <div className='flex items-center space-x-2'>
-                    <AlertCircle className='w-4 h-4 text-yellow-600' />
+                    <AlertCircle className='w-4 h-4 text-yellow-600 transition-transform duration-200 hover:scale-125' />
                     <span className='text-sm font-medium text-yellow-800'>
                       Ngày đến hạn tiếp theo:{' '}
                       {format(
@@ -451,9 +451,9 @@ export default function CaseDetail({
 
               {/* Overdue alert */}
               {caseService.case_totalsCache.overdueCount > 0 && (
-                <div className='mt-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+                <div className='mt-4 p-3 bg-red-50 border border-red-200 rounded-lg transition-all duration-200 hover:bg-red-100 hover:shadow-md animate-in slide-in-from-right-2 duration-400 delay-850'>
                   <div className='flex items-center space-x-2'>
-                    <AlertCircle className='w-4 h-4 text-red-600' />
+                    <AlertCircle className='w-4 h-4 text-red-600 transition-transform duration-200 hover:scale-125 animate-pulse' />
                     <span className='text-sm font-medium text-red-800'>
                       Có {caseService.case_totalsCache.overdueCount} kỳ thanh
                       toán quá hạn
@@ -465,30 +465,36 @@ export default function CaseDetail({
           </div>
         )}
 
-        <CaseInstallmentList
-          caseId={caseService.id}
-          installments={caseService.case_installments || []}
-        />
+        <div className='animate-in slide-in-from-left-3 duration-500 delay-500'>
+          <CaseInstallmentList
+            caseId={caseService.id}
+            installments={caseService.case_installments || []}
+          />
+        </div>
 
-        <CaseIncurredCostList
-          caseId={caseService.id}
-          incurredCosts={caseService.case_incurredCosts || []}
-        />
+        <div className='animate-in slide-in-from-right-3 duration-500 delay-550'>
+          <CaseIncurredCostList
+            caseId={caseService.id}
+            incurredCosts={caseService.case_incurredCosts || []}
+          />
+        </div>
 
-        <CaseParticipantList
-          caseId={caseService.id}
-          caseParticipants={caseService.case_participants as any}
-        />
+        <div className='animate-in slide-in-from-left-3 duration-500 delay-600'>
+          <CaseParticipantList
+            caseId={caseService.id}
+            caseParticipants={caseService.case_participants as any}
+          />
+        </div>
 
         {/* Actions */}
-        <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-200'>
+        <div className='flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-200 animate-in slide-in-from-bottom-3 fade-in-0 duration-500 delay-650'>
           <Button
             variant={'primary'}
             asChild
-            className='justify-center sm:justify-start'
+            className='justify-center sm:justify-start transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95'
           >
             <Link to='./edit' prefetch='intent'>
-              <Edit className='w-4 h-4' />
+              <Edit className='w-4 h-4 transition-transform duration-200 hover:rotate-12' />
               <span className='hidden sm:inline'>Chỉnh sửa hồ sơ</span>
               <span className='sm:hidden'>Chỉnh sửa</span>
             </Link>
@@ -497,10 +503,10 @@ export default function CaseDetail({
           <Button
             variant={'secondary'}
             asChild
-            className='justify-center sm:justify-start'
+            className='justify-center sm:justify-start transition-all duration-200 hover:scale-105 hover:shadow-md active:scale-95'
           >
             <Link to='/erp/cases' prefetch='intent'>
-              <ArrowLeft className='w-4 h-4' />
+              <ArrowLeft className='w-4 h-4 transition-transform duration-200 hover:-translate-x-1' />
               <span className='hidden sm:inline'>Quay lại danh sách</span>
               <span className='sm:hidden'>Quay lại</span>
             </Link>

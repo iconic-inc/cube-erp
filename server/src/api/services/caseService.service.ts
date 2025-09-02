@@ -22,9 +22,15 @@ import { getEmployeeByUserId } from './employee.service';
 import { CaseServiceModel } from '@models/caseService.model';
 import { CASE_SERVICE, TASK } from '../constants';
 import { CUSTOMER } from '../constants/customer.constant';
+import { TRANSACTION } from '../constants/transaction.constant';
 import { TaskModel } from '@models/task.model';
 import '@utils/date.util'; // Ensure date utilities are loaded
 import { createTasksFromTemplate, getTasks } from './task.service';
+import {
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+} from './transaction.service';
 
 // Import modules for export functionality
 import * as XLSX from 'xlsx';
@@ -315,13 +321,13 @@ const calculateTotalsCache = (caseServiceData: {
 
   // Calculate scheduled amount (sum of installments)
   const scheduled = installments.reduce(
-    (sum: number, installment: any) => sum + (installment.amount || 0),
+    (sum: number, installment: any) => sum + (+installment.amount || 0),
     0
   );
 
   // Calculate paid amount (sum of paid amounts in installments)
   const paid = installments.reduce(
-    (sum: number, installment: any) => sum + (installment.paidAmount || 0),
+    (sum: number, installment: any) => sum + (+installment.paidAmount || 0),
     0
   );
 
@@ -332,17 +338,9 @@ const calculateTotalsCache = (caseServiceData: {
   let taxComputed = 0;
   if (pricing && pricing.taxes) {
     const baseForTax =
-      // pricing.scope === 'ON_BASE_PLUS_INCIDENTALS'
       (+pricing.baseAmount || 0) +
       (+pricing.addOns! || 0) +
       (+pricing.discounts! || 0);
-    // incurredCosts.reduce(
-    //   (sum: number, cost: any) => sum + (cost.amount || 0),
-    //   0
-    // )
-    // : (pricing.baseAmount || 0) +
-    //   (pricing.addOns || 0) +
-    //   (pricing.discounts || 0);
 
     taxComputed = pricing.taxes.reduce((sum: number, tax: any) => {
       if (tax.mode === 'PERCENT') {
@@ -1722,143 +1720,6 @@ const getCaseServiceOverview = async (caseServiceId: string) => {
 };
 
 /**
- * Create a new installment for a case service
- */
-const createInstallment = async (
-  caseServiceId: string,
-  installmentData: {
-    seq: number;
-    dueDate: Date;
-    amount: number;
-    notes?: string;
-  }
-) => {
-  const caseService = await CaseServiceModel.findById(caseServiceId);
-
-  if (!caseService) {
-    throw new NotFoundError('Case service not found');
-  }
-
-  // Check if sequence number already exists
-  const existingInstallment = caseService.case_installments.find(
-    (inst) => inst.seq === installmentData.seq
-  );
-
-  if (existingInstallment) {
-    throw new BadRequestError(
-      'Installment with this sequence number already exists'
-    );
-  }
-
-  caseService.case_installments.push({
-    seq: installmentData.seq,
-    dueDate: installmentData.dueDate,
-    amount: installmentData.amount,
-    status: 'PLANNED',
-    paidAmount: 0,
-    notes: installmentData.notes,
-  } as any);
-
-  // Sort installments by sequence
-  caseService.case_installments.sort((a, b) => a.seq - b.seq);
-
-  await caseService.save();
-  return caseService.case_installments;
-};
-
-/**
- * Add a participant to a case service
- */
-const addParticipant = async (
-  caseServiceId: string,
-  participantData: {
-    employeeId: string;
-    role?: string;
-    commission: {
-      type: 'PERCENT_OF_GROSS' | 'PERCENT_OF_NET' | 'FLAT';
-      value: number;
-    };
-  }
-) => {
-  const caseService = await CaseServiceModel.findById(caseServiceId);
-
-  if (!caseService) {
-    throw new NotFoundError('Case service not found');
-  }
-
-  // Check if participant already exists
-  const existingParticipant = caseService.case_participants.find(
-    (participant) =>
-      participant.employeeId.toString() === participantData.employeeId
-  );
-
-  if (existingParticipant) {
-    throw new BadRequestError('Employee is already a participant in this case');
-  }
-
-  caseService.case_participants.push({
-    employeeId: new Types.ObjectId(participantData.employeeId),
-    role: participantData.role,
-    commission: participantData.commission,
-  } as any);
-
-  await caseService.save();
-  return caseService.case_participants;
-};
-
-/**
- * Add a payment to a case service installment
- */
-const addPayment = async (
-  caseServiceId: string,
-  paymentData: {
-    installmentId: string;
-    amount: number;
-    paymentDate?: Date;
-    notes?: string;
-  }
-) => {
-  const caseService = await CaseServiceModel.findById(caseServiceId);
-
-  if (!caseService) {
-    throw new NotFoundError('Case service not found');
-  }
-
-  const installment = caseService.case_installments.id(
-    paymentData.installmentId
-  );
-
-  if (!installment) {
-    throw new NotFoundError('Installment not found');
-  }
-
-  const newPaidAmount = installment.paidAmount + paymentData.amount;
-
-  if (newPaidAmount > installment.amount) {
-    throw new BadRequestError('Payment amount exceeds installment amount');
-  }
-
-  installment.paidAmount = newPaidAmount;
-
-  // Update status based on payment
-  if (newPaidAmount === installment.amount) {
-    installment.status = 'PAID';
-  } else if (newPaidAmount > 0) {
-    installment.status = 'PARTIALLY_PAID';
-  }
-
-  await caseService.save();
-  return {
-    installment,
-    payment: {
-      amount: paymentData.amount,
-      paymentDate: paymentData.paymentDate || new Date(),
-      notes: paymentData.notes,
-    },
-  };
-};
-
-/**
  * Helper function to update task assignees for all tasks in a case service
  * @param caseServiceId - The case service ID
  * @param participantEmployeeIds - Array of employee IDs to assign to all tasks
@@ -1924,10 +1785,12 @@ const updateTaskAssigneesForCase = async (
  * This function updates the case service participants with the provided participants data
  * @param caseServiceId - The case service ID to update participants for
  * @param caseParticipants - Array of CaseParticipant objects to update/add
+ * @param userId - The user ID for transaction tracking
  */
 const updateCaseServiceParticipant = async (
   caseServiceId: string,
-  caseParticipants: CaseParticipant[]
+  caseParticipants: CaseParticipant[],
+  userId?: string
 ) => {
   try {
     if (!Types.ObjectId.isValid(caseServiceId)) {
@@ -1993,6 +1856,17 @@ const updateCaseServiceParticipant = async (
       incurredCosts: caseService.case_incurredCosts,
       participants: caseService.case_participants,
     });
+
+    // Handle transaction updates for participant commissions if userId is provided
+    if (userId) {
+      await updateParticipantTransactions(
+        userId,
+        caseServiceId,
+        caseParticipants,
+        caseService.case_participants
+      );
+    }
+
     await caseService.save();
 
     // Update task assignees to match the new participants
@@ -2042,7 +1916,8 @@ const updateCaseServiceParticipant = async (
 
 const updateCaseServiceInstallment = async (
   caseId: string,
-  payload: InstallmentPlanItem[]
+  payload: InstallmentPlanItem[],
+  userId?: string
 ) => {
   try {
     if (!Types.ObjectId.isValid(caseId)) {
@@ -2075,6 +1950,16 @@ const updateCaseServiceInstallment = async (
     // Update the case service installments
     caseService.case_installments = cleanedInstallments;
 
+    // Handle transaction updates for installments if userId is provided
+    if (userId) {
+      await updateInstallmentTransactions(
+        userId,
+        caseId,
+        cleanedInstallments,
+        caseService.case_installments
+      );
+    }
+
     // Recalculate totals cache with updated installments
     caseService.case_totalsCache = calculateTotalsCache({
       pricing: caseService.case_pricing,
@@ -2105,7 +1990,8 @@ const updateCaseServiceInstallment = async (
 
 const updateCaseServiceIncurredCost = async (
   caseId: string,
-  payload: IncurredCost[]
+  payload: IncurredCost[],
+  userId?: string
 ) => {
   try {
     if (!Types.ObjectId.isValid(caseId)) {
@@ -2139,6 +2025,16 @@ const updateCaseServiceIncurredCost = async (
     // Update the case service incurred costs
     caseService.case_incurredCosts = cleanedIncurredCosts;
 
+    // Handle transaction updates for incurred costs if userId is provided
+    if (userId) {
+      await updateIncurredCostTransactions(
+        userId,
+        caseId,
+        cleanedIncurredCosts,
+        caseService.case_incurredCosts
+      );
+    }
+
     // Recalculate totals cache with updated incurred costs
     caseService.case_totalsCache = calculateTotalsCache({
       pricing: caseService.case_pricing,
@@ -2167,6 +2063,618 @@ const updateCaseServiceIncurredCost = async (
   }
 };
 
+// Helper functions for managing transaction records
+const createTransactionRecord = async (
+  userId: string,
+  caseServiceId: string,
+  transactionData: {
+    title: string;
+    type: 'income' | 'outcome';
+    amount: number;
+    category: string;
+    description?: string;
+    paymentMethod?: string;
+  }
+) => {
+  try {
+    const employee = await getEmployeeByUserId(userId);
+    const transaction = await createTransaction(userId, {
+      title: transactionData.title,
+      type: transactionData.type as any,
+      amount: transactionData.amount,
+      paymentMethod: (transactionData.paymentMethod ||
+        TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER) as any,
+      category: transactionData.category as any,
+      description: transactionData.description,
+      caseService: caseServiceId,
+      date: new Date().toISOString(),
+    });
+    return transaction.id;
+  } catch (error) {
+    console.error('Error creating transaction record:', error);
+    throw error;
+  }
+};
+
+const updateTransactionRecord = async (
+  transactionId: string,
+  updateData: {
+    title?: string;
+    type?: 'income' | 'outcome';
+    amount?: number;
+    category?: string;
+    description?: string;
+    paymentMethod?: string;
+  }
+) => {
+  try {
+    if (!transactionId || !Types.ObjectId.isValid(transactionId)) {
+      console.warn(
+        'Invalid transaction ID provided for update:',
+        transactionId
+      );
+      return;
+    }
+    await updateTransaction(transactionId, {
+      ...updateData,
+      type: updateData.type as any,
+      category: updateData.category as any,
+      paymentMethod: updateData.paymentMethod as any,
+    });
+  } catch (error) {
+    console.error('Error updating transaction record:', error);
+    // Don't throw error to avoid breaking the main case service update
+    console.warn(
+      'Transaction update failed, continuing with case service update'
+    );
+  }
+};
+
+const deleteTransactionRecord = async (transactionId: string) => {
+  try {
+    if (!transactionId || !Types.ObjectId.isValid(transactionId)) {
+      console.warn(
+        'Invalid transaction ID provided for deletion:',
+        transactionId
+      );
+      return;
+    }
+    await deleteTransaction(transactionId);
+  } catch (error) {
+    console.error('Error deleting transaction record:', error);
+    // Don't throw error to avoid breaking the main case service operation
+    console.warn(
+      'Transaction deletion failed, continuing with case service operation'
+    );
+  }
+};
+
+// Enhanced case service functions with transaction handling
+const createCaseServiceWithTransactions = async (
+  userId: string,
+  caseServiceData: ICaseServiceCreate
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Create the case service first
+    const caseService = await createCaseService(caseServiceData);
+
+    // Create transaction records for financial components
+    const transactionIds = {
+      installments: [] as string[],
+      incurredCosts: [] as string[],
+      taxes: [] as string[],
+      commissions: [] as string[],
+    };
+
+    // Create transactions for installments
+    if (
+      caseServiceData.installments &&
+      caseServiceData.installments.length > 0
+    ) {
+      for (const installment of caseServiceData.installments) {
+        const transactionId = await createTransactionRecord(
+          userId,
+          caseService.id,
+          {
+            title: `Đợt thanh toán - ${caseService.case_code} (Seq: ${installment.seq})`,
+            type: 'income',
+            amount: installment.amount,
+            category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT,
+            description: `Đợt thanh toán ${installment.seq} cho vụ việc ${
+              caseService.case_code
+            }. Hạn chót: ${new Date(installment.dueDate).toLocaleDateString()}`,
+            paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+          }
+        );
+        transactionIds.installments.push(transactionId);
+
+        // Update the installment with transaction ID
+        installment.transactionId = transactionId;
+      }
+    }
+
+    // Create transactions for incurred costs
+    if (
+      caseServiceData.incurredCosts &&
+      caseServiceData.incurredCosts.length > 0
+    ) {
+      for (const cost of caseServiceData.incurredCosts) {
+        const transactionId = await createTransactionRecord(
+          userId,
+          caseService.id,
+          {
+            title: `Chi phí phát sinh - ${cost.category}`,
+            type: 'outcome',
+            amount: cost.amount,
+            category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE,
+            description: `${cost.description || cost.category} cho vụ việc ${
+              caseService.case_code
+            }`,
+            paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+          }
+        );
+        transactionIds.incurredCosts.push(transactionId);
+
+        // Update the incurred cost with transaction ID
+        cost.transactionId = transactionId;
+      }
+    }
+
+    // Create transactions for taxes
+    if (
+      caseServiceData.pricing?.taxes &&
+      caseServiceData.pricing.taxes.length > 0
+    ) {
+      for (const tax of caseServiceData.pricing.taxes) {
+        const taxAmount =
+          tax.mode === 'PERCENT'
+            ? (caseServiceData.pricing.baseAmount * tax.value) / 100
+            : tax.value;
+
+        const transactionId = await createTransactionRecord(
+          userId,
+          caseService.id,
+          {
+            title: `Thuế - ${tax.name}`,
+            type: 'outcome',
+            amount: taxAmount,
+            category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT,
+            description: `${tax.name} cho vụ việc ${caseService.case_code}`,
+            paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+          }
+        );
+
+        // Update the tax with transaction ID
+        tax.transactionId = transactionId;
+      }
+    }
+
+    // Create transactions for commissions
+    if (
+      caseServiceData.participants &&
+      caseServiceData.participants.length > 0
+    ) {
+      for (const participant of caseServiceData.participants) {
+        if (participant.commission) {
+          let commissionAmount = 0;
+          const baseAmount = caseServiceData.pricing?.baseAmount || 0;
+
+          switch (participant.commission.type) {
+            case 'PERCENT_OF_GROSS':
+              commissionAmount =
+                (baseAmount * participant.commission.value) / 100;
+              break;
+            case 'PERCENT_OF_NET':
+              // Calculate net amount (this is simplified, in reality would need full calculation)
+              const netAmount = baseAmount;
+              commissionAmount =
+                (netAmount * participant.commission.value) / 100;
+              break;
+            case 'FLAT':
+              commissionAmount = participant.commission.value;
+              break;
+          }
+
+          const transactionId = await createTransactionRecord(
+            userId,
+            caseService.id,
+            {
+              title: `Hoa hồng - ${participant.role || 'Nhân viên'}`,
+              type: 'outcome',
+              amount: commissionAmount,
+              category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT,
+              description: `Hoa hồng cho ${
+                participant.role || 'nhân viên'
+              } trong vụ việc ${caseService.case_code}`,
+              paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+            }
+          );
+
+          // Update the participant commission with transaction ID
+          participant.commission.transactionId = transactionId;
+        }
+      }
+    }
+
+    console.log(
+      '---------------------------------------updating case service: ',
+      caseServiceData
+    );
+
+    // Update the case service with transaction IDs
+    await updateCaseService(caseService.id, {
+      installments: caseServiceData.installments,
+      incurredCosts: caseServiceData.incurredCosts,
+      pricing: caseServiceData.pricing,
+      participants: caseServiceData.participants,
+    });
+
+    await session.commitTransaction();
+    return caseService;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const updateCaseServiceWithTransactions = async (
+  userId: string,
+  id: string,
+  data: ICaseServiceUpdate,
+  originalCaseService?: any
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Get the original case service if not provided
+    if (!originalCaseService) {
+      originalCaseService = await CaseServiceModel.findById(id);
+      if (!originalCaseService) {
+        throw new NotFoundError('Case service not found');
+      }
+    }
+
+    // Update installments transactions
+    if (data.installments) {
+      await updateInstallmentTransactions(
+        userId,
+        id,
+        data.installments,
+        originalCaseService.case_installments
+      );
+    }
+
+    // Update incurred costs transactions
+    if (data.incurredCosts) {
+      await updateIncurredCostTransactions(
+        userId,
+        id,
+        data.incurredCosts,
+        originalCaseService.case_incurredCosts
+      );
+    }
+
+    // Update pricing/tax transactions
+    if (data.pricing) {
+      await updatePricingTransactions(
+        userId,
+        id,
+        data.pricing,
+        originalCaseService.case_pricing
+      );
+    }
+
+    // Update participant commission transactions
+    if (data.participants) {
+      await updateParticipantTransactions(
+        userId,
+        id,
+        data.participants,
+        originalCaseService.case_participants
+      );
+    }
+
+    // Update the case service
+    const updatedCaseService = await updateCaseService(id, data);
+
+    await session.commitTransaction();
+    return updatedCaseService;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const updateInstallmentTransactions = async (
+  userId: string,
+  caseServiceId: string,
+  newInstallments: InstallmentPlanItem[],
+  originalInstallments: InstallmentPlanItem[]
+) => {
+  // Create maps for easy lookup
+  const originalMap = new Map(
+    originalInstallments.map((item) => [item._id, item])
+  );
+  const newMap = new Map(newInstallments.map((item) => [item._id, item]));
+
+  // Handle deletions
+  for (const original of originalInstallments) {
+    if (!newMap.has(original._id) && original.transactionId) {
+      await deleteTransactionRecord(original.transactionId.toString());
+    }
+  }
+
+  // Handle additions and updates
+  for (const newItem of newInstallments) {
+    const original = originalMap.get(newItem._id);
+
+    if (!original) {
+      // New installment - create transaction
+      const transactionId = await createTransactionRecord(
+        userId,
+        caseServiceId,
+        {
+          title: `Đợt giao dịch - STT: ${newItem.seq}`,
+          type: 'income',
+          amount: newItem.amount,
+          category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT,
+          description: `Đợt giao dịch - STT: ${
+            newItem.seq
+          }. Hạn chót: ${new Date(newItem.dueDate).toLocaleDateString()}`,
+          paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+        }
+      );
+      newItem.transactionId = transactionId;
+    } else if (
+      original.amount !== newItem.amount ||
+      original.dueDate !== newItem.dueDate
+    ) {
+      // Updated installment - update transaction
+      if (original.transactionId) {
+        await updateTransactionRecord(original.transactionId.toString(), {
+          title: `Đợt giao dịch - STT: ${newItem.seq}`,
+          amount: newItem.amount,
+          description: `Đợt giao dịch - STT: ${
+            newItem.seq
+          }. Hạn chót: ${new Date(newItem.dueDate).toLocaleDateString()}`,
+        });
+        newItem.transactionId = original.transactionId;
+      }
+    } else {
+      // No changes - keep existing transaction ID
+      newItem.transactionId = original.transactionId;
+    }
+  }
+};
+
+const updateIncurredCostTransactions = async (
+  userId: string,
+  caseServiceId: string,
+  newCosts: IncurredCost[],
+  originalCosts: IncurredCost[]
+) => {
+  const originalMap = new Map(originalCosts.map((item) => [item._id, item]));
+  const newMap = new Map(newCosts.map((item) => [item._id, item]));
+
+  // Handle deletions
+  for (const original of originalCosts) {
+    if (!newMap.has(original._id) && original.transactionId) {
+      await deleteTransactionRecord(original.transactionId.toString());
+    }
+  }
+
+  // Handle additions and updates
+  for (const newItem of newCosts) {
+    const original = originalMap.get(newItem._id);
+
+    if (!original) {
+      // New cost - create transaction
+      const transactionId = await createTransactionRecord(
+        userId,
+        caseServiceId,
+        {
+          title: `Chi phí - ${newItem.category}`,
+          type: 'outcome',
+          amount: newItem.amount,
+          category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE,
+          description: newItem.description || newItem.category,
+          paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+        }
+      );
+      newItem.transactionId = transactionId;
+    } else if (
+      original.amount !== newItem.amount ||
+      original.category !== newItem.category
+    ) {
+      // Updated cost - update transaction
+      if (original.transactionId) {
+        await updateTransactionRecord(original.transactionId.toString(), {
+          title: `Chi phí - ${newItem.category}`,
+          amount: newItem.amount,
+          description: newItem.description || newItem.category,
+        });
+        newItem.transactionId = original.transactionId;
+      }
+    } else {
+      // No changes - keep existing transaction ID
+      newItem.transactionId = original.transactionId;
+    }
+  }
+};
+
+const updatePricingTransactions = async (
+  userId: string,
+  caseServiceId: string,
+  newPricing: ICaseServiceCreate['pricing'],
+  originalPricing: ICaseServiceCreate['pricing']
+) => {
+  if (!newPricing?.taxes || !originalPricing?.taxes) {
+    return;
+  }
+
+  const originalTaxes = originalPricing.taxes || [];
+  const newTaxes = newPricing.taxes || [];
+
+  // Handle deletions - find taxes that exist in original but not in new
+  for (let i = 0; i < originalTaxes.length; i++) {
+    const originalTax = originalTaxes[i];
+    const exists = newTaxes.some((newTax, j) => j === i);
+
+    if (!exists && (originalTax as any).transactionId) {
+      await deleteTransactionRecord(
+        (originalTax as any).transactionId.toString()
+      );
+    }
+  }
+
+  // Handle additions and updates
+  for (let i = 0; i < newTaxes.length; i++) {
+    const newTax = newTaxes[i];
+    const originalTax = originalTaxes[i];
+
+    const taxAmount =
+      newTax.mode === 'PERCENT'
+        ? (newPricing.baseAmount * newTax.value) / 100
+        : newTax.value;
+
+    if (!originalTax) {
+      // New tax - create transaction
+      const transactionId = await createTransactionRecord(
+        userId,
+        caseServiceId,
+        {
+          title: `Thuế - ${newTax.name}`,
+          type: 'outcome',
+          amount: taxAmount,
+          category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT,
+          description: `${newTax.name}`,
+          paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+        }
+      );
+      (newTax as any).transactionId = transactionId;
+    } else {
+      // Check if tax amount changed
+      const originalTaxAmount =
+        originalTax.mode === 'PERCENT'
+          ? (originalPricing.baseAmount * originalTax.value) / 100
+          : originalTax.value;
+
+      if (originalTaxAmount !== taxAmount || originalTax.name !== newTax.name) {
+        // Updated tax - update transaction
+        if ((originalTax as any).transactionId) {
+          await updateTransactionRecord(
+            (originalTax as any).transactionId.toString(),
+            {
+              title: `Thuế - ${newTax.name}`,
+              amount: taxAmount,
+              description: `${newTax.name}`,
+            }
+          );
+          (newTax as any).transactionId = (originalTax as any).transactionId;
+        }
+      } else {
+        // No changes - keep existing transaction ID
+        (newTax as any).transactionId = (originalTax as any).transactionId;
+      }
+    }
+  }
+};
+
+const updateParticipantTransactions = async (
+  userId: string,
+  caseServiceId: string,
+  newParticipants: CaseParticipant[],
+  originalParticipants: CaseParticipant[]
+) => {
+  const originalMap = new Map(
+    originalParticipants.map((item) => [item.employeeId.toString(), item])
+  );
+  const newMap = new Map(
+    newParticipants.map((item) => [item.employeeId.toString(), item])
+  );
+
+  // Handle deletions
+  for (const original of originalParticipants) {
+    if (
+      !newMap.has(original.employeeId.toString()) &&
+      original.commission?.transactionId
+    ) {
+      await deleteTransactionRecord(
+        original.commission.transactionId.toString()
+      );
+    }
+  }
+
+  // Handle additions and updates
+  for (const newItem of newParticipants) {
+    if (!newItem.commission) continue;
+
+    const original = originalMap.get(newItem.employeeId.toString());
+
+    // Calculate commission amount (simplified)
+    let commissionAmount = 0;
+    switch (newItem.commission.type) {
+      case 'FLAT':
+        commissionAmount = newItem.commission.value;
+        break;
+      case 'PERCENT_OF_GROSS':
+      case 'PERCENT_OF_NET':
+        // This would need access to pricing info for accurate calculation
+        commissionAmount = newItem.commission.value; // Simplified
+        break;
+    }
+
+    if (!original || !original.commission) {
+      // New participant commission - create transaction
+      const transactionId = await createTransactionRecord(
+        userId,
+        caseServiceId,
+        {
+          title: `Hoa hồng - ${newItem.role || 'Employee'}`,
+          type: 'outcome',
+          amount: commissionAmount,
+          category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT,
+          description: `Hoa hồng cho ${newItem.role || 'nhân viên'}`,
+          paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
+        }
+      );
+      newItem.commission.transactionId = transactionId;
+    } else {
+      // Check if commission changed
+      const originalCommissionAmount = original.commission.value;
+
+      if (
+        originalCommissionAmount !== newItem.commission.value ||
+        original.commission.type !== newItem.commission.type
+      ) {
+        // Updated commission - update transaction
+        if (original.commission.transactionId) {
+          await updateTransactionRecord(
+            original.commission.transactionId.toString(),
+            {
+              title: `Hoa hồng - ${newItem.role || 'Nhân viên'}`,
+              amount: commissionAmount,
+              description: `Hoa hồng cho ${newItem.role || 'nhân viên'}`,
+            }
+          );
+          newItem.commission.transactionId = original.commission.transactionId;
+        }
+      } else {
+        // No changes - keep existing transaction ID
+        newItem.commission.transactionId = original.commission.transactionId;
+      }
+    }
+  }
+};
+
 export {
   getCaseServices,
   getCaseServiceById,
@@ -2181,11 +2689,11 @@ export {
   detachDocumentFromCase,
   getCaseServiceDocuments,
   getCaseServiceOverview,
-  createInstallment,
-  addParticipant,
-  addPayment,
   updateCaseServiceParticipant,
   updateCaseServiceInstallment,
   updateCaseServiceIncurredCost,
   updateTaskAssigneesForCase,
+  // New transaction-aware functions
+  createCaseServiceWithTransactions,
+  updateCaseServiceWithTransactions,
 };

@@ -4,11 +4,9 @@ import { ICaseServiceBrief } from './case.interface';
 
 export interface ITransactionBrief {
   id: string;
-  tx_code: string;
   tx_type: 'income' | 'outcome';
   tx_title: string;
   tx_amount: number;
-  tx_paid: number;
   tx_paymentMethod: string;
   tx_category: string;
   tx_description?: string;
@@ -25,11 +23,9 @@ export interface ITransaction extends ITransactionBrief {
 }
 
 export interface ITransactionCreate {
-  code: string;
   type: 'income' | 'outcome';
   title: string;
   amount: number;
-  paid?: number;
   paymentMethod: string;
   category: string;
   description?: string;
@@ -62,8 +58,6 @@ export interface ITransactionQuery {
 export interface ITransactionStats {
   totalIncome: number;
   totalOutcome: number;
-  totalPaid: number;
-  totalUnpaid: number;
   transactionCount: number;
   netAmount: number;
   debtCount: number;

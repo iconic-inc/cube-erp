@@ -76,7 +76,7 @@ export default function () {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto'>
+    <div className='space-y-4 sm:space-y-6 min-h-screen mx-auto animate-in fade-in-0 duration-500'>
       <ContentHeader
         title='Chi tiết Hồ sơ vụ việc'
         actionContent={
@@ -93,16 +93,22 @@ export default function () {
       />
 
       {/* Case Service Details Card */}
-      <CaseDetail caseService={caseService} />
+      <div className='animate-in slide-in-from-left-4 duration-500 delay-100'>
+        <CaseDetail caseService={caseService} />
+      </div>
 
       {/* Associated Tasks Card */}
-      <CaseTaskList caseId={caseId} caseTasksPromise={caseTasksPromise} />
+      <div className='animate-in slide-in-from-right-4 duration-500 delay-200'>
+        <CaseTaskList caseId={caseId} caseTasksPromise={caseTasksPromise} />
+      </div>
 
       {/* Associated Documents Card */}
-      <CaseDocumentList
-        caseId={caseId}
-        caseDocumentsPromise={caseDocumentsPromise}
-      />
+      <div className='animate-in slide-in-from-left-4 duration-500 delay-300'>
+        <CaseDocumentList
+          caseId={caseId}
+          caseDocumentsPromise={caseDocumentsPromise}
+        />
+      </div>
     </div>
   );
 }

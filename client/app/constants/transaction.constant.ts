@@ -37,6 +37,10 @@ export const TRANSACTION = {
         value: 'document_drafting',
         label: 'Phí soạn thảo văn bản',
       },
+      INSTALLMENT_PAYMENT: {
+        value: 'installment_payment',
+        label: 'Thu tiền trả góp từ khách hàng',
+      },
       OTHER: { value: 'other_income', label: 'Khác' },
     },
 
@@ -54,6 +58,20 @@ export const TRANSACTION = {
       EQUIPMENT: { value: 'equipment', label: 'Mua sắm thiết bị' },
       TRAINING_EXPENSE: { value: 'training_expense', label: 'Chi phí đào tạo' },
       REWARD: { value: 'reward', label: 'Thưởng' },
+      FOOD: { value: 'food', label: 'Chi phí ăn uống' },
+      TRAVEL_EXPENSE: { value: 'travel_expense', label: 'Chi phí công tác' },
+      OPERATIONAL_EXPENSE: {
+        value: 'operational_expense',
+        label: 'Chi phí vận hành',
+      },
+      TAX_PAYMENT: {
+        value: 'tax_payment',
+        label: 'Thanh toán thuế cho hồ sơ vụ việc',
+      },
+      COMMISSION_PAYMENT: {
+        value: 'commission_payment',
+        label: 'Thanh toán hoa hồng cho nhân viên',
+      },
       OTHER: { value: 'other_outcome', label: 'Khác' },
     },
   },

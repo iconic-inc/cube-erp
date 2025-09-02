@@ -56,9 +56,9 @@ export default function IndexHRM() {
   const navigate = useNavigate();
 
   return (
-    <div className='space-y-4 md:space-y-6 min-h-screen p-1 sm:p-0'>
+    <div className='space-y-4 md:space-y-6 min-h-screen p-1 sm:p-0 animate-in fade-in-0 duration-500'>
       {/* Content Header */}
-      <div className='mb-4 md:mb-6'>
+      <div className='mb-4 md:mb-6 animate-in slide-in-from-top-4 duration-500'>
         <ContentHeader
           title='Bảng điều khiển'
           actionContent={
@@ -75,78 +75,86 @@ export default function IndexHRM() {
         {(data) => (
           <div className='space-y-4 md:space-y-6'>
             {/* Dashboard Stats - Responsive Grid */}
-            <div className='grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6'>
-              <StatsCard
-                title='Tổng nhân viên'
-                value={data.stats.totalEmployees.toLocaleString()}
-                description='Nhân viên đang hoạt động trong hệ thống'
-                icon={Users}
-                trend={{
-                  value: 8.2,
-                  isPositive: true,
-                  label: 'so với tháng trước',
-                }}
-                iconClassName='bg-red-900/10'
-                className='col-span-1'
-              />
+            <div className='grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 animate-in slide-in-from-bottom-4 duration-600 delay-100'>
+              <div className='animate-in slide-in-from-left-3 duration-500 delay-200'>
+                <StatsCard
+                  title='Tổng nhân viên'
+                  value={data.stats.totalEmployees.toLocaleString()}
+                  description='Nhân viên đang hoạt động trong hệ thống'
+                  icon={Users}
+                  trend={{
+                    value: 8.2,
+                    isPositive: true,
+                    label: 'so với tháng trước',
+                  }}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1'
+                />
+              </div>
 
-              <StatsCard
-                title='Tỷ lệ chấm công'
-                value={`${data.stats.attendanceRate}%`}
-                description='Tỷ lệ chấm công hôm nay'
-                icon={CheckCircle}
-                trend={{
-                  value: 2.1,
-                  isPositive: true,
-                  label: 'so với hôm qua',
-                }}
-                iconClassName='bg-red-900/10'
-                className='col-span-1'
-              />
+              <div className='animate-in slide-in-from-left-3 duration-500 delay-300'>
+                <StatsCard
+                  title='Tỷ lệ chấm công'
+                  value={`${data.stats.attendanceRate}%`}
+                  description='Tỷ lệ chấm công hôm nay'
+                  icon={CheckCircle}
+                  trend={{
+                    value: 2.1,
+                    isPositive: true,
+                    label: 'so với hôm qua',
+                  }}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1'
+                />
+              </div>
 
-              <StatsCard
-                title='Công việc đang thực hiện'
-                value={data.stats.totalTasks.toLocaleString()}
-                description={`${data.stats.completedTasks} hoàn thành, ${data.stats.pendingTasks} đang chờ`}
-                icon={Target}
-                trend={{
-                  value: 12.5,
-                  isPositive: true,
-                  label: 'so với tuần trước',
-                }}
-                iconClassName='bg-red-900/10'
-                className='col-span-1 xs:col-span-2 lg:col-span-1'
-              />
+              <div className='animate-in slide-in-from-left-3 duration-500 delay-400'>
+                <StatsCard
+                  title='Công việc đang thực hiện'
+                  value={data.stats.totalTasks.toLocaleString()}
+                  description={`${data.stats.completedTasks} hoàn thành, ${data.stats.pendingTasks} đang chờ`}
+                  icon={Target}
+                  trend={{
+                    value: 12.5,
+                    isPositive: true,
+                    label: 'so với tuần trước',
+                  }}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1 xs:col-span-2 lg:col-span-1'
+                />
+              </div>
 
-              <StatsCard
-                title='Điểm hiệu suất'
-                value={`${data.stats.averagePerformanceScore}/100`}
-                description='Hiệu suất trung bình của đội nhóm'
-                icon={TrendingUp}
-                trend={{
-                  value: 4.3,
-                  isPositive: true,
-                  label: 'so với tháng trước',
-                }}
-                iconClassName='bg-red-900/10'
-                className='col-span-1 xs:col-span-2 lg:col-span-1'
-              />
+              <div className='animate-in slide-in-from-left-3 duration-500 delay-500'>
+                <StatsCard
+                  title='Điểm hiệu suất'
+                  value={`${data.stats.averagePerformanceScore}/100`}
+                  description='Hiệu suất trung bình của đội nhóm'
+                  icon={TrendingUp}
+                  trend={{
+                    value: 4.3,
+                    isPositive: true,
+                    label: 'so với tháng trước',
+                  }}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1 xs:col-span-2 lg:col-span-1'
+                />
+              </div>
             </div>
 
             {/* Main Dashboard Content - Responsive Grid */}
-            <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6'>
+            <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 animate-in slide-in-from-bottom-3 duration-600 delay-300'>
               {/* Performance Overview */}
-              <div className='col-span-1 lg:col-span-1 xl:col-span-1'>
+              <div className='col-span-1 lg:col-span-1 xl:col-span-1 animate-in slide-in-from-left-4 duration-500 delay-600'>
                 <PerformanceOverview performers={data.topPerformers} />
               </div>
 
               {/* Recent Tasks */}
-              <div className='col-span-1 lg:col-span-1 xl:col-span-1'>
+              <div className='col-span-1 lg:col-span-1 xl:col-span-1 animate-in slide-in-from-bottom-4 duration-500 delay-700'>
                 <RecentTasks tasks={data.recentTasks} />
               </div>
 
               {/* Attendance Overview */}
-              <div className='col-span-1 lg:col-span-2 xl:col-span-1'>
+              <div className='col-span-1 lg:col-span-2 xl:col-span-1 animate-in slide-in-from-right-4 duration-500 delay-800'>
                 <AttendanceOverview
                   attendanceList={data.recentAttendance}
                   totalEmployees={data.stats.totalEmployees}
@@ -156,33 +164,39 @@ export default function IndexHRM() {
             </div>
 
             {/* Additional Stats Row - Responsive Grid */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6'>
-              <StatsCard
-                title='Chấm công hôm nay'
-                value={data.stats.todayCheckIns.toLocaleString()}
-                description='Nhân viên đã chấm công hôm nay'
-                icon={Clock}
-                iconClassName='bg-red-900/10'
-                className='col-span-1'
-              />
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 animate-in slide-in-from-bottom-2 duration-600 delay-500'>
+              <div className='animate-in slide-in-from-left-2 duration-500 delay-900'>
+                <StatsCard
+                  title='Chấm công hôm nay'
+                  value={data.stats.todayCheckIns.toLocaleString()}
+                  description='Nhân viên đã chấm công hôm nay'
+                  icon={Clock}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1'
+                />
+              </div>
 
-              <StatsCard
-                title='Công việc quá hạn'
-                value={data.stats.overdueTasks.toLocaleString()}
-                description='Công việc đã quá thời hạn'
-                icon={AlertTriangle}
-                iconClassName='bg-red-900/10'
-                className='col-span-1'
-              />
+              <div className='animate-in slide-in-from-bottom-2 duration-500 delay-1000'>
+                <StatsCard
+                  title='Công việc quá hạn'
+                  value={data.stats.overdueTasks.toLocaleString()}
+                  description='Công việc đã quá thời hạn'
+                  icon={AlertTriangle}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1'
+                />
+              </div>
 
-              <StatsCard
-                title='Chấm công theo tháng'
-                value={`${data.stats.monthlyAttendanceRate}%`}
-                description='Trung bình tháng này'
-                icon={Calendar}
-                iconClassName='bg-red-900/10'
-                className='col-span-1 sm:col-span-2 lg:col-span-1'
-              />
+              <div className='animate-in slide-in-from-right-2 duration-500 delay-1100'>
+                <StatsCard
+                  title='Chấm công theo tháng'
+                  value={`${data.stats.monthlyAttendanceRate}%`}
+                  description='Trung bình tháng này'
+                  icon={Calendar}
+                  iconClassName='bg-red-900/10'
+                  className='col-span-1 sm:col-span-2 lg:col-span-1'
+                />
+              </div>
             </div>
           </div>
         )}

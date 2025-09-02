@@ -16,12 +16,11 @@ import {
   attachDocumentToCase,
   getCaseServiceTasks,
   getCaseServiceOverview,
-  createInstallment,
-  addParticipant,
-  addPayment,
   updateCaseServiceParticipant,
   updateCaseServiceIncurredCost,
   updateCaseServiceInstallment,
+  createCaseServiceWithTransactions,
+  updateCaseServiceWithTransactions,
 } from '@services/caseService.service';
 
 const patchCaseServiceHandler = {
@@ -60,7 +59,10 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service created successfully',
-      metadata: await createCaseService(req.body),
+      metadata: await createCaseServiceWithTransactions(
+        req.user.userId,
+        req.body
+      ),
     });
   }
 
@@ -71,7 +73,11 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service updated successfully',
-      metadata: await updateCaseService(req.params.id, req.body),
+      metadata: await updateCaseServiceWithTransactions(
+        req.user.userId,
+        req.params.id,
+        req.body
+      ),
     });
   }
 
@@ -247,52 +253,31 @@ export class CaseServiceController {
     });
   };
 
-  /**
-   * Create installment for a case service
-   */
-  static createInstallment = async (req: Request, res: Response) => {
-    const installments = await createInstallment(req.params.id, req.body);
-    return OK({
-      res,
-      message: 'Installment created successfully',
-      metadata: installments,
-    });
-  };
-
-  /**
-   * Add participant to a case service
-   */
-  static addParticipant = async (req: Request, res: Response) => {
-    const participants = await addParticipant(req.params.id, req.body);
-    return OK({
-      res,
-      message: 'Participant added successfully',
-      metadata: participants,
-    });
-  };
-
-  /**
-   * Add payment to a case service installment
-   */
-  static addPayment = async (req: Request, res: Response) => {
-    const payment = await addPayment(req.params.id, req.body);
-    return OK({
-      res,
-      message: 'Payment added successfully',
-      metadata: payment,
-    });
-  };
-
   static patchCaseService = async (req: Request, res: Response) => {
     const action = req.body.op as keyof typeof patchCaseServiceHandler;
     if (!patchCaseServiceHandler[action]) {
       throw new BadRequestError(`Invalid action: ${action}`);
     }
 
-    const result = await patchCaseServiceHandler[action](
-      req.params.id,
-      JSON.parse(req.body.value)
-    );
+    // For financial updates, pass userId to create transaction records
+    const userId = req.user?.userId;
+    let result;
+
+    // Handle functions that need userId parameter
+    const financialOperations = [
+      'updateCaseServiceInstallment',
+      'updateCaseServiceIncurredCost',
+      'updateCaseServiceParticipant',
+    ];
+
+    if (financialOperations.includes(action)) {
+      const handler = patchCaseServiceHandler[action] as any;
+      result = await handler(req.params.id, JSON.parse(req.body.value), userId);
+    } else {
+      const handler = patchCaseServiceHandler[action] as any;
+      result = await handler(req.params.id, JSON.parse(req.body.value));
+    }
+
     return OK({
       res,
       message: 'Cập nhật hồ sơ vụ việc thành công',

@@ -124,30 +124,6 @@ router.get(
   CaseServiceController.getCaseServiceOverview
 );
 
-router.post(
-  '/:id/installments',
-  validateObjectId('id'),
-  validateSchema(createInstallmentSchema),
-  hasPermission('caseService', 'updateAny'),
-  CaseServiceController.createInstallment
-);
-
-router.post(
-  '/:id/participants',
-  validateObjectId('id'),
-  validateSchema(addParticipantSchema),
-  hasPermission('caseService', 'updateAny'),
-  CaseServiceController.addParticipant
-);
-
-router.post(
-  '/:id/payments',
-  validateObjectId('id'),
-  validateSchema(addPaymentSchema),
-  hasPermission('caseService', 'updateAny'),
-  CaseServiceController.addPayment
-);
-
 // Update case service participants
 router.patch(
   '/:id',

@@ -21,19 +21,8 @@ import { action } from '..';
 import { IIncurredCostCreate, IncurredCost } from '~/interfaces/case.interface';
 import { Receipt, Edit, Trash2, Plus, Check } from 'lucide-react';
 import NumericInput from '~/components/NumericInput';
-
-// Common cost categories
-const COST_CATEGORIES = [
-  'Phí dịch vụ',
-  'Phí tòa án',
-  'Phí công chứng',
-  'Phí đi lại',
-  'Phí lưu trú',
-  'Phí ăn uống',
-  'Phí in ấn',
-  'Phí gửi hồ sơ',
-  'Phí khác',
-] as const;
+import { SelectSearch } from '~/components/ui/SelectSearch';
+import { TRANSACTION } from '~/constants/transaction.constant';
 
 interface IncurredCostEditModalProps {
   incurredCost: IIncurredCostCreate | null;
@@ -116,21 +105,15 @@ function IncurredCostEditModal({
           {/* Category */}
           <div className='space-y-2'>
             <Label htmlFor='category'>Loại chi phí *</Label>
-            <Input
+            <SelectSearch
               id='category'
               value={formData.category}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, category: e.target.value }))
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, category: value }))
               }
               placeholder='Nhập loại chi phí...'
-              list='cost-categories'
-              required
+              options={Object.values(TRANSACTION.CATEGORY.outcome)}
             />
-            <datalist id='cost-categories'>
-              {COST_CATEGORIES.map((category) => (
-                <option key={category} value={category} />
-              ))}
-            </datalist>
           </div>
 
           {/* Description */}
