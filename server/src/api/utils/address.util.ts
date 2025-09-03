@@ -1,4 +1,4 @@
-import { getFormattedAddress } from 'new-vn-provinces/dist/hierarchy';
+import { getFormattedAddress } from 'new-vn-provinces/hierarchy';
 
 type IAddress = {
   provinceId?: string;
