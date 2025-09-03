@@ -2,10 +2,7 @@ require('dotenv').config();
 import { mongodbInstance } from '../db/init.mongodb';
 import { CUSTOMER } from '@constants/customer.constant';
 import { createCustomer } from '@services/customer.service';
-import {
-  fuzzySearchProvinces,
-  fuzzySearchWards,
-} from 'new-vn-provinces/dist/fuzzy';
+import { fuzzySearchProvinces, fuzzySearchWards } from 'new-vn-provinces/fuzzy';
 
 async function main() {
   await mongodbInstance.connect();

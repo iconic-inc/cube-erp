@@ -40,6 +40,7 @@ import { serverConfig } from '@configs/config.server';
 import { parse } from 'date-fns';
 import { EmployeeModel } from '@models/employee.model';
 import { ITask } from '../interfaces/task.interface';
+import { CustomerModel } from '@models/customer.model';
 
 const getCaseServices = async (
   query: ICaseServiceQuery = {}
@@ -1606,14 +1607,12 @@ const mapExcelRowToCaseService = async (row: any) => {
   // Find customer by code or name
   let customerId;
   if (row['Mã khách hàng']) {
-    const { CustomerModel } = await import('@models/customer.model');
     const customer = await CustomerModel.findOne({
       cus_code: row['Mã khách hàng'],
     });
     customerId = customer?._id;
   } else if (row['Khách hàng']) {
     // Try to find by name if code is not provided
-    const { CustomerModel } = await import('@models/customer.model');
     const fullName = row['Khách hàng'].trim();
     const nameParts = fullName.split(' ');
     if (nameParts.length >= 2) {
@@ -1630,13 +1629,11 @@ const mapExcelRowToCaseService = async (row: any) => {
 
   // Find lead attorney by code or name
   if (row['Mã luật sư']) {
-    const { EmployeeModel } = await import('@models/employee.model');
     const attorney = await EmployeeModel.findOne({
       emp_code: row['Mã luật sư'],
     });
   } else if (row['Luật sư chính']) {
     // Try to find by name if code is not provided
-    const { EmployeeModel } = await import('@models/employee.model');
     const fullName = row['Luật sư chính'].trim();
     const nameParts = fullName.split(' ');
     if (nameParts.length >= 2) {
@@ -1656,7 +1653,6 @@ const mapExcelRowToCaseService = async (row: any) => {
   // Find assignees by parsing the assignees string
   let assigneeIds: string[] = [];
   if (row['Người được phân công']) {
-    const { EmployeeModel } = await import('@models/employee.model');
     const assigneeNames = row['Người được phân công']
       .split(',')
       .map((name: string) => name.trim())

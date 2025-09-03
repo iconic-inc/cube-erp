@@ -4,10 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as XLSX from 'xlsx';
 import { format, parse } from 'date-fns';
-import {
-  fuzzySearchProvinces,
-  fuzzySearchWards,
-} from 'new-vn-provinces/dist/fuzzy';
+import { fuzzySearchProvinces, fuzzySearchWards } from 'new-vn-provinces/fuzzy';
 
 import { NotFoundError, BadRequestError } from '../core/errors';
 import { CustomerModel } from '../models/customer.model';
