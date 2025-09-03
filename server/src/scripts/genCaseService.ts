@@ -4,6 +4,7 @@ import { CASE_SERVICE } from '@constants/caseService.constant';
 import { createCaseService } from '@services/caseService.service';
 import { getCustomers } from '@services/customer.service';
 import { getEmployees } from '@services/employee.service';
+import { ICaseServiceCreate } from '../api/interfaces/caseService.interface';
 
 async function main() {
   await mongodbInstance.connect();
@@ -80,11 +81,26 @@ async function main() {
       }
     }
 
-    const caseServiceData = {
+    const caseServiceData: ICaseServiceCreate = {
       ...caseData,
       customer: customer.id as string,
-      leadAttorney: leadAttorney.id as string,
-      assignees: assignees,
+      participants: assignees.map((assigneeId) => ({
+        employeeId: assigneeId,
+        role: 'Assignee',
+        commission: {
+          type: 'PERCENT_OF_GROSS' as const,
+          value: 5, // 5% commission
+          transactionId: '', // Will be set when transaction is created
+        },
+      })),
+      pricing: {
+        baseAmount: 1000000, // 1M VND base amount
+        addOns: 0,
+        discounts: 0,
+        taxes: [],
+      },
+      installments: [],
+      incurredCosts: [],
     };
 
     try {
