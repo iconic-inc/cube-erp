@@ -13,7 +13,7 @@ import { unlink } from 'fs/promises';
 import { isValidObjectId } from 'mongoose';
 
 const getImages = async () => {
-  const images = await ImageModel.find({}, ['-__v -img_description']).lean();
+  const images = await ImageModel.find({}, '-__v -img_description').lean();
 
   return getReturnList(images);
 };
@@ -21,7 +21,7 @@ const getImages = async () => {
 const getImage = async (id: string) => {
   const image = await ImageModel.findOne(
     { $or: [{ _id: isValidObjectId(id) ? id : null }, { img_name: id }] },
-    ['-__v']
+    '-__v'
   ).lean();
 
   if (!image) throw new NotFoundError('Image not found');

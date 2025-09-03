@@ -65,8 +65,6 @@ export default function () {
           className='text-blue-600 hover:underline py-2'
         >
           {transaction.tx_title || 'Không có tiêu đề'}
-          <br />
-          <span className='text-sm text-gray-500'>{transaction.tx_code}</span>
         </Link>
       ),
     },
@@ -99,28 +97,19 @@ export default function () {
       render: (transaction) => formatCurrency(transaction.tx_amount),
     },
     {
-      key: 'remain',
-      title: 'Còn lại',
+      key: 'tx_caseService',
+      title: 'Hồ sơ vụ việc',
       visible: true,
-      sortField: 'tx_remain',
-      render: (transaction) =>
-        formatCurrency(transaction.tx_amount - transaction.tx_paid),
-    },
-    {
-      key: 'tx_customer',
-      title: 'Khách hàng',
-      visible: true,
-      sortField: 'tx_customer.cus_firstName',
+      sortField: 'tx_caseService.case_code',
       render: (transaction) => {
-        if (!transaction.tx_customer) return 'N/A';
+        if (!transaction.tx_caseService) return 'N/A';
         return (
           <Link
-            to={`/erp/customers/${transaction.tx_customer.id}`}
+            to={`/erp/case-services/${transaction.tx_caseService.id}`}
             prefetch='intent'
             className='text-blue-600 hover:underline'
           >
-            {transaction.tx_customer.cus_firstName}{' '}
-            {transaction.tx_customer.cus_lastName}
+            {transaction.tx_caseService.case_code}
           </Link>
         );
       },

@@ -39,8 +39,12 @@ const transactionBaseSchema = {
   ),
   category: z.enum(
     [
-      ...Object.values(TRANSACTION.CATEGORY.INCOME),
-      ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
+      ...Object.values(TRANSACTION.CATEGORY.INCOME).map(
+        (category) => category.value
+      ),
+      ...Object.values(TRANSACTION.CATEGORY.OUTCOME).map(
+        (category) => category.value
+      ),
     ] as [string, ...string[]],
     {
       errorMap: () => ({ message: 'Danh mục giao dịch không hợp lệ' }),
@@ -151,8 +155,12 @@ export const transactionQuerySchema = z
       .optional(),
     category: z
       .enum([
-        ...Object.values(TRANSACTION.CATEGORY.INCOME),
-        ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
+        ...Object.values(TRANSACTION.CATEGORY.INCOME).map(
+          (category) => category.value
+        ),
+        ...Object.values(TRANSACTION.CATEGORY.OUTCOME).map(
+          (category) => category.value
+        ),
       ] as [string, ...string[]])
       .optional(),
     startDate: z
