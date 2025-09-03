@@ -1848,24 +1848,26 @@ const updateCaseServiceParticipant = async (
       );
     }
 
-    // Update the case service participants
-    caseService.case_participants = caseParticipants;
+    // Handle transaction updates for participant commissions if userId is provided
+    if (userId) {
+      const newParticipants = await updateParticipantTransactions(
+        userId,
+        caseServiceId,
+        caseParticipants,
+        caseService.case_participants
+      );
+      caseService.case_participants = newParticipants;
+    } else {
+      // Update the case service participants
+      caseService.case_participants = caseParticipants;
+    }
+
     caseService.case_totalsCache = calculateTotalsCache({
       pricing: caseService.case_pricing,
       installments: caseService.case_installments,
       incurredCosts: caseService.case_incurredCosts,
       participants: caseService.case_participants,
     });
-
-    // Handle transaction updates for participant commissions if userId is provided
-    if (userId) {
-      await updateParticipantTransactions(
-        userId,
-        caseServiceId,
-        caseParticipants,
-        caseService.case_participants
-      );
-    }
 
     await caseService.save();
 
@@ -1952,12 +1954,14 @@ const updateCaseServiceInstallment = async (
 
     // Handle transaction updates for installments if userId is provided
     if (userId) {
-      await updateInstallmentTransactions(
-        userId,
-        caseId,
-        cleanedInstallments,
-        caseService.case_installments
-      );
+      const installmentsWithTransactionIds =
+        await updateInstallmentTransactions(
+          userId,
+          caseId,
+          cleanedInstallments,
+          caseService.case_installments
+        );
+      caseService.case_installments = installmentsWithTransactionIds;
     }
 
     // Recalculate totals cache with updated installments
@@ -2027,12 +2031,15 @@ const updateCaseServiceIncurredCost = async (
 
     // Handle transaction updates for incurred costs if userId is provided
     if (userId) {
-      await updateIncurredCostTransactions(
-        userId,
-        caseId,
-        cleanedIncurredCosts,
-        caseService.case_incurredCosts
-      );
+      const incurredCostWithTransactionIds =
+        await updateIncurredCostTransactions(
+          userId,
+          caseId,
+          cleanedIncurredCosts,
+          caseService.case_incurredCosts
+        );
+
+      caseService.case_incurredCosts = incurredCostWithTransactionIds;
     }
 
     // Recalculate totals cache with updated incurred costs
@@ -2182,7 +2189,7 @@ const createCaseServiceWithTransactions = async (
             title: `Đợt thanh toán - ${caseService.case_code} (Seq: ${installment.seq})`,
             type: 'income',
             amount: installment.amount,
-            category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT,
+            category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT.value,
             description: `Đợt thanh toán ${installment.seq} cho vụ việc ${
               caseService.case_code
             }. Hạn chót: ${new Date(installment.dueDate).toLocaleDateString()}`,
@@ -2206,13 +2213,16 @@ const createCaseServiceWithTransactions = async (
           userId,
           caseService.id,
           {
-            title: `Chi phí phát sinh - ${cost.category}`,
+            title: `Chi phí phát sinh - ${caseService.case_code}`,
             type: 'outcome',
             amount: cost.amount,
-            category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE,
-            description: `${cost.description || cost.category} cho vụ việc ${
-              caseService.case_code
-            }`,
+            category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE.value,
+            description: `${
+              cost.description ||
+              Object.values(TRANSACTION.CATEGORY.OUTCOME).find(
+                (cat) => cat.value === cost.category
+              )?.label
+            } cho vụ việc ${caseService.case_code}`,
             paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
           }
         );
@@ -2241,7 +2251,7 @@ const createCaseServiceWithTransactions = async (
             title: `Thuế - ${tax.name}`,
             type: 'outcome',
             amount: taxAmount,
-            category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT,
+            category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT.value,
             description: `${tax.name} cho vụ việc ${caseService.case_code}`,
             paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
           }
@@ -2282,13 +2292,11 @@ const createCaseServiceWithTransactions = async (
             userId,
             caseService.id,
             {
-              title: `Hoa hồng - ${participant.role || 'Nhân viên'}`,
+              title: `Hoa hồng - ${caseService.case_code}`,
               type: 'outcome',
               amount: commissionAmount,
-              category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT,
-              description: `Hoa hồng cho ${
-                participant.role || 'nhân viên'
-              } trong vụ việc ${caseService.case_code}`,
+              category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT.value,
+              description: `Hoa hồng cho trong vụ việc ${caseService.case_code}`,
               paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
             }
           );
@@ -2425,7 +2433,7 @@ const updateInstallmentTransactions = async (
           title: `Đợt giao dịch - STT: ${newItem.seq}`,
           type: 'income',
           amount: newItem.amount,
-          category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT,
+          category: TRANSACTION.CATEGORY.INCOME.INSTALLMENT_PAYMENT.value,
           description: `Đợt giao dịch - STT: ${
             newItem.seq
           }. Hạn chót: ${new Date(newItem.dueDate).toLocaleDateString()}`,
@@ -2453,6 +2461,8 @@ const updateInstallmentTransactions = async (
       newItem.transactionId = original.transactionId;
     }
   }
+
+  return Array.from(newMap.values());
 };
 
 const updateIncurredCostTransactions = async (
@@ -2481,11 +2491,19 @@ const updateIncurredCostTransactions = async (
         userId,
         caseServiceId,
         {
-          title: `Chi phí - ${newItem.category}`,
+          title: `Chi phí - ${
+            Object.values(TRANSACTION.CATEGORY.OUTCOME).find(
+              (cat) => cat.value === newItem.category
+            )?.label
+          }`,
           type: 'outcome',
           amount: newItem.amount,
-          category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE,
-          description: newItem.description || newItem.category,
+          category: TRANSACTION.CATEGORY.OUTCOME.OPERATIONAL_EXPENSE.value,
+          description:
+            newItem.description ||
+            Object.values(TRANSACTION.CATEGORY.OUTCOME).find(
+              (cat) => cat.value === newItem.category
+            )?.label,
           paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
         }
       );
@@ -2497,9 +2515,17 @@ const updateIncurredCostTransactions = async (
       // Updated cost - update transaction
       if (original.transactionId) {
         await updateTransactionRecord(original.transactionId.toString(), {
-          title: `Chi phí - ${newItem.category}`,
+          title: `Chi phí - ${
+            Object.values(TRANSACTION.CATEGORY.OUTCOME).find(
+              (cat) => cat.value === newItem.category
+            )?.label
+          }`,
           amount: newItem.amount,
-          description: newItem.description || newItem.category,
+          description:
+            newItem.description ||
+            Object.values(TRANSACTION.CATEGORY.OUTCOME).find(
+              (cat) => cat.value === newItem.category
+            )?.label,
         });
         newItem.transactionId = original.transactionId;
       }
@@ -2508,6 +2534,8 @@ const updateIncurredCostTransactions = async (
       newItem.transactionId = original.transactionId;
     }
   }
+
+  return Array.from(new Map([...originalMap, ...newMap]).values());
 };
 
 const updatePricingTransactions = async (
@@ -2554,7 +2582,7 @@ const updatePricingTransactions = async (
           title: `Thuế - ${newTax.name}`,
           type: 'outcome',
           amount: taxAmount,
-          category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT,
+          category: TRANSACTION.CATEGORY.OUTCOME.TAX_PAYMENT.value,
           description: `${newTax.name}`,
           paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
         }
@@ -2600,6 +2628,7 @@ const updateParticipantTransactions = async (
   const newMap = new Map(
     newParticipants.map((item) => [item.employeeId.toString(), item])
   );
+  const caseService = await getCaseServiceById(caseServiceId, userId);
 
   // Handle deletions
   for (const original of originalParticipants) {
@@ -2628,7 +2657,10 @@ const updateParticipantTransactions = async (
       case 'PERCENT_OF_GROSS':
       case 'PERCENT_OF_NET':
         // This would need access to pricing info for accurate calculation
-        commissionAmount = newItem.commission.value; // Simplified
+        commissionAmount =
+          ((caseService.case_pricing?.baseAmount || 0) *
+            newItem.commission.value) /
+          100; // Simplified
         break;
     }
 
@@ -2638,10 +2670,10 @@ const updateParticipantTransactions = async (
         userId,
         caseServiceId,
         {
-          title: `Hoa hồng - ${newItem.role || 'Employee'}`,
+          title: `Hoa hồng - ${caseService.case_code}`,
           type: 'outcome',
           amount: commissionAmount,
-          category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT,
+          category: TRANSACTION.CATEGORY.OUTCOME.COMMISSION_PAYMENT.value,
           description: `Hoa hồng cho ${newItem.role || 'nhân viên'}`,
           paymentMethod: TRANSACTION.PAYMENT_METHOD.BANK_TRANSFER,
         }
@@ -2660,7 +2692,7 @@ const updateParticipantTransactions = async (
           await updateTransactionRecord(
             original.commission.transactionId.toString(),
             {
-              title: `Hoa hồng - ${newItem.role || 'Nhân viên'}`,
+              title: `Hoa hồng - ${caseService.case_code}`,
               amount: commissionAmount,
               description: `Hoa hồng cho ${newItem.role || 'nhân viên'}`,
             }
@@ -2673,6 +2705,8 @@ const updateParticipantTransactions = async (
       }
     }
   }
+
+  return Array.from(newMap.values());
 };
 
 export {

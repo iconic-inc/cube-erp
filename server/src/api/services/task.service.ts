@@ -1710,7 +1710,7 @@ const syncAllCaseServiceParticipants = async (caseServiceId: string) => {
       commission: {
         type: 'PERCENT_OF_NET' as const,
         value: 0, // Default 0% commission, can be updated later
-        eligibleOn: 'AT_CLOSURE' as const,
+        transactionId: new Types.ObjectId(),
       },
     }));
 

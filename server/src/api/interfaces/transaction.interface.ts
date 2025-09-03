@@ -5,8 +5,8 @@ import { IEmployeePopulate } from './employee.interface';
 import { ICaseServicePopulate } from './caseService.interface';
 
 export type ITransactionCategory =
-  | Values<typeof TRANSACTION.CATEGORY.INCOME>
-  | Values<typeof TRANSACTION.CATEGORY.OUTCOME>;
+  | Values<typeof TRANSACTION.CATEGORY.INCOME>['value']
+  | Values<typeof TRANSACTION.CATEGORY.OUTCOME>['value'];
 
 export interface ITransactionPopulate {
   id: string;

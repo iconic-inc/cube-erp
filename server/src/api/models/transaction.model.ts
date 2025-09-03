@@ -35,8 +35,12 @@ const transactionSchema = new Schema<ITransactionDocument, ITransactionModel>(
     tx_category: {
       type: String,
       enum: [
-        ...Object.values(TRANSACTION.CATEGORY.INCOME),
-        ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
+        ...Object.values(TRANSACTION.CATEGORY.INCOME).map(
+          (category) => category.value
+        ),
+        ...Object.values(TRANSACTION.CATEGORY.OUTCOME).map(
+          (category) => category.value
+        ),
       ],
       required: true,
     },

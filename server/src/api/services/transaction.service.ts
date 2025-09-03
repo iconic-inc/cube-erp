@@ -235,6 +235,11 @@ const getTransactions = async (
           cus_lastName: 1,
           cus_code: 1,
         },
+        tx_caseService: {
+          _id: 1,
+          case_code: 1,
+          case_notes: 1,
+        },
         createdAt: 1,
         updatedAt: 1,
       },
