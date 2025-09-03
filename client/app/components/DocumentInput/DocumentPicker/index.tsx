@@ -11,6 +11,7 @@ import LoadingCard from '~/components/LoadingCard';
 import ErrorCard from '~/components/ErrorCard';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 interface DocumentPickerProps {
   selected?: IDocument[];
@@ -77,48 +78,20 @@ export default function DocumentPicker({
   }, []);
 
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Loading...', {
-          autoClose: false,
-        });
-        setLoading(true);
-        break;
-
-      case 'loading':
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || ('success' as any), // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-          setLoading(false);
-
-          if (toastData.type === 'success') {
-            if (fetcher.formMethod === 'DELETE') {
-              setDocuments((prev) => ({
-                ...prev,
-                data: prev.data.filter(
-                  (doc) => !selectedDocuments.some((d) => d.id === doc.id),
-                ),
-              }));
-              setSelectedDocuments([]);
-            }
-          }
-
-          break;
-        }
-
-        break;
-    }
-  }, [fetcher.state]);
+  const { isSubmitting } = useFetcherResponseHandler(fetcher, {
+    onSuccess(_, fetcher) {
+      if (fetcher.formMethod === 'DELETE') {
+        setDocuments((prev) => ({
+          ...prev,
+          data: prev.data.filter(
+            (doc) => !selectedDocuments.some((d) => d.id === doc.id),
+          ),
+        }));
+        setSelectedDocuments([]);
+      }
+    },
+  });
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2 sm:p-4 lg:p-8 z-50'>
@@ -204,7 +177,7 @@ export default function DocumentPicker({
                         title: 'Tên tài liệu',
                         visible: true,
                         render: (doc) => (
-                          <span className='text-xs sm:text-sm font-medium text-gray-800 break-words'>
+                          <span className='text-sm sm:text-base font-medium text-gray-800 break-words'>
                             {doc.doc_name}
                           </span>
                         ),
@@ -214,7 +187,7 @@ export default function DocumentPicker({
                         title: 'Người tạo',
                         visible: true,
                         render: (doc) => (
-                          <span className='text-xs sm:text-sm text-gray-600 break-words'>
+                          <span className='text-sm sm:text-base text-gray-600 break-words'>
                             {`${doc.doc_createdBy.emp_user?.usr_firstName} ${doc.doc_createdBy.emp_user?.usr_lastName}`}
                           </span>
                         ),
@@ -246,7 +219,7 @@ export default function DocumentPicker({
                                 : 'primary'
                             }
                             size='sm'
-                            className='text-xs sm:text-sm'
+                            className='text-sm sm:text-base'
                           >
                             <span className='hidden sm:inline'>
                               {selectedDocuments.find((d) => d.id === doc.id)
@@ -298,7 +271,7 @@ export default function DocumentPicker({
                     },
                   );
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
                 type='button'
                 size='sm'
                 className='w-full sm:w-auto'
@@ -313,7 +286,7 @@ export default function DocumentPicker({
 
           <Button
             onClick={handleConfirm}
-            disabled={loading}
+            disabled={isSubmitting}
             variant='primary'
             size='sm'
             className='w-full sm:w-auto'

@@ -140,7 +140,7 @@ export default function TransactionReport() {
             <div className='flex flex-col sm:flex-row items-stretch sm:items-end gap-2 sm:gap-2'>
               <Button
                 type='reset'
-                className='w-full text-xs sm:text-sm'
+                className='w-full text-sm sm:text-base'
                 variant='outline'
                 onClick={() => {
                   setSearchParams({
@@ -155,7 +155,7 @@ export default function TransactionReport() {
                 <span className='sm:hidden'>Reset</span>
               </Button>
 
-              <Button type='submit' className='w-full text-xs sm:text-sm'>
+              <Button type='submit' className='w-full text-sm sm:text-base'>
                 <span className='hidden sm:inline'>Áp dụng</span>
                 <span className='sm:hidden'>Lọc</span>
               </Button>

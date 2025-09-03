@@ -89,26 +89,12 @@ export default function HRMTasks() {
       sortField: 'tsk_name',
       render: (task) => (
         <Link
+          prefetch='intent'
           to={`/erp/tasks/${task.id}`}
           className='text-blue-600 hover:underline py-2'
         >
           {task.tsk_name}
         </Link>
-      ),
-    },
-    {
-      key: 'tsk_assignees',
-      title: 'Người thực hiện',
-      visible: true,
-      sortField: 'tsk_assignees',
-      filterField: 'assignee',
-      options: [],
-      render: (task) => (
-        <span>
-          {task.tsk_assignees
-            .map(({ emp_user: user }) => `${user?.usr_firstName}`)
-            .join(', ')}
-        </span>
       ),
     },
     {
@@ -119,6 +105,7 @@ export default function HRMTasks() {
       render: (task) =>
         task.tsk_caseService ? (
           <Link
+            prefetch='intent'
             to={`/erp/cases/${task.tsk_caseService?.id}`}
             className='text-blue-600 hover:underline'
           >

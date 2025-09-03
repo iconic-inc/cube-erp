@@ -53,6 +53,14 @@ const BASE_EMPLOYEE_GRANTS = [
     actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
   },
   { resourceId: { slug: 'reward' }, actions: ['read:any'] },
+  {
+    resourceId: { slug: 'document' },
+    actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+  },
+  {
+    resourceId: { slug: 'documentFolder' },
+    actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
+  },
 ];
 
 const ROLES = [
@@ -78,6 +86,7 @@ const ROLES = [
       'task',
       'transaction',
       'document',
+      'documentFolder',
       'reward',
     ].map((resource) => ({
       resourceId: { slug: resource },
@@ -105,11 +114,6 @@ const ROLES = [
       {
         resourceId: { slug: 'task' },
         actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
-      },
-      // Documents - full access for legal work
-      {
-        resourceId: { slug: 'document' },
-        actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
       // Read access to transactions for case billing
       {
@@ -140,11 +144,6 @@ const ROLES = [
         resourceId: { slug: 'task' },
         actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
       },
-      // Document access for support
-      {
-        resourceId: { slug: 'document' },
-        actions: ['create:any', 'read:any', 'update:any'],
-      },
     ],
   },
   {
@@ -174,10 +173,77 @@ const ROLES = [
         resourceId: { slug: 'transaction' },
         actions: ['create:any', 'read:any', 'update:any', 'delete:any'],
       },
-      // Financial documents
+    ],
+  },
+  {
+    name: 'Thực tập sinh',
+    slug: 'intern',
+    status: 'active',
+    description: 'Thực tập sinh',
+    grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Support role - limited case access
       {
-        resourceId: { slug: 'document' },
-        actions: ['create:any', 'read:any', 'update:any'],
+        resourceId: { slug: 'caseService' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Customer support
+      {
+        resourceId: { slug: 'customer' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Own tasks only
+      {
+        resourceId: { slug: 'task' },
+        actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
+      },
+    ],
+  },
+  {
+    name: 'Cộng tác viên',
+    slug: 'collaborator',
+    status: 'active',
+    description: 'Cộng tác viên',
+    grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Support role - limited case access
+      {
+        resourceId: { slug: 'caseService' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Customer support
+      {
+        resourceId: { slug: 'customer' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Own tasks only
+      {
+        resourceId: { slug: 'task' },
+        actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
+      },
+    ],
+  },
+  {
+    name: 'Truyền thông',
+    slug: 'communication',
+    status: 'active',
+    description: 'Truyền thông',
+    grants: [
+      ...BASE_EMPLOYEE_GRANTS,
+      // Support role - limited case access
+      {
+        resourceId: { slug: 'caseService' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Customer support
+      {
+        resourceId: { slug: 'customer' },
+        actions: ['read:any', 'update:any'],
+      },
+      // Own tasks only
+      {
+        resourceId: { slug: 'task' },
+        actions: ['create:own', 'read:own', 'update:own', 'delete:own'],
       },
     ],
   },

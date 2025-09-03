@@ -83,7 +83,11 @@ export default function AttendanceOverview({
             <span className='sm:hidden'>Chấm công</span>
           </CardTitle>
           <Button variant='ghost' size='sm' asChild>
-            <Link to='/erp/attendance' className='flex items-center'>
+            <Link
+              to='/erp/attendance'
+              className='flex items-center'
+              prefetch='intent'
+            >
               <span className='hidden sm:inline'>Xem tất cả</span>
               <span className='sm:hidden'>Xem</span>
               <ArrowUpRight className='w-4 h-4' />
@@ -91,7 +95,7 @@ export default function AttendanceOverview({
           </Button>
         </div>
 
-        <div className='flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-muted-foreground flex-wrap gap-1'>
+        <div className='flex items-center space-x-2 sm:space-x-4 text-sm sm:text-base text-muted-foreground flex-wrap gap-1'>
           <div className='flex items-center space-x-1 sm:space-x-2'>
             <div className='h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-green-500'></div>
             <span className='whitespace-nowrap'>
@@ -138,7 +142,7 @@ export default function AttendanceOverview({
                     src={attendance.employee?.emp_user?.usr_avatar?.img_url}
                     alt={`${attendance.employee?.emp_user?.usr_firstName} ${attendance.employee?.emp_user?.usr_lastName}`}
                   />
-                  <AvatarFallback className='bg-red-900/10 text-red-900 font-semibold text-xs sm:text-sm'>
+                  <AvatarFallback className='bg-red-900/10 text-red-900 font-semibold text-sm sm:text-base'>
                     {attendance.employee?.emp_user?.usr_firstName?.[0]}
                     {attendance.employee?.emp_user?.usr_lastName?.[0]}
                   </AvatarFallback>
@@ -148,7 +152,8 @@ export default function AttendanceOverview({
                   <div className='flex items-center justify-between mb-1 gap-2'>
                     <Link
                       to={`/erp/employees/${attendance.employee?.id}`}
-                      className='text-xs sm:text-sm font-medium text-foreground hover:text-red-900 transition-colors truncate'
+                      prefetch='intent'
+                      className='text-sm sm:text-base font-medium text-foreground hover:text-red-900 transition-colors truncate'
                     >
                       {attendance.employee?.emp_user?.usr_firstName}{' '}
                       {attendance.employee?.emp_user?.usr_lastName}

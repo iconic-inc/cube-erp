@@ -15,8 +15,12 @@ import { IRewardCreate } from '~/interfaces/reward.interface';
 import RewardDetailForm from './_components/RewardDetailForm';
 import { generateFormId } from '~/utils';
 import { REWARD } from '~/constants/reward.constant';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import { canAccessRewardManagement } from '~/utils/permission';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 // Định nghĩa kiểu cho toast
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -34,8 +38,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {};
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
+  if (!session) return getUnauthorizedActionResponse(dataResponse, headers);
 
   switch (request.method) {
     case 'POST': {
@@ -56,12 +63,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!data.name || !data.currentAmount || !data.startDate) {
           return dataResponse(
             {
-              reward: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
                 type: 'error' as ToastType,
               },
-              redirectTo: null,
             },
             { headers, status: 400 },
           );
@@ -70,12 +76,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (data.currentAmount <= 0) {
           return dataResponse(
             {
-              reward: null,
+              success: false,
               toast: {
                 message: 'Số tiền phải lớn hơn 0',
                 type: 'error' as ToastType,
               },
-              redirectTo: null,
             },
             { headers, status: 400 },
           );
@@ -96,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            reward: res,
+            success: true,
             toast: {
               message: 'Thêm mới quỹ thưởng thành công!',
               type: 'success' as ToastType,
@@ -112,12 +117,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            reward: null,
+            success: false,
             toast: {
               message: errorMessage,
               type: 'error' as ToastType,
             },
-            redirectTo: null,
           },
           { headers, status: 500 },
         );
@@ -127,9 +131,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          reward: null,
+          success: false,
           toast: { message: 'Method not allowed', type: 'error' as ToastType },
-          redirectTo: null,
         },
         { headers, status: 405 },
       );

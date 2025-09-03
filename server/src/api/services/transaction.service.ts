@@ -15,9 +15,9 @@ import {
 import { TransactionModel } from '@models/transaction.model';
 import { TRANSACTION } from '../constants/transaction.constant';
 import { getEmployeeByUserId } from './employee.service';
-import { CASE_SERVICE } from '@constants/caseService.constant';
 import { CUSTOMER } from '@constants/customer.constant';
 import { USER } from '@constants/user.constant';
+import { CASE_SERVICE } from '@constants/caseService.constant';
 
 // Import modules for export functionality
 import * as XLSX from 'xlsx';
@@ -159,22 +159,6 @@ const getTransactions = async (
         localField: 'tx_caseService',
         foreignField: '_id',
         as: 'tx_caseService',
-        pipeline: [
-          {
-            $lookup: {
-              from: CUSTOMER.COLLECTION_NAME,
-              localField: 'case_customer',
-              foreignField: '_id',
-              as: 'case_customer',
-            },
-          },
-          {
-            $unwind: {
-              path: '$case_customer',
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-        ],
       },
     });
 
@@ -201,10 +185,11 @@ const getTransactions = async (
             { 'tx_customer.cus_firstName': searchRegex },
             { 'tx_customer.cus_lastName': searchRegex },
             { 'tx_customer.cus_code': searchRegex },
+            { 'tx_caseService.case_code': searchRegex },
+            { 'tx_caseService.case_notes': searchRegex },
             { 'tx_createdBy.emp_user.usr_firstName': searchRegex },
             { 'tx_createdBy.emp_user.usr_lastName': searchRegex },
             { 'tx_createdBy.emp_user.usr_username': searchRegex },
-            { 'tx_caseService.case_code': searchRegex },
           ],
         },
       });
@@ -253,12 +238,7 @@ const getTransactions = async (
         tx_caseService: {
           _id: 1,
           case_code: 1,
-          case_status: 1,
-          case_customer: {
-            _id: 1,
-            cus_firstName: 1,
-            cus_lastName: 1,
-          },
+          case_notes: 1,
         },
         createdAt: 1,
         updatedAt: 1,
@@ -328,14 +308,6 @@ const getTransactionById = async (
         },
       })
       .populate('tx_customer', 'cus_code cus_firstName cus_lastName')
-      .populate({
-        path: 'tx_caseService',
-        select: 'case_code case_status',
-        populate: {
-          path: 'case_customer',
-          select: 'cus_firstName cus_lastName',
-        },
-      })
       .lean();
 
     if (!transaction) {
@@ -358,18 +330,6 @@ const createTransaction = async (
   try {
     // Validate that createdBy employee exists
     const employee = await getEmployeeByUserId(userId);
-
-    // Set default paid amount if not provided
-    if (data.paid === undefined) {
-      data.paid = 0;
-    }
-
-    // Validate that paid amount doesn't exceed total amount
-    if (data.paid > data.amount) {
-      throw new BadRequestError(
-        'Số tiền đã thanh toán không được vượt quá tổng số tiền'
-      );
-    }
 
     // Create the transaction
     const transaction = await TransactionModel.build({
@@ -406,16 +366,6 @@ const updateTransaction = async (
     // Validate employee if createdBy is being updated
     if (data.createdBy) {
       await getEmployeeByUserId(data.createdBy);
-    }
-
-    // Validate paid amount if being updated
-    const finalAmount = data.amount ?? existingTransaction.tx_amount;
-    const finalPaid = data.paid ?? existingTransaction.tx_paid;
-
-    if (finalPaid > finalAmount) {
-      throw new BadRequestError(
-        'Số tiền đã thanh toán không được vượt quá tổng số tiền'
-      );
     }
 
     // Remove undefined values and format attributes
@@ -529,7 +479,6 @@ const exportTransactionsToXLSX = async (query: ITransactionQuery = {}) => {
     // Map transaction data for Excel
     const excelData = transactions.map((transaction) => {
       return {
-        'Mã giao dịch': transaction.tx_code || '',
         Loại:
           transaction.tx_type === 'income'
             ? 'Thu'
@@ -538,8 +487,6 @@ const exportTransactionsToXLSX = async (query: ITransactionQuery = {}) => {
             : 'Công nợ',
         'Tiêu đề': transaction.tx_title || '',
         'Số tiền': transaction.tx_amount || 0,
-        'Đã thanh toán': transaction.tx_paid || 0,
-        'Còn nợ': (transaction.tx_amount || 0) - (transaction.tx_paid || 0),
         'Phương thức thanh toán': transaction.tx_paymentMethod || '',
         'Danh mục': transaction.tx_category || '',
         'Mô tả': transaction.tx_description || '',
@@ -555,7 +502,6 @@ const exportTransactionsToXLSX = async (query: ITransactionQuery = {}) => {
             }`.trim()
           : '',
         'Mã khách hàng': transaction.tx_customer?.cus_code || '',
-        'Hồ sơ vụ việc': transaction.tx_caseService?.case_code || '',
         'Ngày giao dịch': transaction.tx_date
           ? new Date(transaction.tx_date).toLocaleDateString('vi-VN')
           : '',
@@ -801,7 +747,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       },
       {
         $group: {
-          _id: '$customerData.cus_address.province',
+          _id: '$customerData.cus_address.provinceId',
           income: {
             $sum: {
               $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
@@ -825,14 +771,90 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       { $sort: { total: -1 } },
     ];
 
+    // Case service breakdown pipeline
+    const caseServicePipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'caseservices',
+          localField: 'tx_caseService',
+          foreignField: '_id',
+          as: 'caseServiceData',
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseServiceData',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: '$tx_caseService',
+          caseServiceCode: { $first: '$caseServiceData.cs_caseNumber' },
+          caseServiceTitle: { $first: '$caseServiceData.cs_title' },
+          caseServiceType: { $first: '$caseServiceData.cs_caseType' },
+          income: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'income'] }, '$tx_amount', 0],
+            },
+          },
+          outcome: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_type', 'outcome'] }, '$tx_amount', 0],
+            },
+          },
+          total: { $sum: '$tx_amount' },
+          totalPaid: { $sum: '$tx_paid' },
+          totalUnpaid: {
+            $sum: { $subtract: ['$tx_amount', '$tx_paid'] },
+          },
+          count: { $sum: 1 },
+          // Count different transaction categories
+          installmentCount: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_category', 'INSTALLMENT_PAYMENT'] }, 1, 0],
+            },
+          },
+          expenseCount: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_category', 'OPERATIONAL_EXPENSE'] }, 1, 0],
+            },
+          },
+          taxCount: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_category', 'TAX_PAYMENT'] }, 1, 0],
+            },
+          },
+          commissionCount: {
+            $sum: {
+              $cond: [{ $eq: ['$tx_category', 'COMMISSION_PAYMENT'] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          _id: { $ne: null }, // Only include transactions with case services
+        },
+      },
+      { $sort: { total: -1 } },
+    ];
+
     // Execute all aggregations in parallel
-    const [mainStats, categoryStats, dailyStats, provinceStats] =
-      await Promise.all([
-        TransactionModel.aggregate(mainStatsPipeline),
-        TransactionModel.aggregate(categoryPipeline),
-        TransactionModel.aggregate(dailyPipeline),
-        TransactionModel.aggregate(provincePipeline),
-      ]);
+    const [
+      mainStats,
+      categoryStats,
+      dailyStats,
+      provinceStats,
+      caseServiceStats,
+    ] = await Promise.all([
+      TransactionModel.aggregate(mainStatsPipeline),
+      TransactionModel.aggregate(categoryPipeline),
+      TransactionModel.aggregate(dailyPipeline),
+      TransactionModel.aggregate(provincePipeline),
+      TransactionModel.aggregate(caseServicePipeline),
+    ]);
 
     const stats = mainStats[0] || {
       totalIncome: 0,
@@ -870,13 +892,37 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
 
     // Format province data for charts
     const byProvince = provinceStats.map((item) => ({
-      province: item._id || 'Không xác định',
+      provinceId: item._id || 'Không xác định',
       income: item.income,
       outcome: item.outcome,
       total: item.total,
       net: item.income - item.outcome,
       count: item.count,
       customerCount: item.customerCount,
+    }));
+
+    // Format case service data for charts
+    const byCaseService = caseServiceStats.map((item) => ({
+      caseServiceId: item._id,
+      caseServiceCode: item.caseServiceCode || 'Không có mã',
+      caseServiceTitle: item.caseServiceTitle || 'Không có tiêu đề',
+      caseServiceType: item.caseServiceType || 'Không xác định',
+      income: item.income,
+      outcome: item.outcome,
+      total: item.total,
+      totalPaid: item.totalPaid,
+      totalUnpaid: item.totalUnpaid,
+      net: item.income - item.outcome,
+      count: item.count,
+      // Transaction breakdown by category
+      breakdown: {
+        installments: item.installmentCount,
+        expenses: item.expenseCount,
+        taxes: item.taxCount,
+        commissions: item.commissionCount,
+      },
+      // Payment ratio for this case service
+      paymentRatio: item.total > 0 ? (item.totalPaid / item.total) * 100 : 0,
     }));
 
     // Calculate additional metrics for charts
@@ -906,6 +952,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       byCategory,
       byDay,
       byProvince,
+      byCaseService,
     };
   } catch (error) {
     throw new BadRequestError(

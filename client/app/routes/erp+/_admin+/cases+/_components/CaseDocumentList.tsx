@@ -31,6 +31,7 @@ import DocumentPicker from '~/components/DocumentInput/DocumentPicker';
 import { action } from '~/routes/api+/cases+/$caseId.documents';
 import LoadingCard from '~/components/LoadingCard';
 import { Badge } from '~/components/ui/badge';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function CaseDocumentList({
   caseId,
@@ -39,7 +40,6 @@ export default function CaseDocumentList({
   caseId: string;
   caseDocumentsPromise: ILoaderDataPromise<IListResponse<ICaseDocument>>;
 }) {
-  const toastIdRef = useRef<any>(null);
   const fetcher = useFetcher<typeof action>();
   const [caseDocuments, setCaseDocuments] = useState<ICaseDocumentBrief[]>([]);
   const [error, setError] = useState<IResolveError | null>(null);
@@ -54,6 +54,7 @@ export default function CaseDocumentList({
       visible: true,
       render: (caseDoc) => (
         <Link
+          prefetch='intent'
           to={`/erp/documents/${caseDoc.document.id}`}
           className='text-sm font-medium text-blue-600 hover:underline'
         >
@@ -120,19 +121,7 @@ export default function CaseDocumentList({
     loadData();
   }, [caseDocumentsPromise]);
 
-  useEffect(() => {
-    if (fetcher.data) {
-      toast.update(toastIdRef.current, {
-        type: fetcher.data.toast?.type as 'success' | 'error',
-        render: fetcher.data.toast?.message || 'Đang xử lý...',
-        isLoading: false,
-        autoClose: 3000,
-      });
-      toastIdRef.current = null;
-      setIsLoading(false);
-      revalidator.revalidate();
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   if (error) {
     return <ErrorCard message={error.message} />;
@@ -199,8 +188,6 @@ export default function CaseDocumentList({
             }
           }}
           onSelect={(docs: IDocument[]) => {
-            toastIdRef.current = toast.loading('Đang gán tài liệu...');
-
             fetcher.submit(
               {
                 documentIds: JSON.stringify(docs.map((doc) => doc.id)),

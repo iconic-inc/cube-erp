@@ -1,5 +1,6 @@
 import { HydratedDocument, Model, Types } from 'mongoose';
 import { IUserCreate, IUserDetail, IUserPopulate } from './user.interface';
+import { ITaskPopulate } from './task.interface';
 
 export interface IEmployeePopulate {
   id: string;
@@ -16,7 +17,7 @@ export interface IEmployee extends Omit<IEmployeePopulate, 'emp_user'> {
   emp_position: string;
   emp_department: string;
   emp_joinDate: Date;
-  emp_score: number;
+  emp_score: number; // assigned by admin
   createdAt: Date;
   updatedAt: Date;
 }

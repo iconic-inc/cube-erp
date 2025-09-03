@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
 
 import { action } from '~/routes/erp+/_admin+/tasks+/new';
-import { format } from 'date-fns';
 import { TASK } from '~/constants/task.constant';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IListResponse } from '~/interfaces/response.interface';
@@ -11,7 +10,6 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
 import { ITask } from '~/interfaces/task.interface';
-import ItemList from '~/components/List/ItemList';
 import { Button } from '~/components/ui/button';
 import { ArrowLeft, Plus, Save, XCircle } from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
@@ -33,8 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog';
-import TextEditor from '~/components/TextEditor/index.client';
-import Hydrated from '~/components/Hydrated';
+import TextEditor from '~/components/TextEditor';
 import { ICaseService } from '~/interfaces/case.interface';
 import {
   Card,
@@ -43,26 +40,25 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import Defer from '~/components/Defer';
 import CaseServiceBrief from './CaseServiceBrief';
 import { useERPLoaderData } from '~/lib';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { Separator } from '~/components/ui/separator';
+import EmployeePicker from '~/components/EmployeePicker';
 
 export default function TaskDetailForm({
   formId,
-  employees,
   type,
   taskPromise,
   casePromise,
 }: {
   formId: string;
-  employees: ILoaderDataPromise<IListResponse<IEmployeeBrief>>;
   type: 'create' | 'update';
   taskPromise?: ILoaderDataPromise<ITask>;
   casePromise?: ILoaderDataPromise<ICaseService>;
 }) {
   const { employee } = useERPLoaderData();
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -103,25 +99,6 @@ export default function TaskDetailForm({
       );
       setEmployeeToRemove(null);
     }
-  };
-
-  const handleAddAssignees = (employees: IEmployeeBrief[]) => {
-    if (employees.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
-      return;
-    }
-
-    // Check if any of the selected employees are already in the whitelist
-    const newAssignees = employees.filter(
-      (emp) => !assignees.some((assignee) => assignee.id === emp.id),
-    );
-
-    if (newAssignees.length === 0) {
-      toast.error('Tất cả nhân viên đã có trong danh sách truy cập.');
-      return;
-    }
-
-    setEmployeesToAdd(newAssignees);
   };
 
   const confirmAddAssignees = () => {
@@ -174,7 +151,6 @@ export default function TaskDetailForm({
     // Set the task status
     formData.append('status', status);
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -211,25 +187,7 @@ export default function TaskDetailForm({
     setIsChanged,
   ]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data.toast.type === 'success' && fetcher.data.redirectTo) {
-        navigate(fetcher.data.redirectTo);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   // false by default if type is 'update', true after resolve the casePromise
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
@@ -248,7 +206,7 @@ export default function TaskDetailForm({
             setStatus(
               (task.tsk_status as keyof typeof TASK.STATUS) || 'not_started',
             );
-            setCaseService(task.tsk_caseService || null);
+            setCaseService((task.tsk_caseService as any) || null);
             setCaseOrder(task.tsk_caseOrder || 0);
 
             // Convert string dates to Date objects
@@ -259,11 +217,7 @@ export default function TaskDetailForm({
             if (task.tsk_endDate) {
               setEndDate(new Date(task.tsk_endDate));
             }
-
-            // Set assignees if available
-            if (task.tsk_assignees && Array.isArray(task.tsk_assignees)) {
-              setAssignees(task.tsk_assignees);
-            }
+            setAssignees(task.tsk_assignees);
           } else {
             console.error('Task data is not in the expected format:', task);
             toast.error('Không thể tải dữ liệu task. Vui lòng thử lại sau.');
@@ -284,12 +238,6 @@ export default function TaskDetailForm({
           const caseData = await casePromise;
           if (caseData && 'id' in caseData) {
             setCaseService(caseData);
-            setAssignees([
-              ...(caseData.case_assignees || []),
-              ...(caseData.case_leadAttorney
-                ? [caseData.case_leadAttorney]
-                : []),
-            ]);
             setStartDate(new Date(caseData.case_startDate));
           } else {
             console.error('Case data is not in the expected format:', caseData);
@@ -303,6 +251,8 @@ export default function TaskDetailForm({
       loadCase();
     }
   }, [type, taskPromise, casePromise]);
+
+  const [openEmployeePicker, setOpenEmployeePicker] = useState(false);
 
   return (
     <fetcher.Form
@@ -347,30 +297,32 @@ export default function TaskDetailForm({
                 required
               />
               {errors.name && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.name}
                 </p>
               )}
             </div>
 
-            <div className='lg:col-span-4'>
-              <Label
-                htmlFor='caseOrder'
-                className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
-              >
-                Thứ tự
-              </Label>
-              <Input
-                id='caseOrder'
-                name='caseOrder'
-                type='number'
-                value={caseOrder}
-                onChange={(e) => setCaseOrder(Number(e.target.value))}
-                className='bg-white border-gray-300 text-sm sm:text-base'
-                placeholder='Nhập thứ tự'
-                required
-              />
-            </div>
+            {!!caseService && (
+              <div className='lg:col-span-4'>
+                <Label
+                  htmlFor='caseOrder'
+                  className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
+                >
+                  Thứ tự
+                </Label>
+                <Input
+                  id='caseOrder'
+                  name='caseOrder'
+                  type='number'
+                  value={caseOrder}
+                  onChange={(e) => setCaseOrder(Number(e.target.value))}
+                  className='bg-white border-gray-300 text-sm sm:text-base'
+                  placeholder='Nhập thứ tự'
+                  required
+                />
+              </div>
+            )}
           </div>
 
           {/* Task Description */}
@@ -381,19 +333,16 @@ export default function TaskDetailForm({
             >
               Mô tả
             </Label>
-            <Hydrated>
-              {() => (
-                <div className='h-[250px] sm:h-[200px]'>
-                  <TextEditor
-                    name='description'
-                    value={description}
-                    isReady={isContentReady}
-                    onChange={handleDescriptionChange}
-                    placeholder='Nhập mô tả chi tiết cho Task'
-                  />
-                </div>
-              )}
-            </Hydrated>
+
+            <div className='h-[250px] sm:h-[200px]'>
+              <TextEditor
+                name='description'
+                value={description}
+                isReady={isContentReady}
+                onChange={handleDescriptionChange}
+                placeholder='Nhập mô tả chi tiết cho Task'
+              />
+            </div>
           </div>
 
           {/* Priority, Status, Dates */}
@@ -484,35 +433,65 @@ export default function TaskDetailForm({
               />
 
               {errors.endDate && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.endDate}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Case Service Selection */}
-          {!caseService && type === 'create' && (
-            <div className='flex items-center justify-center py-4 sm:py-6 border-t border-gray-200'>
-              <Button
-                variant='primary'
-                type='button'
-                asChild
-                className='text-sm sm:text-base'
-              >
-                <Link to={`/erp/cases`}>Chọn hồ sơ liên quan</Link>
-              </Button>
-            </div>
-          )}
+          <Separator />
 
           {/* Assignees */}
           <div className='space-y-4'>
-            <Label className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'>
-              <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
-              {assignees.length === 0 && (
-                <span className='text-red-500 ml-1'>*</span>
-              )}
-            </Label>
+            <div className='flex justify-between items-center'>
+              <Label className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'>
+                <span className='text-teal-600 mr-2'>👤</span> Người thực hiện
+                {assignees.length === 0 && (
+                  <span className='text-red-500 ml-1'>*</span>
+                )}
+              </Label>
+
+              <Button
+                variant={'primary'}
+                type='button'
+                onClick={() => setOpenEmployeePicker(true)}
+              >
+                Thêm nhân sự
+              </Button>
+            </div>
+
+            {openEmployeePicker && (
+              <EmployeePicker
+                onClose={() => setOpenEmployeePicker(false)}
+                employeeGetter={async () => {
+                  try {
+                    const response = await fetch(
+                      `/api/data?getter=getEmployees&limit=10000&page=1`,
+                    );
+                    const data: IListResponse<IEmployee> =
+                      await response.json();
+
+                    return {
+                      ...data,
+                      data: data.data.filter(
+                        (employee) =>
+                          !assignees.some(
+                            (assignee) => assignee.id === employee.id,
+                          ),
+                      ),
+                    };
+                  } catch (error) {
+                    console.error('Error fetching documents:', error);
+                    toast.error('Có lỗi xảy ra khi tải nhân viên');
+                    return { data: [], pagination: {} as any };
+                  }
+                }}
+                onSelect={(employees: IEmployee[]) => {
+                  setAssignees((prev) => [...prev, ...employees]);
+                }}
+              />
+            )}
 
             {assignees.length > 0 && (
               <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4'>
@@ -527,119 +506,18 @@ export default function TaskDetailForm({
             )}
 
             {errors.assignees && (
-              <p className='text-red-500 text-xs sm:text-sm'>
+              <p className='text-red-500 text-sm sm:text-base'>
                 {errors.assignees}
               </p>
             )}
-
-            <Defer resolve={employees}>
-              {(employeeData) => (
-                <div className='sm:p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                  {!!selected.length && (
-                    <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 mb-4 rounded-lg gap-2 sm:gap-0'>
-                      <div>
-                        <span className='font-semibold text-xs sm:text-sm'>
-                          Đã chọn {selected.length} nhân viên để thêm
-                        </span>
-                      </div>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          type='button'
-                          onClick={() => setSelectedItems([])}
-                          className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
-                        >
-                          <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
-                          <span>Bỏ chọn tất cả</span>
-                        </Button>
-                        <Button
-                          size='sm'
-                          onClick={() => handleAddAssignees(selected)}
-                          type='button'
-                          className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
-                        >
-                          <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
-                          <span>Thêm đã chọn</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  <ItemList<IEmployeeBrief>
-                    addNewHandler={() => navigate('/erp/employees/new')}
-                    itemsPromise={employeeData}
-                    name='Nhân viên'
-                    visibleColumns={[
-                      {
-                        key: 'emp_user.usr_firstName',
-                        title: 'Tên nhân viên',
-                        visible: true,
-                        render: (item) => (
-                          <a
-                            href={`/erp/employees/${item.id}`}
-                            className='flex items-center space-x-3'
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            <span>
-                              {item.emp_user.usr_firstName}{' '}
-                              {item.emp_user.usr_lastName}
-                            </span>
-                          </a>
-                        ),
-                      },
-                      {
-                        key: 'emp_user.usr_username',
-                        title: 'Tài khoản',
-                        visible: true,
-                        render: (item) => item.emp_user.usr_username,
-                      },
-                      {
-                        key: 'emp_position',
-                        title: 'Chức vụ',
-                        visible: true,
-                        render: (item) => item.emp_position,
-                      },
-                      {
-                        key: 'action',
-                        title: 'Hành động',
-                        visible: true,
-                        render: (item) => {
-                          const isAdded = !!assignees.find(
-                            (selectedAssignee) =>
-                              selectedAssignee.id === item.id,
-                          );
-
-                          return (
-                            <Button
-                              variant='default'
-                              className={`bg-blue-500 hover:bg-blue-400 text-xs sm:text-sm ${
-                                isAdded ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                              type='button'
-                              onClick={() => handleAddAssignees([item])}
-                              disabled={isAdded}
-                            >
-                              {isAdded ? 'Đã thêm' : 'Thêm'}
-                            </Button>
-                          );
-                        },
-                      },
-                    ]}
-                    selectedItems={selected}
-                    setSelectedItems={setSelectedItems}
-                  />
-                </div>
-              )}
-            </Defer>
           </div>
         </CardContent>
 
         <CardFooter className='px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center border-t border-gray-200 gap-3 sm:gap-0'>
           <Link
             to='/erp/tasks'
-            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
+            prefetch='intent'
+            className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
             Trở về Danh sách
@@ -649,7 +527,7 @@ export default function TaskDetailForm({
             variant='primary'
             type='submit'
             disabled={!isChanged || fetcher.state === 'submitting'}
-            className='text-xs sm:text-sm w-full sm:w-auto'
+            className='text-sm sm:text-base w-full sm:w-auto'
           >
             {fetcher.state === 'submitting' ? (
               <>
@@ -695,7 +573,7 @@ export default function TaskDetailForm({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận Thêm nhân sự</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên vào danh
               sách người thực hiện không?

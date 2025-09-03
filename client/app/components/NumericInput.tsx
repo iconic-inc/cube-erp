@@ -1,33 +1,19 @@
 import { NumericFormat } from 'react-number-format';
-import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { ReactNode } from 'react';
 
 export default function NumericInput({
-  label,
   value,
   onValueChange,
   errors,
   required = false,
 }: {
-  label?: ReactNode;
-  value: string;
+  value: string | number;
   onValueChange: (value: string) => void;
   errors?: string;
   required?: boolean;
 }) {
   return (
     <div>
-      <Label
-        htmlFor='amount'
-        className='text-gray-700 font-semibold mb-2 block'
-      >
-        {label || (
-          <>
-            Số tiền <span className='text-red-500'>*</span>
-          </>
-        )}
-      </Label>
       <div className='relative'>
         <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm z-10'>
           ₫
@@ -47,7 +33,7 @@ export default function NumericInput({
           allowNegative={false}
           allowLeadingZeros={false}
           customInput={Input}
-          className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium'
+          className='text-right flex h-9 w-full rounded-md border border-input bg-transparent pl-6 pr-12 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
           required={required}
         />
         <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm'>

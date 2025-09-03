@@ -10,6 +10,8 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IAttendanceBrief } from '~/interfaces/attendance.interface';
 import { isResolveError } from '~/lib';
 import AttendanceRequestDialog from './AttendanceRequestDialog';
+import { action } from '..';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function CheckInOutSection({
   todayAttendance,
@@ -18,9 +20,7 @@ export default function CheckInOutSection({
 }) {
   const [fingerprint, setFingerprint] = useState('');
   const [attendance, setAttendance] = useState<IAttendanceBrief | null>(null);
-  const [loading, setLoading] = useState(false);
-  const fetcher = useFetcher();
-  const toastIdRef = useRef<any>(null);
+  const fetcher = useFetcher<typeof action>();
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [type, setType] = useState<'check-in' | 'check-out' | null>(null);
 
@@ -68,44 +68,14 @@ export default function CheckInOutSection({
     loadAttendance();
   }, [todayAttendance]);
 
-  useEffect(() => {
-    if (
-      fetcher.data &&
-      typeof fetcher.data === 'object' &&
-      'toast' in fetcher.data &&
-      toastIdRef.current
-    ) {
-      const { toast: toastData } = fetcher.data as any;
-      toast.update(toastIdRef.current, {
-        render: toastData.message,
-        type: toastData.type || 'success',
-        autoClose: 3000,
-        isLoading: false,
-      });
-      toastIdRef.current = null;
-      setLoading(false);
-
-      if ('ipNotAllowed' in fetcher.data) {
-        const data = fetcher.data as any;
-        setType(data.type);
+  const { isSubmitting } = useFetcherResponseHandler(fetcher, {
+    onFailed(data) {
+      if (data?.ipNotAllowed) {
+        setType(data?.type === 'check-in' ? 'check-in' : 'check-out');
         setShowRequestDialog(true);
       }
-    } else if (toastIdRef.current) {
-      toast.dismiss(toastIdRef.current);
-      toastIdRef.current = null;
-      setLoading(false);
-    }
-  }, [fetcher.data]);
-
-  useEffect(() => {
-    if (fetcher.state === 'submitting') {
-      setLoading(true);
-      toastIdRef.current = toast.loading('Đang xử lý...');
-    } else if (fetcher.state === 'idle' && toastIdRef.current) {
-      toast.dismiss(toastIdRef.current);
-      toastIdRef.current = null;
-    }
-  }, [fetcher.state]);
+    },
+  });
 
   return (
     <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
@@ -119,7 +89,7 @@ export default function CheckInOutSection({
               <span className='hidden sm:inline'>Chấm công hôm nay</span>
               <span className='sm:hidden'>Chấm công</span>
             </CardTitle>
-            <p className='text-green-100 text-xs sm:text-sm mt-1'>
+            <p className='text-green-100 text-sm sm:text-base mt-1'>
               {new Date().toLocaleDateString('vi', {
                 weekday: 'long',
                 year: 'numeric',
@@ -140,8 +110,8 @@ export default function CheckInOutSection({
           className='flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6'
         >
           {/* Check-in and Check-out cards will get today's attendance data */}
-          <CheckInCard attendance={attendance} loading={loading} />
-          <CheckOutCard attendance={attendance} loading={loading} />
+          <CheckInCard attendance={attendance} loading={isSubmitting} />
+          <CheckOutCard attendance={attendance} loading={isSubmitting} />
 
           <input type='hidden' name='fingerprint' value={fingerprint} />
         </fetcher.Form>

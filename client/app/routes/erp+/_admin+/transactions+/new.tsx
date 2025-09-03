@@ -13,15 +13,16 @@ import { toast } from 'react-toastify';
 import { ITransactionCreate } from '~/interfaces/transaction.interface';
 import TransactionDetailForm from './_components/TransactionDetailForm';
 import ContentHeader from '~/components/ContentHeader';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import { getCustomers } from '~/services/customer.server';
 import { getCaseServices } from '~/services/case.server';
 import { generateFormId } from '~/utils';
 import { canAccessTransactionManagement } from '~/utils/permission';
 import { Save } from 'lucide-react';
-
-// Định nghĩa kiểu cho toast
-type ToastType = 'success' | 'error' | 'info' | 'warning';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -88,14 +89,6 @@ export default function NewTransaction() {
     initialCustomerId,
     initialCaseId,
   } = useLoaderData<typeof loader>();
-  const location = useLocation();
-  const actionData = location.state?.actionData;
-
-  // Hiển thị thông báo nếu có
-  if (actionData?.toast) {
-    const toastType = actionData.toast.type as ToastType;
-    toast[toastType](actionData.toast.message);
-  }
 
   const formId = useMemo(() => generateFormId('transaction-detail-form'), []);
 
@@ -132,8 +125,11 @@ export default function NewTransaction() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
+  if (!session) return getUnauthorizedActionResponse(dataResponse, headers);
 
   switch (request.method) {
     case 'POST': {
@@ -166,12 +162,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ) {
           return dataResponse(
             {
-              transaction: null,
+              success: false,
               toast: {
                 message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                type: 'error',
               },
-              redirectTo: null,
             },
             { headers, status: 400 },
           );
@@ -181,10 +176,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         return dataResponse(
           {
-            transaction: res,
+            success: true,
             toast: {
               message: 'Thêm mới giao dịch thành công!',
-              type: 'success' as ToastType,
+              type: 'success',
             },
             redirectTo: `/erp/transactions/${res.id}`,
           },
@@ -193,16 +188,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       } catch (error: any) {
         console.error('Error creating transaction:', error);
 
-        let errorMessage = 'Có lỗi xảy ra khi thêm giao dịch';
-
         return dataResponse(
           {
-            transaction: null,
+            success: false,
             toast: {
-              message: errorMessage,
-              type: 'error' as ToastType,
+              message: 'Có lỗi xảy ra khi thêm giao dịch',
+              type: 'error',
             },
-            redirectTo: null,
           },
           { headers, status: 500 },
         );
@@ -212,9 +204,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     default:
       return dataResponse(
         {
-          transaction: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
-          redirectTo: null,
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
         },
         { headers, status: 405 },
       );

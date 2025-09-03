@@ -1,9 +1,13 @@
 import { useFetcher } from '@remix-run/react';
 import { UploadCloud } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { FilePondFile } from 'filepond';
+import 'filepond/dist/filepond.min.css';
+
 import { IDocument } from '~/interfaces/document.interface';
 import { action } from '~/routes/api+/documents+/upload';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function DocumentUploader({
   multiple = true,
@@ -14,21 +18,10 @@ export default function DocumentUploader({
   'onChange' | 'value'
 >) {
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      toast.update(toastIdRef.current, {
-        type: fetcher.data.toast.type as 'success' | 'error',
-        render: fetcher.data.toast.message,
-        ...toastUpdateOptions,
-      });
-
-      if (fetcher.data.toast.type === 'success') {
-        handleDocumentUploaded(fetcher.data.documents);
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher, {
+    onSuccess: (data) => data && handleDocumentUploaded(data),
+  });
 
   return (
     <div
@@ -55,14 +48,8 @@ export default function DocumentUploader({
           hidden
           multiple
           onChange={async (e) => {
-            toastIdRef.current = toast.loading('Uploading document...');
-
             if (!e.target.files || e.target.files.length === 0) {
-              toast.update(toastIdRef.current, {
-                type: 'error',
-                render: 'No document selected',
-                ...toastUpdateOptions,
-              });
+              toast.error('No document selected');
               return;
             }
 
@@ -78,10 +65,7 @@ export default function DocumentUploader({
                 action: '/api/documents/upload',
               });
             } catch (err: any) {
-              toast.update(toastIdRef.current, {
-                type: 'error',
-                data: err.message,
-              });
+              toast.error(err.message);
             }
           }}
         />
@@ -89,8 +73,3 @@ export default function DocumentUploader({
     </div>
   );
 }
-
-const toastUpdateOptions = {
-  autoClose: 3000,
-  isLoading: false,
-};

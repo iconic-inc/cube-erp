@@ -15,7 +15,19 @@ import {
   detachDocumentFromCase,
   attachDocumentToCase,
   getCaseServiceTasks,
+  getCaseServiceOverview,
+  updateCaseServiceParticipant,
+  updateCaseServiceIncurredCost,
+  updateCaseServiceInstallment,
+  createCaseServiceWithTransactions,
+  updateCaseServiceWithTransactions,
 } from '@services/caseService.service';
+
+const patchCaseServiceHandler = {
+  updateCaseServiceParticipant,
+  updateCaseServiceIncurredCost,
+  updateCaseServiceInstallment,
+};
 
 export class CaseServiceController {
   /**
@@ -36,7 +48,7 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service fetched successfully',
-      metadata: await getCaseServiceById(req.params.id),
+      metadata: await getCaseServiceById(req.params.id, req.user.userId),
     });
   }
 
@@ -47,7 +59,10 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service created successfully',
-      metadata: await createCaseService(req.body),
+      metadata: await createCaseServiceWithTransactions(
+        req.user.userId,
+        req.body
+      ),
     });
   }
 
@@ -58,7 +73,11 @@ export class CaseServiceController {
     return OK({
       res,
       message: 'Case service updated successfully',
-      metadata: await updateCaseService(req.params.id, req.body),
+      metadata: await updateCaseServiceWithTransactions(
+        req.user.userId,
+        req.params.id,
+        req.body
+      ),
     });
   }
 
@@ -219,6 +238,50 @@ export class CaseServiceController {
       res,
       message: 'Case services fetched successfully',
       metadata: caseServices,
+    });
+  };
+
+  /**
+   * Get case service overview
+   */
+  static getCaseServiceOverview = async (req: Request, res: Response) => {
+    const overview = await getCaseServiceOverview(req.params.id);
+    return OK({
+      res,
+      message: 'Case service overview fetched successfully',
+      metadata: overview,
+    });
+  };
+
+  static patchCaseService = async (req: Request, res: Response) => {
+    const action = req.body.op as keyof typeof patchCaseServiceHandler;
+    if (!patchCaseServiceHandler[action]) {
+      throw new BadRequestError(`Invalid action: ${action}`);
+    }
+
+    // For financial updates, pass userId to create transaction records
+    const userId = req.user?.userId;
+    let result;
+
+    // Handle functions that need userId parameter
+    const financialOperations = [
+      'updateCaseServiceInstallment',
+      'updateCaseServiceIncurredCost',
+      'updateCaseServiceParticipant',
+    ];
+
+    if (financialOperations.includes(action)) {
+      const handler = patchCaseServiceHandler[action] as any;
+      result = await handler(req.params.id, JSON.parse(req.body.value), userId);
+    } else {
+      const handler = patchCaseServiceHandler[action] as any;
+      result = await handler(req.params.id, JSON.parse(req.body.value));
+    }
+
+    return OK({
+      res,
+      message: 'Cập nhật hồ sơ vụ việc thành công',
+      metadata: result,
     });
   };
 }

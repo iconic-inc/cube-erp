@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import { isValidObjectId } from 'mongoose';
 import { TASK } from '../constants/task.constant';
-
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string) => mongoose.isValidObjectId(id);
 
 // Base schema for common task fields
 const taskBaseSchema = {

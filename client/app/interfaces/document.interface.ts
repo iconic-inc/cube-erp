@@ -1,9 +1,10 @@
+import { IDocumentFolder } from './documentFolder.interface';
 import { IEmployee } from './employee.interface';
 
 export interface IDocument {
   id: string;
   doc_name: string;
-  doc_type?: string;
+  doc_parent: IDocumentFolder;
   doc_description?: string;
   doc_url: string;
   doc_isPublic: boolean;
@@ -15,7 +16,7 @@ export interface IDocument {
 
 export interface IDocumentCreate {
   name: string;
-  type?: string;
+  parent: string;
   description?: string;
   file: File;
   isPublic?: boolean;
@@ -26,7 +27,7 @@ export interface IDocumentCreate {
 export interface IDocumentUpdate {
   name?: string;
   description?: string;
-  type?: string;
+  parent?: string;
   isPublic?: boolean;
   whiteList?: string[];
 }
@@ -38,7 +39,7 @@ export interface IAccessRightsUpdate {
 
 export interface IDocumentFilter {
   search?: string;
-  type?: string;
+  parent?: string;
   startDate?: string;
   endDate?: string;
   createdBy?: string;

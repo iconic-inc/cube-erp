@@ -43,10 +43,13 @@ export default function CustomerCaseServiceList({
         <Button
           variant='secondary'
           size='sm'
-          className='bg-white text-red-700 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-fit m-auto sm:m-0'
+          className='bg-white text-red-700 hover:bg-red-50 text-sm sm:text-base px-2 sm:px-3 py-1 sm:py-2 w-fit m-auto sm:m-0'
           asChild
         >
-          <Link to={`/erp/cases/new?customerId=${customerId}`}>
+          <Link
+            to={`/erp/cases/new?customerId=${customerId}`}
+            prefetch='intent'
+          >
             <Plus className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
             <span className='hidden sm:inline'>Tạo hồ sơ mới</span>
             <span className='sm:hidden'>Tạo mới</span>
@@ -84,7 +87,7 @@ export default function CustomerCaseServiceList({
                           {caseService.case_code}
                         </h3>
                         <Badge
-                          className={`text-xs sm:text-sm w-fit ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
+                          className={`text-sm sm:text-base w-fit ${CASE_STATUS_BADGE_CLASSES[caseService.case_status]}`}
                         >
                           {CASE_SERVICE.STATUS[caseService.case_status]}
                         </Badge>
@@ -92,10 +95,13 @@ export default function CustomerCaseServiceList({
                       <Button
                         variant='outline'
                         size='sm'
-                        className='text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-fit'
+                        className='text-sm sm:text-base px-2 sm:px-3 py-1 sm:py-2 w-fit'
                         asChild
                       >
-                        <Link to={`/erp/cases/${caseService.id}`}>
+                        <Link
+                          to={`/erp/cases/${caseService.id}`}
+                          prefetch='intent'
+                        >
                           <span className=''>Xem chi tiết</span>
                         </Link>
                       </Button>

@@ -83,22 +83,6 @@ export default function CRMCaseService() {
 
       setVisibleColumns((prevColumns) =>
         prevColumns.map((col) => {
-          if (col.key === 'leadAttorney' && !isResolveError(employeesData)) {
-            return {
-              ...col,
-              options: employeesData.data.length
-                ? employeesData.data.map((emp: IEmployeeBrief) => ({
-                    value: emp.id,
-                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
-                  }))
-                : [
-                    {
-                      value: '',
-                      label: 'Không có nhân viên',
-                    },
-                  ],
-            };
-          }
           if (col.key === 'customer' && !isResolveError(customersData)) {
             return {
               ...col,
@@ -132,6 +116,7 @@ export default function CRMCaseService() {
       sortField: 'case_code',
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/cases/${item.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
@@ -152,6 +137,7 @@ export default function CRMCaseService() {
       options: [],
       render: (item) => (
         <Link
+          prefetch='intent'
           to={`/erp/customers/${item.case_customer.id}`}
           className='text-blue-600 hover:underline block w-full h-full'
         >
@@ -173,33 +159,11 @@ export default function CRMCaseService() {
       })),
       render: (item) => (
         <span
-          className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]} text-xs sm:text-sm whitespace-nowrap`}
+          className={`${CASE_STATUS_BADGE_CLASSES[item.case_status]} text-sm sm:text-base whitespace-nowrap`}
         >
           {CASE_SERVICE.STATUS[item.case_status] || '-'}
         </span>
       ),
-    },
-    {
-      title: 'Luật sư chính',
-      key: 'leadAttorney',
-      visible: true,
-      sortField: 'case_leadAttorney.emp_user.usr_firstName',
-      filterField: 'leadAttorneyId',
-      options: [],
-      render: (item) =>
-        item.case_leadAttorney ? (
-          <Link
-            to={`/erp/hr/employees/${item.case_leadAttorney.id}`}
-            className='text-blue-600 hover:underline block w-full h-full'
-          >
-            <span className='text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
-              {item.case_leadAttorney.emp_user.usr_firstName}{' '}
-              {item.case_leadAttorney.emp_user.usr_lastName}
-            </span>
-          </Link>
-        ) : (
-          <span className='text-gray-500 text-sm sm:text-base'>N/A</span>
-        ),
     },
     {
       title: 'Ngày bắt đầu',
@@ -209,7 +173,7 @@ export default function CRMCaseService() {
       filterField: 'startDate',
       dateFilterable: true,
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[100px] sm:max-w-none'>
           {formatDate(item.case_startDate, 'DD/MM/YYYY')}
         </span>
       ),
@@ -222,7 +186,7 @@ export default function CRMCaseService() {
       filterField: 'endDate',
       dateFilterable: true,
       render: (item) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[100px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[100px] sm:max-w-none'>
           {item.case_endDate
             ? formatDate(item.case_endDate, 'DD/MM/YYYY')
             : '-'}

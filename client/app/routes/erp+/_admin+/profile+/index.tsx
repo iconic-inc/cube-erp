@@ -29,16 +29,18 @@ import { useERPLoaderData } from '~/lib';
 import { updateMyEmployee } from '~/services/employee.server';
 import { DatePicker } from '~/components/ui/date-picker';
 import ImageInput from '~/components/ImageInput';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { IImage } from '~/interfaces/image.interface';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { getUnauthorizedActionResponse } from '~/services/cookie.server';
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
+  const { session, headers } = await isAuthenticated(request);
+  if (!session) return getUnauthorizedActionResponse(dataResponse, headers);
+
   try {
-    const { session: auth, headers } = await isAuthenticated(request);
-    if (!auth) {
-      throw new Response('Unauthorized', { status: 401 });
-    }
-
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
     // Prepare update data
@@ -55,22 +57,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       avatar: data.avatar as string,
     };
 
-    const updatedEmployee = await updateMyEmployee(updateData, auth!);
+    await updateMyEmployee(updateData, session);
     return dataResponse(
       {
-        employee: updatedEmployee,
+        success: true,
         toast: { message: 'Cập nhật thông tin thành công!', type: 'success' },
       },
       { headers },
     );
   } catch (error: any) {
     console.error('Error updating profile:', error);
-    return {
-      toast: {
-        message: error.message || error.statusText || 'Cập nhật thất bại!',
-        type: 'error',
+    return dataResponse(
+      {
+        success: false,
+        toast: {
+          message: error.message || error.statusText || 'Cập nhật thất bại!',
+          type: 'error',
+        },
       },
-    };
+      { headers, status: 500 },
+    );
   }
 };
 
@@ -78,7 +84,6 @@ export default function HRMProfile() {
   const { employee } = useERPLoaderData();
   const user = employee?.emp_user;
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
 
   const formId = useMemo(() => generateFormId('admin-profile-form'), []);
 
@@ -183,33 +188,18 @@ export default function HRMProfile() {
       formData.append('id', user.id);
     }
 
-    toastIdRef.current = toast.loading('Đang cập nhật...');
-
     // Submit the form
     fetcher.submit(formData, { method: 'PUT' });
   };
 
   // Handle toast notifications
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type as any,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
+  useFetcherResponseHandler(fetcher, {
+    onSuccess() {
       // Reset password and mark as unchanged if success
-      if (toastData.type === 'success') {
-        setPassword('');
-        setIsChanged(false);
-      }
-    }
-  }, [fetcher.data]);
+      setPassword('');
+      setIsChanged(false);
+    },
+  });
 
   return (
     <div className='space-y-4 sm:space-y-6 min-h-screen'>
@@ -286,7 +276,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                   />
                   {errors.firstName && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.firstName}
                     </p>
                   )}
@@ -309,7 +299,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                   />
                   {errors.lastName && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.lastName}
                     </p>
                   )}
@@ -332,7 +322,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                   />
                   {errors.email && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.email}
                     </p>
                   )}
@@ -357,7 +347,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                   />
                   {errors.msisdn && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.msisdn}
                     </p>
                   )}
@@ -440,7 +430,7 @@ export default function HRMProfile() {
                     className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                   />
                   {errors.username && (
-                    <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                    <p className='text-red-500 text-sm sm:text-base mt-1'>
                       {errors.username}
                     </p>
                   )}
@@ -528,8 +518,9 @@ export default function HRMProfile() {
           <CardFooter className='p-3 sm:p-6'>
             <div className='w-full flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0'>
               <Link
+                prefetch='intent'
                 to='/erp'
-                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
+                className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start'
               >
                 <ArrowLeft className='h-4 w-4 mr-1' />
                 <span className='hidden sm:inline'>Trở về Trang chủ</span>
@@ -537,7 +528,7 @@ export default function HRMProfile() {
               </Link>
 
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 w-full sm:w-auto justify-center'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

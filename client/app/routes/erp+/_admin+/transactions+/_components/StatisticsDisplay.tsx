@@ -22,7 +22,8 @@ import { Line, LineChart, Pie, XAxis, YAxis, PieChart, Cell } from 'recharts';
 import { ITransactionStats } from '~/interfaces/transaction.interface';
 import { formatCurrency } from '~/utils';
 import { TRANSACTION } from '~/constants/transaction.constant';
-import { getProvinceBySlug } from '~/utils/address.util';
+import { useEffect, useState } from 'react';
+import { getAllProvince, Province } from 'new-vn-provinces/provinces';
 
 export default function StatisticsDisplay({
   statisticsData,
@@ -30,6 +31,14 @@ export default function StatisticsDisplay({
   statisticsData: ITransactionStats;
 }) {
   const stats = statisticsData;
+  console.log(statisticsData);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  useEffect(() => {
+    (async () => {
+      const provinces = await getAllProvince();
+      setProvinces(provinces);
+    })();
+  }, []);
 
   // Chart configurations
   const chartConfig = {
@@ -59,6 +68,7 @@ export default function StatisticsDisplay({
       );
       if (cat) {
         acc.push({
+          // category: cat.label,
           category: cat.label,
           income: category.income || 0,
           fill: `hsl(${(acc.length * 137.5) % 360}, 70%, 50%)`,
@@ -106,7 +116,9 @@ export default function StatisticsDisplay({
   // Prepare location data for charts
   const topProvinces =
     stats.byProvince?.slice(0, 8).map((province, index) => ({
-      province: getProvinceBySlug(province.province)?.name || province.province,
+      province:
+        provinces.find((p) => p.idProvince === province.provinceId)?.name ||
+        'Khác',
       total: province.total || 0,
       income: province.income || 0,
       outcome: province.outcome || 0,
@@ -122,7 +134,7 @@ export default function StatisticsDisplay({
           <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
               <div className='min-w-0 flex-1'>
-                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                <p className='text-sm sm:text-base font-medium text-gray-600'>
                   Tổng thu
                 </p>
                 <p className='text-lg sm:text-xl md:text-2xl font-bold text-green-600 break-all'>
@@ -140,7 +152,7 @@ export default function StatisticsDisplay({
           <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
               <div className='min-w-0 flex-1'>
-                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                <p className='text-sm sm:text-base font-medium text-gray-600'>
                   Tổng chi
                 </p>
                 <p className='text-lg sm:text-xl md:text-2xl font-bold text-red-600 break-all'>
@@ -158,7 +170,7 @@ export default function StatisticsDisplay({
           <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
               <div className='min-w-0 flex-1'>
-                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                <p className='text-sm sm:text-base font-medium text-gray-600'>
                   Lợi nhuận
                 </p>
                 <p
@@ -178,7 +190,7 @@ export default function StatisticsDisplay({
           <CardContent className='p-4 sm:p-6'>
             <div className='flex items-center justify-between'>
               <div className='min-w-0 flex-1'>
-                <p className='text-xs sm:text-sm font-medium text-gray-600'>
+                <p className='text-sm sm:text-base font-medium text-gray-600'>
                   Tổng giao dịch
                 </p>
                 <p className='text-lg sm:text-xl md:text-2xl font-bold text-gray-900'>
@@ -187,95 +199,6 @@ export default function StatisticsDisplay({
               </div>
               <div className='h-10 w-10 sm:h-12 sm:w-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 ml-2'>
                 <FileText className='h-5 w-5 sm:h-6 sm:w-6 text-purple-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Statistics */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8'>
-        {/* Payment Statistics */}
-        <Card>
-          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
-            <CardTitle className='flex items-center text-base sm:text-lg'>
-              <CreditCard className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
-              <span className='text-sm sm:text-lg'>Thống kê thanh toán</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='p-4 sm:p-6 pt-0'>
-            <div className='space-y-3 sm:space-y-4'>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Tổng đã thanh toán
-                </span>
-                <span className='font-bold text-green-600 text-xs sm:text-sm break-all'>
-                  {formatCurrency(stats.totalPaid || 0)}
-                </span>
-              </div>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Tổng chưa thanh toán
-                </span>
-                <span className='font-bold text-orange-600 text-xs sm:text-sm break-all'>
-                  {formatCurrency(stats.totalUnpaid || 0)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary Statistics */}
-        <Card>
-          <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
-            <CardTitle className='flex items-center text-base sm:text-lg'>
-              <PieChartIcon className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
-              <span className='text-sm sm:text-lg'>Thống kê tổng quan</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='p-4 sm:p-6 pt-0'>
-            <div className='space-y-3 sm:space-y-4'>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Số tiền trung bình/giao dịch
-                </span>
-                <span className='font-bold text-blue-600 text-xs sm:text-sm break-all'>
-                  {formatCurrency(stats.averageTransactionAmount || 0)}
-                </span>
-              </div>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Tỷ lệ thanh toán
-                </span>
-                <span className='font-bold text-purple-600 text-xs sm:text-sm'>
-                  {(stats.paymentRatio || 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Thu/Chi ratio
-                </span>
-                <span className='font-bold text-indigo-600 text-xs sm:text-sm'>
-                  {(stats.totalOutcome || 0) > 0
-                    ? (
-                        (stats.totalIncome || 0) / (stats.totalOutcome || 0)
-                      ).toFixed(2)
-                    : '∞'}
-                </span>
-              </div>
-              <div className='flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg'>
-                <span className='font-medium text-xs sm:text-sm'>
-                  Tình trạng tài chính
-                </span>
-                <span
-                  className={`font-bold text-xs sm:text-sm ${
-                    (stats.netAmount || 0) >= 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {(stats.netAmount || 0) >= 0 ? 'Lãi' : 'Lỗ'}
-                </span>
               </div>
             </div>
           </CardContent>

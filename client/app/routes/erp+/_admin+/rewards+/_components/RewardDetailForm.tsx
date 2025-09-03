@@ -19,6 +19,7 @@ import LoadingCard from '~/components/LoadingCard';
 import { NumericFormat } from 'react-number-format';
 import { DatePicker } from '~/components/ui/date-picker';
 import TextEditor from '~/components/TextEditor';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 interface RewardDetailFormProps {
   formId: string;
@@ -34,8 +35,6 @@ export default function RewardDetailForm({
   initialData,
 }: RewardDetailFormProps) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
-  const navigate = useNavigate();
 
   // Form state
   const [name, setName] = useState<string>('');
@@ -101,8 +100,6 @@ export default function RewardDetailForm({
       formData.set('endDate', endDate.toISOString().split('T')[0]);
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -124,25 +121,7 @@ export default function RewardDetailForm({
   }, [name, description, currentAmount, startDate, endDate]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load reward data when in edit mode
   useEffect(() => {
@@ -240,7 +219,7 @@ export default function RewardDetailForm({
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
               {errors.name && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.name}
                 </p>
               )}
@@ -254,7 +233,7 @@ export default function RewardDetailForm({
                 Số tiền ban đầu <span className='text-red-500'>*</span>
               </Label>
               <div className='relative'>
-                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm z-10'>
+                <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base z-10'>
                   ₫
                 </span>
                 <NumericFormat
@@ -273,12 +252,12 @@ export default function RewardDetailForm({
                   customInput={Input}
                   className='bg-white border-gray-300 pl-8 pr-12 text-right font-medium text-sm sm:text-base'
                 />
-                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs sm:text-sm'>
+                <span className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm sm:text-base'>
                   VNĐ
                 </span>
               </div>
               {errors.currentAmount && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.currentAmount}
                 </p>
               )}
@@ -301,7 +280,7 @@ export default function RewardDetailForm({
                 onChange={(date) => setStartDate(date)}
               />
               {errors.startDate && (
-                <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                <p className='text-red-500 text-sm sm:text-base mt-1'>
                   {errors.startDate}
                 </p>
               )}
@@ -343,8 +322,9 @@ export default function RewardDetailForm({
         <CardFooter className='p-4 sm:p-6 pt-3 sm:pt-4 border-t border-gray-200'>
           <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0'>
             <Link
+              prefetch='intent'
               to='/erp/rewards'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
             >
               <ArrowLeft className='h-4 w-4' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -353,7 +333,7 @@ export default function RewardDetailForm({
 
             <div className='flex space-x-2 order-1 sm:order-2'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none'
+                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-none'
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

@@ -21,6 +21,7 @@ import {
 } from '~/services/attendanceRequest.server';
 import EmployeeAttendanceRequestList from '~/components/EmployeeAttendanceRequestList';
 import { isAuthenticated } from '~/services/auth.server';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -53,7 +54,7 @@ export default function IndexAttendance() {
       <ContentHeader
         title='Chấm công'
         actionContent={
-          <Link to='../attendance-requests'>
+          <Link to='../attendance-requests' prefetch='intent'>
             <Button
               variant='outline'
               className='flex items-center gap-2 text-xs md:text-sm'
@@ -98,7 +99,9 @@ export default function IndexAttendance() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
   const formData = await request.formData();
   const actionType = formData.get('action') as string;
@@ -107,10 +110,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!requestId) {
     return data(
       {
+        success: false,
         toast: { type: 'error', message: 'Không tìm thấy ID yêu cầu' },
-        status: 400,
       },
-      { headers },
+      { headers, status: 400 },
     );
   }
 
@@ -121,6 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await acceptAttendanceRequest(requestId, session!);
           return data(
             {
+              success: true,
               toast: {
                 type: 'success',
                 message: 'Đã chấp nhận yêu cầu chấm công thành công!',
@@ -132,6 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await rejectAttendanceRequest(requestId, session!);
           return data(
             {
+              success: true,
               toast: {
                 type: 'success',
                 message: 'Đã từ chối yêu cầu chấm công!',
@@ -142,33 +147,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         } else {
           return data(
             {
+              success: false,
               toast: { type: 'error', message: 'Hành động không hợp lệ' },
+            },
+            {
+              headers,
               status: 400,
             },
-            { headers },
           );
         }
       } catch (error: any) {
         console.error('Error processing attendance request:', error);
         return data(
           {
+            success: false,
             toast: {
               type: 'error',
               message: error.message || 'Có lỗi xảy ra khi xử lý yêu cầu',
             },
-            status: error.status || 500,
           },
-          { headers },
+          { headers, status: error.status || 500 },
         );
       }
 
     default:
       return data(
         {
+          success: false,
           toast: { type: 'error', message: 'Method not allowed' },
+        },
+        {
+          headers,
           status: 405,
         },
-        { headers },
       );
   }
 };

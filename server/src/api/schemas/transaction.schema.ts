@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { TRANSACTION } from '../constants/transaction.constant';
-
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string) => mongoose.isValidObjectId(id);
 
 // Base schema for common transaction fields
 const transactionBaseSchema = {

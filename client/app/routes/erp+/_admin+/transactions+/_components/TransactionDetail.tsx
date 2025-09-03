@@ -4,13 +4,7 @@ import LoadingCard from '~/components/LoadingCard';
 import ErrorCard from '~/components/ErrorCard';
 import TextRenderer from '~/components/TextRenderer';
 import { Badge } from '~/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { TRANSACTION } from '~/constants/transaction.constant';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { ITransaction } from '~/interfaces/transaction.interface';
@@ -81,9 +75,6 @@ export default function TransactionDetail({
                     {transaction.tx_title}
                   </CardTitle>
                   <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2'>
-                    <p className='text-base sm:text-base md:text-lg break-all'>
-                      Mã: {transaction.tx_code}
-                    </p>
                     <Badge
                       className={`${TRANSACTION.TYPE[transaction.tx_type].className} text-sm sm:text-sm px-2 sm:px-3 py-1 rounded-full`}
                     >
@@ -113,28 +104,6 @@ export default function TransactionDetail({
                       </span>
                       <span className='text-sm sm:text-sm font-medium text-blue-700 break-all'>
                         {formatCurrency(transaction.tx_amount)}
-                      </span>
-                    </div>
-
-                    <div className='flex items-center space-x-2 sm:space-x-3'>
-                      <DollarSign className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0' />
-                      <span className='text-sm sm:text-sm text-gray-500'>
-                        Đã thanh toán:
-                      </span>
-                      <span className='text-sm sm:text-sm font-medium text-green-700 break-all'>
-                        {formatCurrency(transaction.tx_paid)}
-                      </span>
-                    </div>
-
-                    <div className='flex items-center space-x-2 sm:space-x-3'>
-                      <Receipt className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0' />
-                      <span className='text-sm sm:text-sm text-gray-500'>
-                        Còn lại:
-                      </span>
-                      <span className='text-sm sm:text-sm font-medium text-red-700 break-all'>
-                        {formatCurrency(
-                          transaction.tx_amount - transaction.tx_paid,
-                        )}
                       </span>
                     </div>
 
@@ -180,6 +149,7 @@ export default function TransactionDetail({
                       </span>
                       <Link
                         to={`/erp/employees/${transaction.tx_createdBy?.id}`}
+                        prefetch='intent'
                         className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                       >
                         {transaction.tx_createdBy?.emp_user.usr_firstName}{' '}
@@ -196,6 +166,7 @@ export default function TransactionDetail({
                         </span>
                         <Link
                           to={`/erp/customers/${transaction.tx_customer.id}`}
+                          prefetch='intent'
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {transaction.tx_customer.cus_firstName}{' '}
@@ -213,6 +184,7 @@ export default function TransactionDetail({
                         </span>
                         <Link
                           to={`/erp/cases/${transaction.tx_caseService.id}`}
+                          prefetch='intent'
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {transaction.tx_caseService.case_code} -{' '}

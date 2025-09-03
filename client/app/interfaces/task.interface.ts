@@ -15,7 +15,7 @@ export interface ITaskBrief {
 }
 
 export interface ITask extends ITaskBrief {
-  tsk_assignees: Array<IEmployee>;
+  tsk_assignees: IEmployee[];
   tsk_description: string;
   tsk_caseService?: ICaseServiceBrief;
   tsk_caseOrder: number;
@@ -23,9 +23,9 @@ export interface ITask extends ITaskBrief {
 
 export interface ITaskCreate {
   name: string;
-  assignees: string[];
   description?: string;
   caseService?: string;
+  assignees: string[];
   caseOrder?: number;
   startDate?: Date | string;
   endDate: Date | string;
@@ -37,9 +37,6 @@ export interface ITaskUpdate extends Partial<ITaskCreate> {}
 
 export interface ITaskQuery {
   search?: string;
-  assignee?: string;
-  assignees?: string[];
-  excludeAssignee?: string;
   status?: keyof typeof TASK.STATUS;
   statuses?: (keyof typeof TASK.STATUS)[];
   priority?: keyof typeof TASK.PRIORITY;

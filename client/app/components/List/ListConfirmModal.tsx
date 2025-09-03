@@ -1,6 +1,8 @@
 import { useFetcher } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { IActionFunctionResponse } from '~/interfaces/app.interface';
 
 export default function ListConfirmModal<T>({
   name,
@@ -15,56 +17,22 @@ export default function ListConfirmModal<T>({
   setSelectedItems: (items: T[]) => void;
   deleteHandleRoute?: string;
 }) {
-  const bulkDeleteFetcher = useFetcher();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const toastIdRef = useRef<any>(null);
+  const bulkDeleteFetcher = useFetcher<IActionFunctionResponse>();
 
-  useEffect(() => {
-    if (bulkDeleteFetcher.data) {
+  const { isSubmitting } = useFetcherResponseHandler(bulkDeleteFetcher, {
+    onSuccess() {
+      setSelectedItems([]);
+    },
+    onDone() {
       setShowDeleteModal(false);
-      const response = bulkDeleteFetcher.data as {
-        success: boolean;
-        toast: {
-          type: 'success' | 'error';
-          message: string;
-        };
-      };
-      if (response.success) {
-        toast.update(toastIdRef.current, {
-          type: response.toast.type,
-          render: `Đã xóa ${selectedItems.length} ${name} thành công!`,
-          autoClose: 3000,
-          isLoading: false,
-        });
-        setSelectedItems([]);
-      } else {
-        toast.update(toastIdRef.current, {
-          type: 'error',
-          render: response.toast.message || `Có lỗi xảy ra khi xóa ${name}.`,
-          autoClose: 3000,
-          isLoading: false,
-        });
-      }
-      setIsDeleting(false);
-    }
-  }, [bulkDeleteFetcher.data]);
-
-  const handleDelete = () => {
-    setIsDeleting(true);
-    toastIdRef.current = toast.loading(
-      `Đang xóa ${selectedItems.length} ${name}...`,
-    );
-    const itemIds = selectedItems.map((item: any) => item.id);
-    bulkDeleteFetcher.submit(
-      { itemIds: JSON.stringify(itemIds) },
-      { method: 'DELETE', action: deleteHandleRoute || '.' },
-    );
-  };
+    },
+  });
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
       <bulkDeleteFetcher.Form
         method='DELETE'
+        action={deleteHandleRoute || '.'}
         className='bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto'
       >
         <h3 className='text-lg font-bold mb-4'>Xác nhận xóa</h3>
@@ -74,12 +42,17 @@ export default function ListConfirmModal<T>({
             : `Bạn có chắc chắn muốn xóa ${name} này?`}
           Thao tác này không thể khôi phục.
         </p>
+        <input
+          type='hidden'
+          name='itemIds'
+          value={JSON.stringify(selectedItems.map((item: any) => item.id))}
+        />
 
         <div className='flex justify-end gap-2'>
           <button
             className='px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition'
             onClick={() => setShowDeleteModal(false)}
-            disabled={isDeleting}
+            disabled={isSubmitting}
             type='button'
           >
             Hủy
@@ -88,10 +61,9 @@ export default function ListConfirmModal<T>({
           <button
             className='px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-md transition flex items-center gap-2'
             type='submit'
-            onClick={() => handleDelete()}
-            disabled={isDeleting}
+            disabled={isSubmitting}
           >
-            {isDeleting ? (
+            {isSubmitting ? (
               <>
                 <svg
                   className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'

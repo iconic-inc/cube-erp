@@ -26,23 +26,31 @@ export default function ERPSidebar() {
   const navMain = getNavItems(user);
 
   return (
-    <Sidebar className='lg:h-screen'>
+    <Sidebar className='lg:h-screen animate-in slide-in-from-left-5 duration-300'>
       <SidebarHeader>
-        <Link to='/erp' className='flex items-center mb-6'>
-          <div className='w-12 h-12 rounded-full overflow-hidden'>
-            <img src='/assets/cube-lawfirm-logo.png' alt='Cube Lawfirm Logo' />
+        <Link
+          to='/erp'
+          className='flex items-center mb-6 group'
+          prefetch='intent'
+        >
+          <div className='w-12 h-12 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 animate-bounce-gentle'>
+            <img
+              src='/assets/cube-lawfirm-logo.png'
+              alt='Cube Lawfirm Logo'
+              className='w-full h-full object-cover animate-bounce fade-in-0 duration-1000 delay-150'
+            />
           </div>
-          <span className='text-primary font-semibold ml-2'>
+          <span className='text-primary font-semibold ml-2 transition-all duration-300 group-hover:text-primary/80 animate-in slide-in-from-left-3 duration-400 delay-200'>
             Cube Lawfirm ERP
           </span>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className='animate-in slide-in-from-left-3 duration-500 delay-300'>
         <SideNav items={navMain} />
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className='animate-in slide-in-from-bottom-3 duration-400 delay-500'>
         <NavUser
           user={{
             avatar:
@@ -194,7 +202,12 @@ const getNavItems = (user: IUser) => {
     });
   }
 
-  const otherItems = [];
+  const otherItems = [
+    {
+      title: 'Nhân sự',
+      url: '/erp/nhan-vien/employees',
+    },
+  ];
   // Document Management - Role-based access
   // Rewards - Available to all
   if (canAccessRewardManagement(user?.usr_role)) {

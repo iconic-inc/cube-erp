@@ -9,13 +9,27 @@ import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { IListResponse } from '~/interfaces/response.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { IEmployee, IEmployeeBrief } from '~/interfaces/employee.interface';
-import { ICaseService } from '~/interfaces/case.interface';
-import ItemList from '~/components/List/ItemList';
+import { IEmployee } from '~/interfaces/employee.interface';
+import {
+  ICaseService,
+  CaseParticipant,
+  CaseTax,
+  InstallmentPlanItem,
+  IncurredCost,
+  IInstallmentCreate,
+  IIncurredCostCreate,
+} from '~/interfaces/case.interface';
 import { Button } from '~/components/ui/button';
-import { Plus, XCircle, RotateCcw, Save, ArrowLeft } from 'lucide-react';
+import {
+  Save,
+  ArrowLeft,
+  User,
+  CreditCard,
+  Plus,
+  Trash2,
+  Calculator,
+} from 'lucide-react';
 import { DatePicker } from '~/components/ui/date-picker';
-import BriefEmployeeCard from '~/components/BriefEmployeeCard';
 import {
   Select,
   SelectContent,
@@ -23,16 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '~/components/ui/alert-dialog';
 import TextEditor from '~/components/TextEditor';
 import { ICustomer } from '~/interfaces/customer.interface';
 import {
@@ -44,92 +48,47 @@ import {
 } from '~/components/ui/card';
 import Defer from '~/components/Defer';
 import CustomerBrief from './CustomerBrief';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { Separator } from '~/components/ui/separator';
+import EmployeePicker from '~/components/EmployeePicker';
+import NumericInput from '~/components/NumericInput';
 
 export default function CaseDetailForm({
   formId,
-  employeesPromise,
   type,
   casePromise,
   customerPromise,
 }: {
   formId: string;
-  employeesPromise: ILoaderDataPromise<IListResponse<IEmployee>>;
   type: 'create' | 'update';
   casePromise?: ILoaderDataPromise<ICaseService>;
   customerPromise?: ILoaderDataPromise<ICustomer>;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
-  const navigate = useNavigate();
 
-  const [code, setCode] = useState<string>(generateCode('HS'));
-  const [leadAttorney, setLeadAttorney] = useState<IEmployeeBrief | null>(null);
-  const [assignees, setAssignees] = useState<IEmployeeBrief[]>([]);
+  const [code, setCode] = useState<string>('');
+  const [participants, setParticipants] = useState<CaseParticipant[]>([]);
   const [notes, setNotes] = useState<string>('');
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [status, setStatus] =
     useState<keyof typeof CASE_SERVICE.STATUS>('open');
 
+  // Pricing fields
+  const [baseAmount, setBaseAmount] = useState<number>(0);
+  const [discounts, setDiscounts] = useState<number>(0);
+  const [addOns, setAddOns] = useState<number>(0);
+  const [taxes, setTaxes] = useState<CaseTax[]>([]);
+
+  // Installments
+  const [installments, setInstallments] = useState<IInstallmentCreate[]>([]);
+
+  // Incurred costs
+  const [incurredCosts, setIncurredCosts] = useState<IIncurredCostCreate[]>([]);
+
   // Thêm state để theo dõi lỗi
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isChanged, setIsChanged] = useState(false);
-
-  const [selected, setSelectedItems] = useState<IEmployeeBrief[]>([]);
-
-  const [employeeToRemove, setEmployeeToRemove] =
-    useState<IEmployeeBrief | null>(null);
-  const [employeesToAdd, setEmployeesToAdd] = useState<IEmployeeBrief[]>([]);
-
-  const handleRemoveAssignee = (employee: IEmployeeBrief) => {
-    setEmployeeToRemove(employee);
-  };
-
-  const confirmRemoveAssignee = () => {
-    if (employeeToRemove) {
-      const newAssignees = assignees.filter(
-        (emp) => emp.id !== employeeToRemove.id,
-      );
-      setAssignees((prev) => newAssignees);
-      if (leadAttorney?.id === employeeToRemove.id) {
-        // If the removed employee was the lead attorney, clear it
-        setLeadAttorney(newAssignees[0] || null);
-      }
-      setEmployeeToRemove(null);
-    }
-  };
-
-  const handleAddAssignees = (employees: IEmployeeBrief[]) => {
-    if (employees.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một nhân viên để thêm vào danh sách.');
-      return;
-    }
-
-    // Check if any of the selected employees are already in the whitelist
-    const newAssignees = employees.filter(
-      (emp) => !assignees.some((assignee) => assignee.id === emp.id),
-    );
-
-    if (newAssignees.length === 0) {
-      toast.error('Tất cả nhân viên đã có trong danh sách truy cập.');
-      return;
-    }
-
-    setEmployeesToAdd(newAssignees);
-  };
-
-  const confirmAddAssignees = () => {
-    if (employeesToAdd.length > 0) {
-      setAssignees((prev) => [...prev, ...employeesToAdd]);
-      setSelectedItems([]); // Clear selection after adding
-      setEmployeesToAdd([]); // Clear the employees to add
-      if (!leadAttorney) {
-        // Automatically set the first added employee as lead attorney if not already set
-        setLeadAttorney(employeesToAdd[0]);
-      }
-    }
-  };
 
   // Xử lý form submit
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -140,13 +99,6 @@ export default function CaseDetailForm({
 
     if (!code.trim()) {
       validationErrors.code = 'Vui lòng nhập mã Hồ sơ vụ việc';
-    }
-
-    if (assignees.length === 0) {
-      validationErrors.assignees = 'Vui lòng chọn ít nhất một người thực hiện';
-    }
-    if (!leadAttorney) {
-      validationErrors.leadAttorney = 'Vui lòng chọn luật sư chính';
     }
 
     // If there are validation errors, show them and prevent form submission
@@ -162,25 +114,38 @@ export default function CaseDetailForm({
     // Create FormData
     const formData = new FormData(e.currentTarget);
 
-    formData.append('leadAttorney', leadAttorney!.id);
+    // Add participants data
+    formData.set('participants', JSON.stringify(participants));
 
-    // Manually add the assignees array to formData
-    assignees
-      .filter((assignee) => assignee.id !== leadAttorney?.id)
-      .forEach((assignee) => {
-        formData.append('assignees', assignee.id);
-      });
+    // Add pricing data
+    formData.set(
+      'pricing',
+      JSON.stringify({
+        baseAmount,
+        discounts,
+        addOns,
+        taxes,
+      }),
+    );
+
+    // Add participants data
+    formData.set('participants', JSON.stringify(participants));
+
+    // Add installments data
+    formData.set('installments', JSON.stringify(installments));
+
+    // Add incurred costs data
+    formData.set('incurredCosts', JSON.stringify(incurredCosts));
 
     // Set the case status
-    formData.append('status', String(status));
+    formData.set('status', String(status));
 
     if (endDate) {
-      formData.append('endDate', format(endDate, 'yyyy-MM-dd'));
+      formData.set('endDate', format(endDate, 'yyyy-MM-dd'));
     } else {
-      formData.append('endDate', '');
+      formData.set('endDate', '');
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -194,35 +159,36 @@ export default function CaseDetailForm({
     // Check if any field has changed
     const hasChanged =
       code ||
-      leadAttorney ||
-      assignees.length > 0 ||
+      participants.length > 0 ||
       notes ||
       startDate ||
       endDate ||
-      status;
+      status ||
+      baseAmount > 0 ||
+      discounts !== 0 ||
+      addOns !== 0 ||
+      taxes.length > 0 ||
+      installments.length > 0 ||
+      incurredCosts.length > 0;
 
     setIsChanged(!!hasChanged);
-  }, [code, leadAttorney, assignees, notes, startDate, endDate, status]);
+  }, [
+    code,
+    participants,
+    notes,
+    startDate,
+    endDate,
+    status,
+    baseAmount,
+    discounts,
+    addOns,
+    taxes,
+    participants,
+    installments,
+    incurredCosts,
+  ]);
 
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if (fetcher.data?.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data]);
+  useFetcherResponseHandler(fetcher);
 
   // false by default if type is 'update', true after resolve the casePromise
   const [isContentReady, setIsContentReady] = useState(type !== 'update');
@@ -236,11 +202,33 @@ export default function CaseDetailForm({
           if (caseData && 'id' in caseData) {
             setCode(caseData.case_code || '');
             setNotes(caseData.case_notes || '');
-            setLeadAttorney(caseData.case_leadAttorney || null);
             setStatus(
               (caseData.case_status as keyof typeof CASE_SERVICE.STATUS) ||
                 'OPEN',
             );
+
+            // Load pricing data
+            if (caseData.case_pricing) {
+              setBaseAmount(caseData.case_pricing.baseAmount || 0);
+              setDiscounts(caseData.case_pricing.discounts || 0);
+              setAddOns(caseData.case_pricing.addOns || 0);
+              setTaxes(caseData.case_pricing.taxes || []);
+            }
+
+            // Load participants data
+            if (caseData.case_participants) {
+              setParticipants(caseData.case_participants);
+            }
+
+            // Load installments data
+            if (caseData.case_installments) {
+              setInstallments(caseData.case_installments);
+            }
+
+            // Load incurred costs data
+            if (caseData.case_incurredCosts) {
+              setIncurredCosts(caseData.case_incurredCosts);
+            }
 
             // Convert string dates to Date objects
             if (caseData.case_startDate) {
@@ -249,19 +237,6 @@ export default function CaseDetailForm({
 
             if (caseData.case_endDate) {
               setEndDate(new Date(caseData.case_endDate));
-            }
-
-            // Set assignees if available
-            if (
-              caseData.case_assignees &&
-              Array.isArray(caseData.case_assignees)
-            ) {
-              setAssignees([
-                ...(caseData.case_assignees || []),
-                ...(caseData.case_leadAttorney
-                  ? [caseData.case_leadAttorney]
-                  : []),
-              ]);
             }
           } else {
             console.error('Case data is not in the expected format:', caseData);
@@ -278,6 +253,8 @@ export default function CaseDetailForm({
       });
     }
   }, [type, casePromise]);
+
+  const [openEmployeePicker, setOpenEmployeePicker] = useState(false);
 
   return (
     <fetcher.Form
@@ -312,39 +289,12 @@ export default function CaseDetailForm({
                 placeholder='Ví dụ: HS123456'
                 className='bg-white border-gray-300 text-sm sm:text-base'
               />
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={() => setCode(generateCode('HS'))}
-                className='whitespace-nowrap justify-center sm:justify-start'
-              >
-                <RotateCcw className='h-4 w-4 mr-1' />
-                <span className='hidden sm:inline'>Tự động tạo</span>
-                <span className='sm:hidden'>Tạo</span>
-              </Button>
             </div>
             {errors.code && (
-              <p className='text-red-500 text-xs sm:text-sm mt-1'>
+              <p className='text-red-500 text-sm sm:text-base mt-1'>
                 {errors.code}
               </p>
             )}
-          </div>
-
-          {/* Case Notes */}
-          <div>
-            <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
-              Ghi chú
-            </Label>
-
-            <TextEditor
-              name='notes'
-              value={notes}
-              isReady={isContentReady}
-              onChange={setNotes}
-              className='min-h-48 sm:min-h-40'
-              placeholder='Nhập ghi chú cho dịch vụ vụ việc này...'
-            />
           </div>
 
           {/* Start Date, End Date */}
@@ -408,200 +358,460 @@ export default function CaseDetailForm({
             </div>
           </div>
 
-          <div className='border-t border-gray-200 pt-4 sm:pt-6'>
-            <Label
-              htmlFor='assignees'
-              className='text-gray-700 font-semibold block flex items-center text-sm sm:text-base'
-            >
-              <span className='text-teal-600 mr-2'>
-                &#128100; Người thực hiện
-              </span>
+          {/* Case Notes */}
+          <div>
+            <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
+              Ghi chú
             </Label>
-            {errors.assignees && (
-              <p className='text-red-500 text-xs sm:text-sm mt-2 sm:mt-4'>
-                {errors.assignees}
-              </p>
-            )}
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-6'>
-              {assignees.map((assignee, i) => (
-                <BriefEmployeeCard
-                  key={i}
-                  employee={assignee}
-                  handleRemoveEmployee={handleRemoveAssignee}
-                  onClick={() => {
-                    setLeadAttorney(assignee);
-                  }}
-                  highlighted={assignee.id === leadAttorney?.id}
-                  highlightText='Luật sư chính'
+            <TextEditor
+              name='notes'
+              value={notes}
+              isReady={isContentReady}
+              onChange={setNotes}
+              className='min-h-48 sm:min-h-40'
+              placeholder='Nhập ghi chú cho dịch vụ vụ việc này...'
+            />
+          </div>
+
+          <Separator />
+
+          {/* Pricing Section */}
+          <div className='space-y-4'>
+            <Label className='flex items-center gap-2 text-green-600 font-semibold text-sm sm:text-base'>
+              <Calculator />
+              Thông tin tài chính
+            </Label>
+
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+              <div>
+                <Label className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'>
+                  Giá cơ bản <span className='text-red-500'>*</span>
+                </Label>
+                <NumericInput
+                  value={baseAmount}
+                  onValueChange={(value) => setBaseAmount(parseInt(value))}
                 />
+              </div>
+
+              <div>
+                <input
+                  hidden
+                  id='discounts'
+                  type='number'
+                  value={discounts}
+                  onChange={(e) => setDiscounts(Number(e.target.value))}
+                  placeholder='0'
+                  className='bg-white border-gray-300'
+                />
+              </div>
+
+              <div>
+                <input
+                  hidden
+                  id='addOns'
+                  type='number'
+                  value={addOns}
+                  onChange={(e) => setAddOns(Number(e.target.value))}
+                  placeholder='0'
+                  className='bg-white border-gray-300'
+                />
+              </div>
+            </div>
+
+            {/* Tax Section */}
+            <div>
+              <div className='flex justify-between items-center mb-2'>
+                <Label className='text-gray-700 font-semibold text-sm'>
+                  Thuế
+                </Label>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() =>
+                    setTaxes([
+                      ...taxes,
+                      { name: '', mode: 'PERCENT', value: 0, scope: 'ON_BASE' },
+                    ])
+                  }
+                >
+                  <Plus />
+                  Thêm thuế
+                </Button>
+              </div>
+
+              {taxes.map((tax, index) => (
+                <div
+                  key={index}
+                  className='grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 p-2 border rounded'
+                >
+                  <Input
+                    placeholder='Tên thuế'
+                    value={tax.name}
+                    onChange={(e) => {
+                      const newTaxes = [...taxes];
+                      newTaxes[index].name = e.target.value;
+                      setTaxes(newTaxes);
+                    }}
+                  />
+                  <Select
+                    value={tax.mode}
+                    onValueChange={(value) => {
+                      const newTaxes = [...taxes];
+                      newTaxes[index].mode = value as 'PERCENT' | 'FIXED';
+                      setTaxes(newTaxes);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='PERCENT'>Phần trăm</SelectItem>
+                      <SelectItem value='FIXED'>Cố định</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {tax.mode === 'PERCENT' ? (
+                    <Input
+                      type='number'
+                      placeholder='Giá trị'
+                      value={tax.value}
+                      onChange={(e) => {
+                        const newTaxes = [...taxes];
+                        newTaxes[index].value = Number(e.target.value);
+                        setTaxes(newTaxes);
+                      }}
+                    />
+                  ) : (
+                    <NumericInput
+                      value={tax.value}
+                      onValueChange={(value) => {
+                        const newTaxes = [...taxes];
+                        newTaxes[index].value = Number(value);
+                        setTaxes(newTaxes);
+                      }}
+                    />
+                  )}
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setTaxes(taxes.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                </div>
               ))}
             </div>
+          </div>
 
-            {/* AlertDialog for employee removal confirmation */}
-            <AlertDialog
-              open={!!employeeToRemove}
-              onOpenChange={(open) => !open && setEmployeeToRemove(null)}
-            >
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Bạn có chắc muốn xóa{' '}
-                    {employeeToRemove?.emp_user.usr_firstName}{' '}
-                    {employeeToRemove?.emp_user.usr_lastName} khỏi danh sách
-                    người thực hiện?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
-                  <AlertDialogAction
-                    variant='destructive'
-                    onClick={confirmRemoveAssignee}
-                    type='button'
-                  >
-                    Xác nhận
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <Separator />
 
-            <div className='mt-3 sm:mt-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-              {!!selected.length && (
-                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-blue-100 border border-blue-200 text-blue-800 gap-2 sm:gap-0'>
-                  <div className=''>
-                    <span className='font-semibold text-xs sm:text-sm'>{`Đã chọn ${selected.length} Nhân viên để thêm`}</span>
-                  </div>
+          {/* Installments Section */}
+          <div className='space-y-4'>
+            <div className='flex justify-between items-center'>
+              <Label className='flex items-center gap-2 text-blue-600 font-semibold text-sm sm:text-base'>
+                <CreditCard />
+                Kỳ thanh toán
+              </Label>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() =>
+                  setInstallments([
+                    ...installments,
+                    {
+                      seq: installments.length + 1,
+                      dueDate: new Date(),
+                      amount: 0,
+                      paidAmount: 0,
+                      notes: '',
+                    },
+                  ])
+                }
+              >
+                <Plus />
+                Thêm kỳ thanh toán
+              </Button>
+            </div>
 
-                  <div className='flex flex-wrap items-center gap-2 w-full sm:w-auto'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      type='button'
-                      onClick={() => setSelectedItems([])} // Clear selection
-                      className='text-blue-700 hover:bg-blue-200 flex items-center space-x-1 text-xs sm:text-sm'
-                    >
-                      <XCircle className='h-3 w-3 sm:h-4 sm:w-4' />
-                      <span>Bỏ chọn tất cả</span>
-                    </Button>
-
-                    <Button
-                      size='sm'
-                      onClick={() => {
-                        handleAddAssignees(selected);
-                      }}
-                      type='button'
-                      className='bg-blue-500 hover:bg-blue-400 flex items-center space-x-1 text-xs sm:text-sm'
-                    >
-                      <Plus className='h-3 w-3 sm:h-4 sm:w-4' />
-                      <span>Thêm đã chọn</span>
-                    </Button>
-                  </div>
+            {installments.map((installment, index) => (
+              <div
+                key={index}
+                className='grid grid-cols-1 sm:grid-cols-5 gap-2 p-3 border rounded-lg bg-gray-50'
+              >
+                <div>
+                  <Label className='text-xs font-medium'>Thứ tự</Label>
+                  <Input
+                    type='number'
+                    value={installment.seq}
+                    onChange={(e) => {
+                      const newInstallments = [...installments];
+                      newInstallments[index].seq = Number(e.target.value);
+                      setInstallments(newInstallments);
+                    }}
+                    className='mt-1'
+                  />
                 </div>
+                <div>
+                  <Label className='text-xs font-medium'>Ngày đến hạn</Label>
+                  <Input
+                    type='date'
+                    value={
+                      new Date(installment.dueDate).toISOString().split('T')[0]
+                    }
+                    onChange={(e) => {
+                      const newInstallments = [...installments];
+                      newInstallments[index].dueDate = new Date(e.target.value);
+                      setInstallments(newInstallments);
+                    }}
+                    className='mt-1'
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs font-medium mb-1'>Số tiền</Label>
+                  <NumericInput
+                    value={installment.amount}
+                    onValueChange={(value) => {
+                      const newInstallments = [...installments];
+                      newInstallments[index].amount = Number(value);
+                      setInstallments(newInstallments);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs font-medium'>Ghi chú</Label>
+                  <Input
+                    value={installment.notes || ''}
+                    onChange={(e) => {
+                      const newInstallments = [...installments];
+                      newInstallments[index].notes = e.target.value;
+                      setInstallments(newInstallments);
+                    }}
+                    className='mt-1'
+                  />
+                </div>
+                <div className='flex items-end'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setInstallments(
+                        installments.filter((_, i) => i !== index),
+                      )
+                    }
+                    className='w-full'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Separator />
+
+          {/* Incurred Costs Section */}
+          <div className='space-y-4'>
+            <div className='flex justify-between items-center'>
+              <Label className='flex items-center gap-2 text-orange-600 font-semibold text-sm sm:text-base'>
+                <Calculator />
+                Chi phí phát sinh
+              </Label>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() =>
+                  setIncurredCosts([
+                    ...incurredCosts,
+                    {
+                      date: new Date(),
+                      category: '',
+                      description: '',
+                      amount: 0,
+                    },
+                  ])
+                }
+              >
+                <Plus />
+                Thêm chi phí
+              </Button>
+            </div>
+
+            {incurredCosts.map((cost, index) => (
+              <div
+                key={index}
+                className='grid grid-cols-1 sm:grid-cols-5 gap-2 p-3 border rounded-lg bg-gray-50'
+              >
+                <div>
+                  <Label className='text-xs font-medium'>Ngày</Label>
+                  <Input
+                    type='date'
+                    value={new Date(cost.date).toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      const newCosts = [...incurredCosts];
+                      newCosts[index].date = new Date(e.target.value);
+                      setIncurredCosts(newCosts);
+                    }}
+                    className='mt-1'
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs font-medium'>Danh mục</Label>
+                  <Input
+                    value={cost.category}
+                    onChange={(e) => {
+                      const newCosts = [...incurredCosts];
+                      newCosts[index].category = e.target.value;
+                      setIncurredCosts(newCosts);
+                    }}
+                    placeholder='Ví dụ: Phí lab'
+                    className='mt-1'
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs font-medium'>Số tiền</Label>
+                  <NumericInput
+                    value={cost.amount}
+                    onValueChange={(value) => {
+                      const newCosts = [...incurredCosts];
+                      newCosts[index].amount = Number(value);
+                      setIncurredCosts(newCosts);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs font-medium'>Mô tả</Label>
+                  <Input
+                    value={cost.description || ''}
+                    onChange={(e) => {
+                      const newCosts = [...incurredCosts];
+                      newCosts[index].description = e.target.value;
+                      setIncurredCosts(newCosts);
+                    }}
+                    className='mt-1'
+                  />
+                </div>
+                <div className='flex items-end'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setIncurredCosts(
+                        incurredCosts.filter((_, i) => i !== index),
+                      )
+                    }
+                    className='w-full'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Separator />
+
+          {type === 'create' && (
+            <div className=''>
+              <div className='flex justify-between items-center'>
+                <Label
+                  htmlFor='participants'
+                  className='flex gap-2 text-teal-600 font-semibold block flex items-center text-sm sm:text-base'
+                >
+                  <User />
+                  Người tham gia
+                </Label>
+
+                <Button
+                  variant={'outline'}
+                  type='button'
+                  onClick={() => setOpenEmployeePicker(true)}
+                >
+                  <Plus />
+                  Thêm nhân sự
+                </Button>
+              </div>
+
+              {errors.participants && (
+                <p className='text-red-500 text-sm sm:text-base mt-2 sm:mt-4'>
+                  {errors.participants}
+                </p>
               )}
 
-              {/* AlertDialog for adding assignees confirmation */}
-              <AlertDialog
-                open={employeesToAdd.length > 0}
-                onOpenChange={(open) => !open && setEmployeesToAdd([])}
-              >
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Xác nhận thêm nhân viên</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Bạn có chắc muốn thêm {employeesToAdd.length} nhân viên
-                      vào danh sách người thực hiện không?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel type='button'>Hủy</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant='primary'
-                      onClick={confirmAddAssignees}
-                      type='button'
-                    >
-                      Xác nhận
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <ItemList<IEmployeeBrief>
-                addNewHandler={() => {
-                  navigate('/erp/employees/new');
-                }}
-                itemsPromise={employeesPromise}
-                name='Nhân viên'
-                visibleColumns={[
-                  {
-                    key: 'emp_user.usr_firstName',
-                    title: 'Tên nhân viên',
-                    visible: true,
-                    render: (item) => (
-                      <a
-                        href={`/erp/employees/${item.id}`}
-                        className='flex items-center space-x-3'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        <span>
-                          {item.emp_user.usr_firstName}{' '}
-                          {item.emp_user.usr_lastName}
-                        </span>
-                      </a>
-                    ),
-                  },
-                  {
-                    key: 'emp_user.usr_username',
-                    title: 'Tài khoản',
-                    visible: true,
-                    render: (item) => item.emp_user.usr_username,
-                  },
-                  {
-                    key: 'emp_position',
-                    title: 'Chức vụ',
-                    visible: true,
-                    render: (item) => item.emp_position,
-                  },
-                  {
-                    key: 'action',
-                    title: 'Hành động',
-                    visible: true,
-                    render: (item) => {
-                      const isAdded = !!assignees.find(
-                        (selectedAssignee) => selectedAssignee.id === item.id,
+              {openEmployeePicker && (
+                <EmployeePicker
+                  onClose={() => setOpenEmployeePicker(false)}
+                  selected={
+                    participants.map((p) => ({
+                      id: p.employeeId,
+                      emp_firstName: '',
+                      emp_lastName: '',
+                      emp_email: '',
+                    })) as any[]
+                  }
+                  employeeGetter={async () => {
+                    try {
+                      const response = await fetch(
+                        `/api/data?getter=getEmployees&limit=10000&page=1`,
                       );
+                      const data: IListResponse<IEmployee> =
+                        await response.json();
 
-                      return (
-                        <Button
-                          variant='default'
-                          className={`bg-blue-500 hover:bg-blue-400 ${
-                            isAdded ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                          type='button'
-                          onClick={() => {
-                            handleAddAssignees([item]);
-                          }}
-                        >
-                          {isAdded ? 'Đã thêm' : 'Thêm'}
-                        </Button>
-                      );
-                    },
-                  },
-                ]}
-                selectedItems={selected}
-                setSelectedItems={setSelectedItems}
-                showPagination={false}
-              />
+                      return data;
+                    } catch (error) {
+                      console.error('Error fetching documents:', error);
+                      toast.error('Có lỗi xảy ra khi tải nhân viên');
+                      return { data: [], pagination: {} as any };
+                    }
+                  }}
+                  onSelect={(employees: IEmployee[]) => {
+                    // Convert employees to participants with default commission
+                    const newParticipants: CaseParticipant[] = employees.map(
+                      (emp) => ({
+                        employeeId: emp.id,
+                        role: '',
+                        commission: {
+                          type: 'PERCENT_OF_GROSS',
+                          value: 0,
+                          eligibleOn: 'AT_CLOSURE',
+                        },
+                      }),
+                    );
+                    setParticipants(newParticipants);
+                  }}
+                />
+              )}
+
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-6'>
+                {participants.map((participant, i) => (
+                  <div key={i} className='p-3 border rounded-lg'>
+                    <div className='text-sm font-medium'>
+                      Participant ID: {participant.employeeId}
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      Role: {participant.role || 'Not specified'}
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      Commission: {participant.commission.value}% (
+                      {participant.commission.type})
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
 
         <CardFooter className='p-4 sm:p-6'>
           <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
               to='/erp/customers'
-              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
+              prefetch='intent'
+              className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
             >
               <ArrowLeft className='h-4 w-4' />
               <span className='hidden sm:inline'>Trở về Danh sách</span>
@@ -610,7 +820,7 @@ export default function CaseDetailForm({
 
             <div className='flex space-x-2 w-full sm:w-auto'>
               <Button
-                className='bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm flex items-center transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center'
+                className=''
                 type='submit'
                 form={formId}
                 disabled={!isChanged}

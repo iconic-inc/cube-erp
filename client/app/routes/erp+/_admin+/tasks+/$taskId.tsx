@@ -1,18 +1,33 @@
-import { LoaderFunctionArgs, redirect } from '@remix-run/node';
+import { LoaderFunctionArgs, ActionFunctionArgs, data } from '@remix-run/node';
 
-import { getTaskById } from '~/services/task.server';
+import { deleteTask, getTaskById, patchTask } from '~/services/task.server';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import TaskDetail from './_components/TaskDetail';
-import { Edit, Pencil } from 'lucide-react';
+import { Edit } from 'lucide-react';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { isAuthenticated } from '~/services/auth.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
 
   // Fetch task details from the API
   const taskId = params.taskId as string;
-  const task = getTaskById(taskId, user!).catch((error) => {
+  if (!taskId) {
+    return {
+      task: {
+        success: false,
+        message: 'Có lỗi xảy ra khi lấy thông tin công việc',
+      },
+      taskId: null,
+      participants: {
+        success: false,
+        message: 'Có lỗi xảy ra khi lấy danh sách người tham gia',
+      },
+    };
+  }
+  const task = await getTaskById(taskId, user!).catch((error) => {
     console.error('Error fetching task:', error.message);
     return {
       success: false,
@@ -21,11 +36,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     };
   });
 
-  return { task };
+  return { taskId, task };
 };
 
 export default function TaskDetailPage() {
-  const { task } = useLoaderData<typeof loader>();
+  const { taskId, task } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
@@ -46,7 +61,99 @@ export default function TaskDetailPage() {
         backHandler={() => navigate('/erp/tasks')}
       />
 
-      <TaskDetail taskPromise={task} />
+      <TaskDetail task={task} taskId={taskId!} />
     </div>
   );
 }
+
+export const action = async ({
+  params,
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
+  const { session, headers } = await isAuthenticated(request);
+  const taskId = params.taskId as string;
+
+  if (!session) {
+    return data(
+      {
+        success: false,
+        toast: { message: 'Unauthorized', type: 'error' },
+      },
+      { headers, status: 401 },
+    );
+  }
+
+  switch (request.method) {
+    case 'DELETE':
+      try {
+        await deleteTask(taskId, session);
+        return data(
+          {
+            success: true,
+            toast: {
+              message: 'Xóa Task thành công!',
+              type: 'success',
+            },
+            redirectTo: '/erp/tasks',
+          },
+          { headers },
+        );
+      } catch (error: any) {
+        console.error('Error deleting task:', error);
+        return data(
+          {
+            success: false,
+            toast: {
+              message: 'Có lỗi xảy ra khi xóa Task',
+              type: 'error',
+            },
+          },
+          { headers, status: 500 },
+        );
+      }
+
+    case 'PATCH':
+      try {
+        const formData = await request.formData();
+        const res = await patchTask(
+          taskId,
+          { op: formData.get('op') as string, value: formData.get('value') },
+          session!,
+        );
+
+        return data(
+          {
+            success: true,
+            toast: {
+              message: 'Cập nhật Task thành công!',
+              type: 'success',
+            },
+          },
+          { headers },
+        );
+      } catch (error: any) {
+        console.error('Error updating task:', error);
+        let errorMessage = 'Có lỗi xảy ra khi cập nhật Task';
+
+        return data(
+          {
+            success: false,
+            toast: {
+              message: errorMessage,
+              type: 'error',
+            },
+          },
+          { headers, status: 500 },
+        );
+      }
+
+    default:
+      return data(
+        {
+          success: false,
+          toast: { message: 'Method not allowed', type: 'error' },
+        },
+        { headers, status: 405 },
+      );
+  }
+};

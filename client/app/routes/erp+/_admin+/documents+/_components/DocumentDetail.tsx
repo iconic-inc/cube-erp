@@ -24,6 +24,7 @@ import {
   ArrowLeft,
   ExternalLink,
 } from 'lucide-react';
+import DocumentPreview from '~/components/DocumentPreview';
 
 export default function DocumentDetail({
   documentPromise,
@@ -80,7 +81,8 @@ export default function DocumentDetail({
           );
         }
 
-        const { doc_createdBy, doc_whiteList } = document;
+        const { doc_createdBy, doc_whiteList, doc_parent } = document;
+        console.log(doc_parent);
 
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>
@@ -162,9 +164,13 @@ export default function DocumentDetail({
                         </span>
                       </div>
                       <div className='flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2'>
-                        <span className='text-sm sm:text-sm font-medium text-blue-600 break-all flex-1'>
+                        <a
+                          href={document.doc_url}
+                          target='_blank'
+                          className='text-sm sm:text-sm font-medium text-blue-600 break-all hover:underline flex-1'
+                        >
                           {document.doc_url}
-                        </span>
+                        </a>
                         <Button
                           size='sm'
                           onClick={() => handleDownload(document)}
@@ -185,11 +191,30 @@ export default function DocumentDetail({
                           </span>
                         </div>
                         <Link
+                          prefetch='intent'
                           to={`/erp/employees/${doc_createdBy.id}`}
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
                           {doc_createdBy.emp_user.usr_firstName}{' '}
                           {doc_createdBy.emp_user.usr_lastName}
+                        </Link>
+                      </div>
+                    )}
+
+                    {doc_parent && (
+                      <div className='flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3'>
+                        <div className='flex items-center space-x-2'>
+                          <User className='w-4 h-4 sm:w-4 sm:h-4 text-gray-400' />
+                          <span className='text-sm sm:text-sm text-gray-500'>
+                            <span className=''>Thư mục chứa:</span>
+                          </span>
+                        </div>
+                        <Link
+                          prefetch='intent'
+                          to={`/erp/documents?parent=${doc_parent.id}`}
+                          className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
+                        >
+                          {doc_parent.fol_name}
                         </Link>
                       </div>
                     )}
@@ -300,7 +325,6 @@ export default function DocumentDetail({
                   )}
                 </div>
               )}
-
               {/* Actions */}
               <div className='flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200'>
                 <Button
@@ -308,7 +332,7 @@ export default function DocumentDetail({
                   variant={'primary'}
                   className='w-full sm:w-auto text-sm sm:text-sm'
                 >
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
                     <span className='hidden sm:inline'>Chỉnh sửa tài liệu</span>
                     <span className='sm:hidden'>Chỉnh sửa</span>
@@ -338,13 +362,15 @@ export default function DocumentDetail({
                   variant={'secondary'}
                   className='w-full sm:w-auto text-sm sm:text-sm'
                 >
-                  <Link to='/erp/documents'>
+                  <Link to='/erp/documents' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>
                   </Link>
                 </Button>
               </div>
+
+              <DocumentPreview url={document.doc_url} />
             </CardContent>
           </Card>
         );

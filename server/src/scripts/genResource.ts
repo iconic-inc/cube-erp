@@ -100,6 +100,11 @@ const RESOURCES = [
     description: 'Quản lý tài liệu',
   },
   {
+    name: 'Document Folder Management',
+    slug: 'documentFolder',
+    description: 'Quản lý thư mục tài liệu',
+  },
+  {
     name: 'Reward Management',
     slug: 'reward',
     description: 'Quản lý quỹ thưởng',

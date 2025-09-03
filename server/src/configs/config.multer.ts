@@ -2,6 +2,7 @@ import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 import { BadRequestError } from '../api/core/errors';
+import slugify from 'slugify';
 
 const UPLOAD_FOLDER = 'public/uploads';
 
@@ -28,8 +29,13 @@ export const storage = (subfolder: string = '') => {
     },
     filename: (req, file, cb) => {
       // Generate unique filename with original extension
+      console.log('-'.repeat(50), file);
       const fileExt = path.extname(file.originalname);
-      const fileName = `${Date.now()}-${file.originalname
+      const fileName = `${Date.now()}-${slugify(file.originalname, {
+        locale: 'vi',
+        lower: true,
+        strict: true,
+      })
         .replace(fileExt, '')
         .replace(/\s+/g, '-')
         .toLowerCase()}${fileExt}`;

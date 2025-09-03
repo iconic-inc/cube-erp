@@ -1,3 +1,11 @@
+import { FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as XLSX from 'xlsx';
+import { format, parse } from 'date-fns';
+import { fuzzySearchProvinces, fuzzySearchWards } from 'new-vn-provinces/fuzzy';
+
 import { NotFoundError, BadRequestError } from '../core/errors';
 import { CustomerModel } from '../models/customer.model';
 import { CaseServiceModel } from '../models/caseService.model';
@@ -13,14 +21,8 @@ import {
 } from '@utils/index';
 import { CUSTOMER } from '../constants';
 import { formatAttributeName } from '../utils';
-import { FilterQuery } from 'mongoose';
-import mongoose from 'mongoose';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as XLSX from 'xlsx';
 import { serverConfig } from '@configs/config.server';
 import { toAddressString } from '@utils/address.util';
-import { format, parse } from 'date-fns';
 
 interface ICustomerQuery {
   page?: number;
@@ -30,8 +32,8 @@ interface ICustomerQuery {
   sortOrder?: 'asc' | 'desc';
   source?: string;
   contactChannel?: string;
-  province?: string;
-  district?: string;
+  provinceId?: string;
+  wardId?: string;
   createdAtFrom?: string;
   createdAtTo?: string;
 }
@@ -79,8 +81,8 @@ const createCustomer = async (customerData: ICustomerCreate) => {
           : undefined,
       msisdn: customerData.msisdn,
       address: {
-        province: customerData.province || '',
-        district: customerData.district || '',
+        provinceId: customerData.provinceId || '',
+        wardId: customerData.wardId || '',
         street: customerData.street || '',
       },
       sex: customerData.sex,
@@ -117,8 +119,8 @@ const getCustomers = async (query: ICustomerQuery = {}) => {
       sortOrder,
       source,
       contactChannel,
-      province,
-      district,
+      provinceId,
+      wardId,
       createdAtFrom,
       createdAtTo,
     } = query;
@@ -159,19 +161,19 @@ const getCustomers = async (query: ICustomerQuery = {}) => {
     }
 
     // Filter by province if provided
-    if (province) {
+    if (provinceId) {
       pipeline.push({
         $match: {
-          'cus_address.province': province,
+          'cus_address.provinceId': provinceId,
         },
       });
     }
 
-    // Filter by district if provided
-    if (district) {
+    // Filter by ward if provided
+    if (wardId) {
       pipeline.push({
         $match: {
-          'cus_address.district': district,
+          'cus_address.wardId': wardId,
         },
       });
     }
@@ -330,8 +332,8 @@ const updateCustomer = async (
       {
         ...cleanedData,
         address: {
-          province: cleanedData.province,
-          district: cleanedData.district,
+          provinceId: cleanedData.provinceId,
+          wardId: cleanedData.wardId,
           street: cleanedData.street,
         },
       },
@@ -467,79 +469,6 @@ const deleteMultipleCustomers = async ({
     ) {
       throw new Error(
         `Đã xảy ra lỗi khi xóa nhiều khách hàng: ${error.message}`
-      );
-    }
-    throw error;
-  }
-};
-
-const searchCustomers = async (searchQuery: any) => {
-  try {
-    let query: FilterQuery<any> = {};
-
-    // Build search query based on provided fields
-    if (searchQuery.text) {
-      const searchText = searchQuery.text;
-      query.$or = [
-        { cus_firstName: { $regex: searchText, $options: 'i' } },
-        { cus_lastName: { $regex: searchText, $options: 'i' } },
-        { cus_email: { $regex: searchText, $options: 'i' } },
-        { cus_msisdn: { $regex: searchText, $options: 'i' } },
-        { cus_notes: { $regex: searchText, $options: 'i' } },
-        { 'cus_address.province': { $regex: searchText, $options: 'i' } },
-        { 'cus_address.district': { $regex: searchText, $options: 'i' } },
-        { 'cus_address.street': { $regex: searchText, $options: 'i' } },
-      ];
-    }
-
-    // Add filters for specific fields if provided
-    if (searchQuery.sex) {
-      query.cus_sex = searchQuery.sex;
-    }
-
-    if (searchQuery.source) {
-      query.cus_source = searchQuery.source;
-    }
-
-    if (searchQuery.contactChannel) {
-      query.cus_contactChannel = searchQuery.contactChannel;
-    }
-
-    // Filter by address components if provided
-    if (searchQuery.province) {
-      query['cus_address.province'] = searchQuery.province;
-    }
-
-    if (searchQuery.district) {
-      query['cus_address.district'] = searchQuery.district;
-    }
-
-    // Date range filters
-    if (searchQuery.startDate || searchQuery.endDate) {
-      query.createdAt = {};
-
-      if (searchQuery.startDate) {
-        query.createdAt.$gte = new Date(searchQuery.startDate);
-      }
-
-      if (searchQuery.endDate) {
-        query.createdAt.$lte = new Date(searchQuery.endDate);
-      }
-    }
-
-    // Get results
-    const customers = await CustomerModel.find(query).sort({ createdAt: -1 });
-
-    return getReturnList(customers);
-  } catch (error) {
-    // Wrap original error with Vietnamese message if it's a standard Error
-    if (
-      error instanceof Error &&
-      !(error instanceof BadRequestError) &&
-      !(error instanceof NotFoundError)
-    ) {
-      throw new Error(
-        `Đã xảy ra lỗi khi tìm kiếm khách hàng: ${error.message}`
       );
     }
     throw error;
@@ -803,7 +732,7 @@ const importCustomersFromXLSX = async (
         }
 
         // Map Excel columns to customer data
-        const customerData = mapExcelRowToCustomer(row);
+        const customerData = await mapExcelRowToCustomer(row);
 
         // Validate required fields
         if (!customerData.firstName && !customerData.lastName) {
@@ -866,8 +795,8 @@ const importCustomersFromXLSX = async (
                   ...customerData,
                   birthDate: customerData.birthDate,
                   address: {
-                    province: customerData.province || '',
-                    district: customerData.district || '',
+                    provinceId: customerData.provinceId,
+                    wardId: customerData.wardId,
                     street: customerData.street || '',
                   },
                 },
@@ -891,8 +820,8 @@ const importCustomersFromXLSX = async (
             email: customerData.email,
             msisdn: customerData.msisdn,
             address: {
-              province: customerData.province || '',
-              district: customerData.district || '',
+              provinceId: customerData.provinceId || '',
+              wardId: customerData.wardId || '',
               street: customerData.street || '',
             },
             sex: customerData.sex,
@@ -967,7 +896,7 @@ const isEmptyRow = (row: any): boolean => {
 /**
  * Helper function to map Excel row to customer data
  */
-const mapExcelRowToCustomer = (row: any) => {
+const mapExcelRowToCustomer = async (row: any) => {
   const sexRow = row['Giới tính'];
   const contactChannelRow = row['Kênh liên hệ'];
   const sourceRow = row['Nguồn'];
@@ -997,20 +926,20 @@ const mapExcelRowToCustomer = (row: any) => {
     }
   }
 
-  // Parse address string to extract province, district, and street
+  // Parse address string to extract province, ward, and street
   const addressString = row['Địa chỉ'] || '';
   let province = '',
-    district = '',
+    ward = '',
     street = '';
 
   if (addressString) {
-    // Try to parse address format: "street, district, province"
+    // Try to parse address format: "street, ward, province"
     const addressParts = addressString
       .split(',')
       .map((part: string) => part.trim());
     if (addressParts.length >= 3) {
       street = addressParts.slice(0, -2).join(', ');
-      district = addressParts[addressParts.length - 2];
+      ward = addressParts[addressParts.length - 2];
       province = addressParts[addressParts.length - 1];
     } else if (addressParts.length === 2) {
       street = addressParts[0];
@@ -1027,8 +956,8 @@ const mapExcelRowToCustomer = (row: any) => {
     email:
       row['Email'] && row['Email'].trim() ? row['Email'].trim() : undefined,
     msisdn: row['Số điện thoại'] || '',
-    province,
-    district,
+    provinceId: (await fuzzySearchProvinces(province))[0].item.idProvince,
+    wardId: (await fuzzySearchWards(ward))[0].item.idWard,
     street,
     sex: Object.values(CUSTOMER.SEX).find((item) => item.label === sexRow)
       ?.value,
@@ -1073,7 +1002,6 @@ export {
   updateCustomer,
   deleteCustomer,
   deleteMultipleCustomers,
-  searchCustomers,
   getCustomerStatistics,
   exportCustomersToXLSX,
   importCustomersFromXLSX,

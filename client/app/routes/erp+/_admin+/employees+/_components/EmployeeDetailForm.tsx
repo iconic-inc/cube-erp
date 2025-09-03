@@ -1,14 +1,14 @@
 import { toast } from 'react-toastify';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from '@remix-run/react';
+import { format } from 'date-fns';
+import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 
 import { action } from '~/routes/erp+/_admin+/employees+/new';
-import { format } from 'date-fns';
 import { ILoaderDataPromise } from '~/interfaces/app.interface';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
 import { IEmployee } from '~/interfaces/employee.interface';
 import { IRole } from '~/interfaces/role.interface';
 import {
@@ -30,7 +30,7 @@ import {
 import Defer from '~/components/Defer';
 import ErrorCard from '~/components/ErrorCard';
 import { USER } from '~/constants/user.constant';
-import { generateCode } from '~/utils';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export default function EmployeeDetailForm({
   formId,
@@ -44,11 +44,11 @@ export default function EmployeeDetailForm({
   rolesPromise?: ILoaderDataPromise<IRole[]>;
 }) {
   const fetcher = useFetcher<typeof action>({ key: formId });
-  const toastIdRef = useRef<any>(null);
   const navigate = useNavigate();
 
   // Form state
-  const [code, setCode] = useState<string>(generateCode('NV'));
+  const [code, setCode] = useState<string>('');
+  const [score, setScore] = useState<number>(0);
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -79,6 +79,10 @@ export default function EmployeeDetailForm({
 
     if (!code.trim()) {
       validationErrors.code = 'Vui lòng nhập mã nhân viên';
+    }
+
+    if (score < 0 || score > 100) {
+      validationErrors.score = 'Điểm phải nằm trong khoảng từ 0 đến 100';
     }
 
     if (!firstName.trim()) {
@@ -134,6 +138,7 @@ export default function EmployeeDetailForm({
 
     // Add all form data
     formData.set('employeeCode', code);
+    formData.set('score', score.toString());
     formData.set('firstName', firstName);
     formData.set('lastName', lastName);
     formData.set('email', email);
@@ -158,8 +163,6 @@ export default function EmployeeDetailForm({
       formData.set('joinDate', format(joinDate, 'yyyy-MM-dd'));
     }
 
-    toastIdRef.current = toast.loading('Đang xử lý...');
-
     // Submit the form
     if (type === 'create') {
       fetcher.submit(formData, { method: 'POST' });
@@ -172,6 +175,7 @@ export default function EmployeeDetailForm({
   useEffect(() => {
     const hasChanged =
       code ||
+      score ||
       firstName ||
       lastName ||
       email ||
@@ -185,6 +189,7 @@ export default function EmployeeDetailForm({
       position ||
       joinDate ||
       roleId ||
+      score ||
       status;
 
     setIsChanged(!!hasChanged);
@@ -207,25 +212,7 @@ export default function EmployeeDetailForm({
   ]);
 
   // Handle fetcher response
-  useEffect(() => {
-    if (fetcher.data?.toast) {
-      const { toast: toastData } = fetcher.data;
-      toast.update(toastIdRef.current, {
-        type: toastData.type,
-        render: toastData.message,
-        isLoading: false,
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        pauseOnFocusLoss: true,
-      });
-
-      // Redirect if success
-      if ('redirectTo' in fetcher.data && fetcher.data.redirectTo) {
-        navigate(fetcher.data.redirectTo, { replace: true });
-      }
-    }
-  }, [fetcher.data, navigate]);
+  useFetcherResponseHandler(fetcher);
 
   // Load employee data when in edit mode
   useEffect(() => {
@@ -237,6 +224,7 @@ export default function EmployeeDetailForm({
           if (employeeData && 'emp_code' in employeeData) {
             // setEmployee(employeeData);
             setCode(employeeData.emp_code || '');
+            setScore(employeeData.emp_score || 0);
             setFirstName(employeeData.emp_user.usr_firstName || '');
             setLastName(employeeData.emp_user.usr_lastName || '');
             setEmail(employeeData.emp_user.usr_email || '');
@@ -312,8 +300,8 @@ export default function EmployeeDetailForm({
               </CardHeader>
 
               <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
-                {/* Employee Code */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+                  {/* Employee Code */}
                   <div>
                     <Label
                       htmlFor='code'
@@ -330,20 +318,36 @@ export default function EmployeeDetailForm({
                         placeholder='Nhập mã nhân viên'
                         className={`flex-1 text-sm sm:text-base ${errors.code ? 'border-red-500' : ''}`}
                       />
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={() => setCode(generateCode('NV'))}
-                        className='px-2 sm:px-3 flex-shrink-0'
-                        size='sm'
-                      >
-                        <RotateCcw className='w-3 h-3 sm:w-4 sm:h-4' />
-                        <span className='hidden sm:inline ml-1'>Tạo mã</span>
-                      </Button>
                     </div>
                     {errors.code && (
-                      <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                      <p className='text-red-500 text-sm sm:text-base mt-1'>
                         {errors.code}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor='score'
+                      className='text-gray-700 font-semibold mb-2 block text-sm sm:text-base'
+                    >
+                      Điểm (0 - 100) <span className='text-red-500'>*</span>
+                    </Label>
+                    <div className='flex gap-2'>
+                      <Input
+                        id='score'
+                        type='number'
+                        value={score}
+                        onChange={(e) =>
+                          setScore(parseInt(e.target.value) || 0)
+                        }
+                        placeholder='Nhập điểm'
+                        className={`flex-1 text-sm sm:text-base ${errors.score ? 'border-red-500' : ''}`}
+                      />
+                    </div>
+                    {errors.score && (
+                      <p className='text-red-500 text-sm sm:text-base mt-1'>
+                        {errors.score}
                       </p>
                     )}
                   </div>
@@ -372,7 +376,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.firstName ? 'border-red-500' : ''}`}
                       />
                       {errors.firstName && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.firstName}
                         </p>
                       )}
@@ -394,7 +398,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.lastName ? 'border-red-500' : ''}`}
                       />
                       {errors.lastName && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.lastName}
                         </p>
                       )}
@@ -416,7 +420,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.email ? 'border-red-500' : ''}`}
                       />
                       {errors.email && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.email}
                         </p>
                       )}
@@ -438,7 +442,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.msisdn ? 'border-red-500' : ''}`}
                       />
                       {errors.msisdn && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.msisdn}
                         </p>
                       )}
@@ -517,7 +521,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.username ? 'border-red-500' : ''}`}
                       />
                       {errors.username && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.username}
                         </p>
                       )}
@@ -540,7 +544,7 @@ export default function EmployeeDetailForm({
                           className={`text-sm sm:text-base ${errors.password ? 'border-red-500' : ''}`}
                         />
                         {errors.password && (
-                          <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                          <p className='text-red-500 text-sm sm:text-base mt-1'>
                             {errors.password}
                           </p>
                         )}
@@ -572,7 +576,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.department ? 'border-red-500' : ''}`}
                       />
                       {errors.department && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.department}
                         </p>
                       )}
@@ -594,7 +598,7 @@ export default function EmployeeDetailForm({
                         className={`text-sm sm:text-base ${errors.position ? 'border-red-500' : ''}`}
                       />
                       {errors.position && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.position}
                         </p>
                       )}
@@ -638,7 +642,7 @@ export default function EmployeeDetailForm({
                         </SelectContent>
                       </Select>
                       {errors.roleId && (
-                        <p className='text-red-500 text-xs sm:text-sm mt-1'>
+                        <p className='text-red-500 text-sm sm:text-base mt-1'>
                           {errors.roleId}
                         </p>
                       )}
@@ -675,6 +679,7 @@ export default function EmployeeDetailForm({
                 <div className='w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3'>
                   <Link
                     to='/erp/employees'
+                    prefetch='intent'
                     className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm flex items-center justify-center transition-all duration-300 order-2 sm:order-1'
                   >
                     <ArrowLeft className='w-4 h-4 mr-1' />

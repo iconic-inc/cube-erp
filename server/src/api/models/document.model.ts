@@ -1,12 +1,13 @@
 // filepath: /home/phanhotboy/workspace/iconic/cube-erp/server/src/api/models/document.model.ts
 import { Schema, model } from 'mongoose';
-import { DOCUMENT, USER } from '../constants';
+import { DOCUMENT, DOCUMENT_FOLDER, USER } from '../constants';
 import {
   IDocumentCreate,
   IDocumentDocument,
   IDocumentModel,
 } from '../interfaces/document.interface';
 import { formatAttributeName } from '../utils';
+import { DocumentCaseModel } from './documentCase.model';
 
 const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
   {
@@ -15,10 +16,10 @@ const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
       required: true,
       trim: true,
     },
-    doc_type: {
-      type: String,
-      enum: Object.values(DOCUMENT.TYPE),
-      default: DOCUMENT.TYPE.OTHER,
+    doc_parent: {
+      type: Schema.Types.ObjectId,
+      ref: DOCUMENT_FOLDER.DOCUMENT_NAME,
+      required: true,
     },
     doc_description: {
       type: String,
@@ -52,6 +53,23 @@ const documentSchema = new Schema<IDocumentDocument, IDocumentModel>(
 documentSchema.statics.build = (attrs: IDocumentCreate) => {
   return DocumentModel.create(formatAttributeName(attrs, DOCUMENT.PREFIX));
 };
+
+const cascadeDelete = async (documentId: string) => {
+  await DocumentCaseModel.deleteMany({ document: documentId });
+};
+
+documentSchema.pre('findOneAndDelete', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
+documentSchema.pre('deleteOne', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
+documentSchema.pre('deleteMany', async function (next) {
+  await cascadeDelete(this.getFilter()._id as string);
+  next();
+});
 
 export const DocumentModel = model<IDocumentDocument, IDocumentModel>(
   DOCUMENT.DOCUMENT_NAME,

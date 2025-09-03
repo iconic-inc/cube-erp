@@ -76,7 +76,8 @@ export class DocumentController {
     try {
       const result = await DocumentService.createDocument(
         req.files as Express.Multer.File[],
-        req.user.userId
+        req.user.userId,
+        req.body.parent
       );
 
       return OK({

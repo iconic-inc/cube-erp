@@ -227,6 +227,7 @@ export default function EmployeeDetail({
                 <Link
                   to='./edit'
                   className='inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors'
+                  prefetch='intent'
                 >
                   <Edit className='w-4 h-4 md:w-5 md:h-5 mr-2' />
                   <span className='hidden sm:inline'>Chỉnh sửa thông tin</span>
@@ -234,6 +235,7 @@ export default function EmployeeDetail({
                 </Link>
 
                 <Link
+                  prefetch='intent'
                   to='/erp/employees'
                   className='inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors'
                 >

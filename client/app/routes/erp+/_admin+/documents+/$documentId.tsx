@@ -1,12 +1,13 @@
 import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { data, useLoaderData, useNavigate } from '@remix-run/react';
+import { data, Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { parseAuthCookie } from '~/services/cookie.server';
 import { deleteDocument, getDocumentById } from '~/services/document.server';
 import { isAuthenticated } from '~/services/auth.server';
 import ContentHeader from '~/components/ContentHeader';
 import DocumentDetail from './_components/DocumentDetail';
-import { Edit } from 'lucide-react';
+import { ChevronRight, Edit } from 'lucide-react';
 import { canAccessDocumentManagement } from '~/utils/permission';
+import Defer from '~/components/Defer';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -49,8 +50,29 @@ export default function DocumentDetailPage() {
         actionHandler={() => {
           navigate(`./edit`);
         }}
-        backHandler={() => navigate('/erp/documents')}
       />
+
+      <div className='flex items-center'>
+        <Link
+          to='/erp/documents'
+          className='mr-2 text-gray-900 hover:text-gray-500'
+        >
+          Danh sách thư mục
+        </Link>
+        <Defer resolve={document}>
+          {({ doc_parent: folder }) => (
+            <div key={folder?.id} className='flex items-center'>
+              <ChevronRight className='mx-2 text-gray-900' size={16} />
+              <Link
+                to={`/erp/documents?parent=${folder?.id}`}
+                className='text-gray-900 hover:text-gray-500'
+              >
+                {folder?.fol_name}
+              </Link>
+            </div>
+          )}
+        </Defer>
+      </div>
 
       <DocumentDetail documentPromise={document} />
     </div>

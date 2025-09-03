@@ -5,16 +5,14 @@ import { IEmployeePopulate } from './employee.interface';
 import { ICaseServicePopulate } from './caseService.interface';
 
 export type ITransactionCategory =
-  | Values<typeof TRANSACTION.CATEGORY.INCOME>
-  | Values<typeof TRANSACTION.CATEGORY.OUTCOME>;
+  | Values<typeof TRANSACTION.CATEGORY.INCOME>['value']
+  | Values<typeof TRANSACTION.CATEGORY.OUTCOME>['value'];
 
 export interface ITransactionPopulate {
   id: string;
-  tx_code: string;
-  tx_type: Values<typeof TRANSACTION.TYPE>;
   tx_title: string;
+  tx_type: Values<typeof TRANSACTION.TYPE>;
   tx_amount: number;
-  tx_paid: number;
   tx_paymentMethod: Values<typeof TRANSACTION.PAYMENT_METHOD>;
   tx_category: ITransactionCategory;
   tx_description?: string;
@@ -26,11 +24,9 @@ export interface ITransactionPopulate {
 
 export interface ITransaction {
   id: string;
-  tx_code: string;
-  tx_type: Values<typeof TRANSACTION.TYPE>;
   tx_title: string;
+  tx_type: Values<typeof TRANSACTION.TYPE>;
   tx_amount: number;
-  tx_paid: number;
   tx_paymentMethod: Values<typeof TRANSACTION.PAYMENT_METHOD>;
   tx_category: ITransactionCategory;
   tx_description?: string;
@@ -43,11 +39,9 @@ export interface ITransaction {
 }
 
 export interface ITransactionCreate {
-  code: ITransaction['tx_code'];
-  type: ITransaction['tx_type'];
   title: ITransaction['tx_title'];
+  type: ITransaction['tx_type'];
   amount: number;
-  paid?: number;
   paymentMethod: ITransaction['tx_paymentMethod'];
   category: ITransaction['tx_category'];
   description?: ITransaction['tx_description'];

@@ -2,8 +2,8 @@ import { CUSTOMER } from '@constants/customer.constant';
 import { HydratedDocument, Model, Types } from 'mongoose';
 
 type IAddress = {
-  province?: string;
-  district?: string;
+  provinceId?: string;
+  wardId?: string;
   street: string;
 };
 

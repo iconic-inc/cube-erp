@@ -13,28 +13,18 @@ import { formatAttributeName } from '../utils';
 
 const transactionSchema = new Schema<ITransactionDocument, ITransactionModel>(
   {
-    tx_code: {
+    tx_title: {
       type: String,
       required: true,
-      unique: true,
     },
     tx_type: {
       type: String,
       enum: Object.values(TRANSACTION.TYPE),
       required: true,
     },
-    tx_title: {
-      type: String,
-      required: true,
-    },
     tx_amount: {
       type: Number,
       required: true,
-      min: 0,
-    },
-    tx_paid: {
-      type: Number,
-      default: 0,
       min: 0,
     },
     tx_paymentMethod: {
@@ -45,8 +35,12 @@ const transactionSchema = new Schema<ITransactionDocument, ITransactionModel>(
     tx_category: {
       type: String,
       enum: [
-        ...Object.values(TRANSACTION.CATEGORY.INCOME),
-        ...Object.values(TRANSACTION.CATEGORY.OUTCOME),
+        ...Object.values(TRANSACTION.CATEGORY.INCOME).map(
+          (category) => category.value
+        ),
+        ...Object.values(TRANSACTION.CATEGORY.OUTCOME).map(
+          (category) => category.value
+        ),
       ],
       required: true,
     },

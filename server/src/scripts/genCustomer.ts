@@ -2,6 +2,10 @@ require('dotenv').config();
 import { mongodbInstance } from '../db/init.mongodb';
 import { CUSTOMER } from '@constants/customer.constant';
 import { createCustomer } from '@services/customer.service';
+import {
+  fuzzySearchProvinces,
+  fuzzySearchWards,
+} from 'new-vn-provinces/dist/fuzzy';
 
 async function main() {
   await mongodbInstance.connect();
@@ -10,7 +14,18 @@ async function main() {
 
   for (const customer of CUSTOMERS) {
     try {
-      await createCustomer(customer);
+      await createCustomer({
+        ...customer,
+        address: {
+          ...customer.address,
+          provinceId: (
+            await fuzzySearchProvinces(customer.address.provinceId)
+          )[0].item.idProvince,
+          wardId: (
+            await fuzzySearchWards(customer.address.wardId)
+          )[0].item.idWard,
+        },
+      });
       console.log(
         `✓ Created customer: ${customer.firstName} ${customer.lastName} (${customer.code})`
       );
@@ -39,8 +54,8 @@ const CUSTOMERS = [
     email: 'nguyen.van.an@email.com',
     msisdn: '0901234567',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 1',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 1',
       street: '123 Lê Lợi',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -56,8 +71,8 @@ const CUSTOMERS = [
     email: 'tran.thi.binh@email.com',
     msisdn: '0912345678',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 1',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 1',
       street: '456 Nguyễn Huệ',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -73,8 +88,8 @@ const CUSTOMERS = [
     email: 'le.minh.cuong@email.com',
     msisdn: '0923456789',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 5',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 5',
       street: '789 Trần Hưng Đạo',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -90,8 +105,8 @@ const CUSTOMERS = [
     email: 'pham.thi.dung@email.com',
     msisdn: '0934567890',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 3',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 3',
       street: '321 Võ Văn Tần',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -107,8 +122,8 @@ const CUSTOMERS = [
     email: 'hoang.van.em@email.com',
     msisdn: '0945678901',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 1',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 1',
       street: '654 Lý Tự Trọng',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -124,8 +139,8 @@ const CUSTOMERS = [
     email: 'vo.thi.giang@email.com',
     msisdn: '0956789012',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 1',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 1',
       street: '987 Hai Bà Trưng',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -141,8 +156,8 @@ const CUSTOMERS = [
     email: 'dang.minh.hai@email.com',
     msisdn: '0967890123',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 1',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 1',
       street: '147 Pasteur',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -158,8 +173,8 @@ const CUSTOMERS = [
     email: 'bui.thi.inh@email.com',
     msisdn: '0978901234',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 10',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 10',
       street: '258 Cách Mạng Tháng 8',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -175,8 +190,8 @@ const CUSTOMERS = [
     email: 'ly.van.khanh@email.com',
     msisdn: '0989012345',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận Bình Thạnh',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận Bình Thạnh',
       street: '369 Điện Biên Phủ',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -192,8 +207,8 @@ const CUSTOMERS = [
     email: 'do.thi.lan@email.com',
     msisdn: '0990123456',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 3',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 3',
       street: '741 Nguyễn Thị Minh Khai',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -209,8 +224,8 @@ const CUSTOMERS = [
     email: 'vu.minh.nam@email.com',
     msisdn: '0901234560',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận Tân Bình',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận Tân Bình',
       street: '852 Cộng Hòa',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -226,8 +241,8 @@ const CUSTOMERS = [
     email: 'mai.thi.oanh@email.com',
     msisdn: '0912345670',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận 11',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận 11',
       street: '963 Lạc Long Quân',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -243,8 +258,8 @@ const CUSTOMERS = [
     email: 'ngo.van.phuc@email.com',
     msisdn: '0923456780',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận Phú Nhuận',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận Phú Nhuận',
       street: '174 Hoàng Văn Thụ',
     },
     sex: CUSTOMER.SEX.MALE.value,
@@ -260,8 +275,8 @@ const CUSTOMERS = [
     email: 'ho.thi.quynh@email.com',
     msisdn: '0934567801',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận Bình Thạnh',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận Bình Thạnh',
       street: '285 Xô Viết Nghệ Tĩnh',
     },
     sex: CUSTOMER.SEX.FEMALE.value,
@@ -277,8 +292,8 @@ const CUSTOMERS = [
     email: 'chu.minh.rong@email.com',
     msisdn: '0945678912',
     address: {
-      province: 'TP.HCM',
-      district: 'Quận Gò Vấp',
+      provinceId: 'TP.HCM',
+      wardId: 'Quận Gò Vấp',
       street: '396 Nguyễn Kiệm',
     },
     sex: CUSTOMER.SEX.MALE.value,

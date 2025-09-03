@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from './ui/alert-dialog';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import { action } from '~/routes/erp+/_admin+/attendance+';
 
 // Action buttons component for handling accept/reject
 function AttendanceRequestActions({
@@ -37,41 +39,8 @@ function AttendanceRequestActions({
 }: {
   request: IAttendanceRequestBrief;
 }) {
-  const fetcher = useFetcher();
-  const isSubmitting = fetcher.state === 'submitting';
-  const toastIdRef = useRef<any>(null);
-
-  // Handle response and show toast
-  useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Đang xử lý...', {
-          autoClose: false,
-        });
-        break;
-
-      case 'idle':
-        if (
-          fetcher.data &&
-          typeof fetcher.data === 'object' &&
-          'toast' in fetcher.data &&
-          toastIdRef.current
-        ) {
-          const { toast: toastData } = fetcher.data as any;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success',
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-        } else if (toastIdRef.current) {
-          toast.dismiss(toastIdRef.current);
-          toastIdRef.current = null;
-        }
-        break;
-    }
-  }, [fetcher.state, fetcher.data]);
+  const fetcher = useFetcher<typeof action>();
+  const { isSubmitting } = useFetcherResponseHandler(fetcher);
 
   return (
     <fetcher.Form method='post' className='flex flex-col sm:flex-row gap-2'>
@@ -137,6 +106,7 @@ export default function EmployeeAttendanceRequestList({
       render: (item) => (
         <Link
           to={`../attendance-requests/${item.id}`}
+          prefetch='intent'
           className='text-blue-600 hover:underline block w-full h-full'
         >
           <div className='flex items-center space-x-2 md:space-x-3'>

@@ -7,16 +7,20 @@ import {
 } from '@remix-run/react';
 import { Save } from 'lucide-react';
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { toast } from 'react-toastify';
 
 import { isAuthenticated } from '~/services/auth.server';
 import { createCaseService } from '~/services/case.server';
 import { getCustomerById } from '~/services/customer.server';
-import { ICaseServiceCreate } from '~/interfaces/case.interface';
+import {
+  ICaseServiceCreate,
+  CaseParticipant,
+} from '~/interfaces/case.interface';
 import CaseDetailForm from './_components/CaseDetailForm';
 import { Button } from '~/components/ui/button';
-import { getEmployees } from '~/services/employee.server';
-import { parseAuthCookie } from '~/services/cookie.server';
+import {
+  getUnauthorizedActionResponse,
+  parseAuthCookie,
+} from '~/services/cookie.server';
 import ContentHeader from '~/components/ContentHeader';
 import { CASE_SERVICE } from '~/constants/caseService.constant';
 import {
@@ -31,9 +35,8 @@ import {
 import { generateFormId } from '~/utils';
 import { useMemo } from 'react';
 import { canAccessCaseServices } from '~/utils/permission';
-
-// Định nghĩa kiểu cho toast
-type ToastType = 'success' | 'error' | 'info' | 'warning';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
+import { getTasks } from '~/services/task.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await parseAuthCookie(request);
@@ -49,17 +52,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const customerId = searchParams.get('customerId') || undefined;
 
   if (!customerId) {
-    return { customerPromise: null, employeesPromise: null };
+    return { customerPromise: null };
   }
-
-  // Load customers and employees for form selection
-  const employeesPromise = getEmployees(
-    new URLSearchParams({ limit: '1000' }),
-    session!,
-  ).catch((error) => {
-    console.error('Error fetching employees:', error);
-    return { success: false, message: 'Có lỗi khi lấy danh sách nhân viên' };
-  });
 
   const customerPromise = getCustomerById(customerId, session!).catch(
     (error) => {
@@ -68,119 +62,190 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   );
 
-  return { customerPromise, employeesPromise };
+  return { customerPromise };
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
+  if (!session) {
+    return getUnauthorizedActionResponse(dataResponse, headers);
+  }
 
-  switch (request.method) {
-    case 'POST': {
-      try {
-        const url = new URL(request.url);
-        const searchParams = url.searchParams;
-        const customerId = searchParams.get('customerId');
-        if (!customerId) {
+  try {
+    switch (request.method) {
+      case 'POST': {
+        try {
+          const url = new URL(request.url);
+          const searchParams = url.searchParams;
+          const customerId = searchParams.get('customerId');
+          if (!customerId) {
+            return dataResponse(
+              {
+                success: false,
+                toast: {
+                  message: 'Vui lòng chọn Khách hàng trước khi tạo Hồ sơ',
+                  type: 'error',
+                },
+              },
+              { headers, status: 400 },
+            );
+          }
+
+          const formData = await request.formData();
+
+          // Parse pricing data
+          const pricingData = formData.get('pricing') as string;
+          const pricing = pricingData
+            ? JSON.parse(pricingData)
+            : {
+                baseAmount: 0,
+                discounts: 0,
+                addOns: 0,
+                taxes: [],
+              };
+
+          // Parse participants data
+          const participantsData = formData.get('participants') as string;
+          const participants = participantsData
+            ? JSON.parse(participantsData)
+            : [];
+
+          // Parse installments data
+          const installmentsData = formData.get('installments') as string;
+          const installments = installmentsData
+            ? JSON.parse(installmentsData)
+            : [];
+
+          // Parse incurred costs data
+          const incurredCostsData = formData.get('incurredCosts') as string;
+          const incurredCosts = incurredCostsData
+            ? JSON.parse(incurredCostsData)
+            : [];
+
+          const data: ICaseServiceCreate = {
+            customer: customerId,
+            code: formData.get('code') as string,
+            notes: (formData.get('notes') as string) || undefined,
+            status:
+              (formData.get('status') as keyof typeof CASE_SERVICE.STATUS) ||
+              undefined,
+            startDate: (formData.get('startDate') as string) || undefined,
+            endDate: (formData.get('endDate') as string) || undefined,
+            pricing,
+            participants,
+            installments,
+            incurredCosts,
+          };
+
+          // Kiểm tra dữ liệu bắt buộc
+          if (
+            ['customer', 'code'].some(
+              (field) => !data[field as keyof ICaseServiceCreate],
+            )
+          ) {
+            return dataResponse(
+              {
+                success: false,
+                toast: {
+                  message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
+                  type: 'error',
+                },
+              },
+              { headers, status: 400 },
+            );
+          }
+
+          // Validate pricing data
+          if (data.pricing && data.pricing.baseAmount < 0) {
+            return dataResponse(
+              {
+                success: false,
+                toast: {
+                  message: 'Giá cơ bản không thể âm',
+                  type: 'error',
+                },
+              },
+              { headers, status: 400 },
+            );
+          }
+
+          // Validate installments sequence numbers are unique
+          if (data.installments && data.installments.length > 0) {
+            const sequences = data.installments.map((inst) => inst.seq);
+            const uniqueSequences = new Set(sequences);
+            if (sequences.length !== uniqueSequences.size) {
+              return dataResponse(
+                {
+                  success: false,
+                  toast: {
+                    message: 'Số thứ tự các kỳ thanh toán phải duy nhất',
+                    type: 'error',
+                  },
+                },
+                { headers, status: 400 },
+              );
+            }
+          }
+
+          console.log(data);
+          const res = await createCaseService(data, session!);
+
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: true,
               toast: {
-                message: 'Vui lòng chọn Khách hàng trước khi tạo Hồ sơ',
-                type: 'error' as ToastType,
+                message: 'Thêm mới Hồ sơ thành công!',
+                type: 'success',
               },
+              redirectTo: `/erp/cases/${res.id}`,
             },
             { headers },
           );
-        }
+        } catch (error: any) {
+          console.error('Error creating case:', error);
+          const errorMessage = error.message || 'Có lỗi xảy ra khi thêm Hồ sơ';
 
-        const formData = await request.formData();
-        const data: ICaseServiceCreate = {
-          customer: customerId,
-          code: formData.get('code') as string,
-          leadAttorney: formData.get('leadAttorney') as string,
-          assignees: (formData.getAll('assignees') as string[]) || [],
-          notes: (formData.get('notes') as string) || undefined,
-          status:
-            (formData.get('status') as keyof typeof CASE_SERVICE.STATUS) ||
-            undefined,
-          startDate: (formData.get('startDate') as string) || undefined,
-          endDate: (formData.get('endDate') as string) || undefined,
-        };
-
-        // Kiểm tra dữ liệu bắt buộc
-        if (
-          ['customer', 'code', 'leadAttorney'].some(
-            (field) => !data[field as keyof ICaseServiceCreate],
-          )
-        ) {
           return dataResponse(
             {
-              case: null,
-              redirectTo: null,
+              success: false,
               toast: {
-                message: 'Vui lòng điền đầy đủ thông tin bắt buộc',
-                type: 'error' as ToastType,
+                message: errorMessage,
+                type: 'error',
               },
             },
-            { headers },
+            { headers, status: 500 },
           );
         }
-
-        const res = await createCaseService(data, session!);
-
-        return dataResponse(
-          {
-            case: res,
-            toast: {
-              message: 'Thêm mới Hồ sơ thành công!',
-              type: 'success' as ToastType,
-            },
-            redirectTo: `/erp/cases/${res.id}`,
-          },
-          { headers },
-        );
-      } catch (error: any) {
-        console.error('Error creating case:', error);
-        const errorMessage = error.message || 'Có lỗi xảy ra khi thêm Hồ sơ';
-
-        return dataResponse(
-          {
-            case: null,
-            redirectTo: null,
-            toast: {
-              message: errorMessage,
-              type: 'error' as ToastType,
-            },
-          },
-          { headers },
-        );
       }
-    }
 
-    default:
-      return dataResponse(
-        {
-          case: null,
-          redirectTo: null,
-          toast: { message: 'Method not allowed', type: 'error' as ToastType },
+      default:
+        return dataResponse(
+          {
+            success: false,
+            toast: { message: 'Method not allowed', type: 'error' },
+          },
+          { headers, status: 405 },
+        );
+    }
+  } catch (res) {
+    console.error('Error in action function:', res);
+    return dataResponse(
+      {
+        success: false,
+        toast: {
+          message: 'Có lỗi xảy ra trong quá trình xử lý',
+          type: 'error',
         },
-        { headers },
-      );
+      },
+      { headers, status: 500 },
+    );
   }
 };
 
 export default function NewCase() {
-  const location = useLocation();
-  const actionData = location.state?.actionData;
-  const { customerPromise, employeesPromise } = useLoaderData<typeof loader>();
-
-  // Hiển thị thông báo nếu có
-  if (actionData?.toast) {
-    const toastType = actionData.toast.type as ToastType;
-    toast[toastType](actionData.toast.message);
-  }
-
+  const { customerPromise } = useLoaderData<typeof loader>();
   const formId = useMemo(() => generateFormId('case-detail-form'), []);
   const navigate = useNavigate();
 
@@ -205,12 +270,11 @@ export default function NewCase() {
       />
 
       {/* Form Container */}
-      {customerPromise && employeesPromise ? (
+      {customerPromise ? (
         <CaseDetailForm
           formId={formId}
           type='create'
           customerPromise={customerPromise}
-          employeesPromise={employeesPromise}
         />
       ) : (
         <AlertDialog open={true}>
@@ -238,6 +302,7 @@ export default function NewCase() {
               <Button variant={'primary'} className='w-full sm:w-auto'>
                 <Link
                   to='/erp/customers'
+                  prefetch='intent'
                   className='flex items-center justify-center'
                 >
                   Chọn Khách hàng

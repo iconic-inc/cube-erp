@@ -38,6 +38,7 @@ export default function EmployeeAttendanceList({
       render: (item) => (
         <Link
           to={`/erp/employees/${item.employee.id}`}
+          prefetch='intent'
           className='text-blue-600 hover:underline block w-full h-full'
         >
           <div className='flex items-center space-x-2 md:space-x-3'>
@@ -146,7 +147,10 @@ export default function EmployeeAttendanceList({
       visible: true,
       render: (item) => (
         <Button variant={'primary'} asChild size='sm' className='text-xs'>
-          <Link to={`/erp/attendance/detail?employeeId=${item.employee.id}`}>
+          <Link
+            to={`/erp/attendance/detail?employeeId=${item.employee.id}`}
+            prefetch='intent'
+          >
             <span className='hidden sm:inline'>Xem chi tiết</span>
             <span className='sm:hidden'>Chi tiết</span>
           </Link>

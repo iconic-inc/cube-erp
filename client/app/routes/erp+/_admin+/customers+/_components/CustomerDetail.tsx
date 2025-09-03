@@ -23,8 +23,8 @@ import {
   Plus,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
-import { toAddressString } from '~/utils/address.util';
 import { CUSTOMER } from '~/constants/customer.constant';
+import AddressRenderer from '~/components/AddressRenderer';
 
 export default function CustomerDetail({
   customerPromise,
@@ -154,7 +154,7 @@ export default function CustomerDetail({
                       <div className='pl-5 sm:pl-0'>
                         <Badge
                           variant='secondary'
-                          className='text-xs sm:text-sm'
+                          className='text-sm sm:text-base'
                         >
                           {customer.cus_sex === 'male'
                             ? 'Nam'
@@ -173,7 +173,7 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <span className='text-sm md:text-base font-medium pl-5 sm:pl-0 break-words'>
-                        {toAddressString(customer.cus_address)}
+                        <AddressRenderer address={customer.cus_address} />
                       </span>
                     </div>
                   </div>
@@ -195,7 +195,10 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <div className='pl-5 sm:pl-0'>
-                        <Badge variant='outline' className='text-xs sm:text-sm'>
+                        <Badge
+                          variant='outline'
+                          className='text-sm sm:text-base'
+                        >
                           {getContactChannelLabel(customer.cus_contactChannel)}
                         </Badge>
                       </div>
@@ -209,7 +212,10 @@ export default function CustomerDetail({
                         </span>
                       </div>
                       <div className='pl-5 sm:pl-0'>
-                        <Badge variant='default' className='text-xs sm:text-sm'>
+                        <Badge
+                          variant='default'
+                          className='text-sm sm:text-base'
+                        >
                           {getSourceLabel(customer.cus_source)}
                         </Badge>
                       </div>
@@ -274,7 +280,7 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to='./edit'>
+                  <Link to='./edit' prefetch='intent'>
                     <Edit className='w-4 h-4' />
                     <span className='hidden sm:inline'>
                       Chỉnh sửa thông tin
@@ -288,7 +294,10 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to={`/erp/cases/new?customerId=${customer?.id || ''}`}>
+                  <Link
+                    to={`/erp/cases/new?customerId=${customer?.id || ''}`}
+                    prefetch='intent'
+                  >
                     <Plus className='w-4 h-4' />
                     <span className='hidden sm:inline'>Thêm Hồ sơ vụ việc</span>
                     <span className='sm:hidden'>Thêm hồ sơ</span>
@@ -300,7 +309,7 @@ export default function CustomerDetail({
                   asChild
                   className='text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2'
                 >
-                  <Link to='/erp/customers'>
+                  <Link to='/erp/customers' prefetch='intent'>
                     <ArrowLeft className='w-4 h-4' />
                     <span className='hidden sm:inline'>Quay lại danh sách</span>
                     <span className='sm:hidden'>Quay lại</span>

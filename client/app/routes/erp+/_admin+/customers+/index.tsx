@@ -7,6 +7,13 @@ import {
 } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { Province } from 'new-vn-provinces/provinces';
+import { Ward } from 'new-vn-provinces/wards';
+import {
+  getProvinceById,
+  getWardsByProvinceId,
+  getProvinceData,
+} from 'new-vn-provinces/cache';
 
 import {
   deleteMultipleCustomers,
@@ -28,15 +35,10 @@ import { Button } from '~/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
 import { Badge } from '~/components/ui/badge';
 import { canAccessCustomerManagement } from '~/utils/permission';
-import {
-  getDistrictBySlug,
-  getDistrictsByProvinceCode,
-  getProvinceBySlug,
-  provinces,
-  toAddressString,
-} from '~/utils/address.util';
+import { toAddressString } from '~/utils/address.util';
 import { CUSTOMER } from '~/constants/customer.constant';
 import { formatDate } from '~/utils';
+import AddressRenderer from '~/components/AddressRenderer';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
@@ -69,36 +71,55 @@ export default function HRMCustomers() {
   const { customersPromise } = useLoaderData<typeof loader>();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [province, setProvince] = useState(provinces[0]);
-  const [districts, setDistricts] = useState(
-    getDistrictsByProvinceCode(province.code),
-  );
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
 
   // Handle province changes
   useEffect(() => {
-    const provinceSlug = searchParams.get('province');
-    const selectedProvince =
-      getProvinceBySlug(provinceSlug || '') || provinces[0];
+    (async () => {
+      const provinces = await getProvinceData();
+      const provinceIdParam = searchParams.get('provinceId');
+      const selectedProvince =
+        (await getProvinceById(provinceIdParam || '')) || provinces[0];
+      const newWards = await getWardsByProvinceId(selectedProvince?.idProvince);
 
-    setProvince(selectedProvince);
+      setProvinces(provinces);
+      setWards(newWards);
+      setVisibleColumns((prevColumns) =>
+        prevColumns.map((col) => {
+          switch (col.key) {
+            case 'wardId':
+              return {
+                ...col,
+                options: newWards.map((d) => ({
+                  value: d.idWard,
+                  label: d.name,
+                })),
+              };
 
-    const newDistricts = getDistrictsByProvinceCode(selectedProvince.code);
-    setDistricts(newDistricts);
-    setVisibleColumns((prevColumns) =>
-      prevColumns.map((col) => {
-        if (col.key === 'district') {
-          return {
-            ...col,
-            options: newDistricts.map((d) => ({
-              value: d.slug,
-              label: d.name,
-            })),
-          };
-        }
-        return col;
-      }),
-    );
+            case 'provinceId':
+              return {
+                ...col,
+                options: provinces.map((p) => ({
+                  value: p.idProvince,
+                  label: p.name,
+                })),
+              };
+
+            default:
+              return col;
+          }
+        }),
+      );
+    })();
   }, [searchParams]);
+
+  // remove ward search param on province change
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('wardId');
+    setSearchParams(params);
+  }, [searchParams.get('provinceId')]);
 
   const getSourceLabel = (source?: string) => {
     return (
@@ -123,6 +144,7 @@ export default function HRMCustomers() {
       visible: true,
       render: (customer: ICustomer) => (
         <Link
+          prefetch='intent'
           to={`/erp/customers/${customer.id}`}
           className='text-blue-600 hover:underline flex items-center'
         >
@@ -131,7 +153,7 @@ export default function HRMCustomers() {
               src={'/assets/avatar-placeholder.png'}
               alt={`${customer.cus_firstName} ${customer.cus_lastName}`}
             />
-            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-xs sm:text-sm'>
+            <AvatarFallback className='bg-gray-200 text-gray-600 font-bold text-sm sm:text-base'>
               {customer.cus_firstName?.charAt(0).toUpperCase() || 'N/A'}
             </AvatarFallback>
           </Avatar>
@@ -139,7 +161,7 @@ export default function HRMCustomers() {
             <span className='text-sm sm:text-base font-medium truncate'>
               {customer.cus_firstName} {customer.cus_lastName}
             </span>
-            <span className='text-gray-500 text-xs sm:text-sm truncate'>
+            <span className='text-gray-500 text-sm sm:text-base truncate'>
               {customer.cus_code || 'Chưa có mã'}
             </span>
           </div>
@@ -154,14 +176,15 @@ export default function HRMCustomers() {
       render: (customer: ICustomer) =>
         customer.cus_msisdn ? (
           <Link
+            prefetch='intent'
             to={`tel:${customer.cus_msisdn}`}
-            className='text-blue-600 hover:underline text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'
+            className='text-blue-600 hover:underline text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'
             onClick={(e) => e.stopPropagation()}
           >
             {customer.cus_msisdn}
           </Link>
         ) : (
-          <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
+          <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
             Chưa có số điện thoại
           </span>
         ),
@@ -176,7 +199,7 @@ export default function HRMCustomers() {
       render: (customer: ICustomer) => (
         <Badge
           variant='secondary'
-          className='text-xs sm:text-sm whitespace-nowrap'
+          className='text-sm sm:text-base whitespace-nowrap'
         >
           {getContactChannelLabel(customer.cus_contactChannel)}
         </Badge>
@@ -192,7 +215,7 @@ export default function HRMCustomers() {
       render: (customer: ICustomer) => (
         <Badge
           variant='outline'
-          className='text-xs sm:text-sm whitespace-nowrap'
+          className='text-sm sm:text-base whitespace-nowrap'
         >
           {getSourceLabel(customer.cus_source)}
         </Badge>
@@ -201,43 +224,39 @@ export default function HRMCustomers() {
     {
       key: 'address',
       title: 'Địa chỉ',
-      sortField: 'cus_address.district',
+      sortField: 'cus_address.provinceId',
       visible: true,
       render: (customer: ICustomer) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[150px] sm:max-w-none'>
-          {toAddressString(customer.cus_address)}
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[150px] sm:max-w-none'>
+          <AddressRenderer address={customer.cus_address} />
         </span>
       ),
     },
     {
-      key: 'province',
+      key: 'provinceId',
       title: 'Tỉnh/Thành phố',
-      sortField: 'cus_address.province',
+      sortField: 'cus_address.provinceId',
       visible: false,
-      filterField: 'province',
-      options: provinces.map((p) => ({
-        value: p.slug,
-        label: p.name,
-      })),
+      filterField: 'provinceId',
+      options: [],
       render: (customer: ICustomer) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
-          {getProvinceBySlug(customer.cus_address.province)?.name}
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
+          {provinces[(customer.cus_address.provinceId || '') as any]?.name ||
+            'Chưa có tỉnh/thành phố'}
         </span>
       ),
     },
     {
-      key: 'district',
-      title: 'Quận/Huyện',
-      sortField: 'cus_address.district',
+      key: 'wardId',
+      title: 'Phường/Xã',
+      sortField: 'cus_address.wardId',
       visible: false,
-      filterField: 'district',
-      options: districts.map((p) => ({
-        value: p.slug,
-        label: p.name,
-      })),
+      filterField: 'wardId',
+      options: [],
       render: (customer: ICustomer) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[120px] sm:max-w-none'>
-          {getDistrictBySlug(districts, customer.cus_address.district)?.name}
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[120px] sm:max-w-none'>
+          {wards[(customer.cus_address.wardId || '') as any]?.name ||
+            'Chưa có phường/xã'}
         </span>
       ),
     },
@@ -249,7 +268,7 @@ export default function HRMCustomers() {
       filterField: 'createdAt',
       dateFilterable: true,
       render: (customer: ICustomer) => (
-        <span className='text-gray-600 text-xs sm:text-sm truncate block max-w-[140px] sm:max-w-none'>
+        <span className='text-gray-600 text-sm sm:text-base truncate block max-w-[140px] sm:max-w-none'>
           {formatDate(customer.cus_createdAt, 'DD/MM/YYYY')}
         </span>
       ),
@@ -262,9 +281,12 @@ export default function HRMCustomers() {
         <Button
           variant='primary'
           asChild
-          className='text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2'
+          className='text-sm sm:text-base px-2 sm:px-4 py-1 sm:py-2'
         >
-          <Link to={`/erp/cases/new?customerId=${customer?.id || ''}`}>
+          <Link
+            to={`/erp/cases/new?customerId=${customer?.id || ''}`}
+            prefetch='intent'
+          >
             <span className='hidden sm:inline'>Thêm Hồ sơ vụ việc</span>
             <span className='sm:hidden'>Thêm vụ việc</span>
           </Link>

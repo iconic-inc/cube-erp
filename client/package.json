@@ -37,9 +37,11 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "filepond": "^4.32.8",
     "is-ip": "^5.0.1",
     "isbot": "^4.1.0",
     "lucide-react": "^0.511.0",
+    "new-vn-provinces": "^3.0.4",
     "quill": "^2.0.3",
     "react": "^18.2.0",
     "react-day-picker": "^9.7.0",
@@ -52,8 +54,7 @@
     "remix-auth-form": "^3.0.0",
     "remix-utils": "^8.5.0",
     "tailwind-merge": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7",
-    "vn-provinces": "^1.0.4"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@react-router/remix-config-routes-adapter": "^0.0.0-nightly-bf7ecb711-20240911",

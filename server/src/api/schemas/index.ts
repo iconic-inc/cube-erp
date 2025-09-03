@@ -1,9 +1,11 @@
-import { ZodEffects, ZodObject } from 'zod';
+import { ZodArray, ZodEffects, ZodObject } from 'zod';
 import { BadRequestError, NotFoundError } from '../core/errors';
 import { isValidObjectId } from 'mongoose';
 import { removeNestedNullish } from '@utils/index';
 
-export const validateSchema = (schema: ZodObject<any> | ZodEffects<any>) => {
+export const validateSchema = (
+  schema: ZodArray<any> | ZodObject<any> | ZodEffects<any>
+) => {
   return (req: any, res: any, next: any) => {
     const { error } = schema.safeParse(removeNestedNullish(req.body));
     if (error) {

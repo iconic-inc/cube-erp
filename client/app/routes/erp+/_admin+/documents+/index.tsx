@@ -1,41 +1,66 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useFetcher, useLoaderData } from '@remix-run/react';
-import { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 import {
   deleteMultipleDocuments,
-  // deleteMultipleDocuments,
   getDocuments,
   uploadDocument,
 } from '~/services/document.server';
 import ContentHeader from '~/components/ContentHeader';
 import { parseAuthCookie } from '~/services/cookie.server';
-import { IDocument } from '~/interfaces/document.interface';
-import { IListResponse } from '~/interfaces/response.interface';
-import { IListColumn } from '~/interfaces/app.interface';
+import { IActionFunctionReturn } from '~/interfaces/app.interface';
 import { isAuthenticated } from '~/services/auth.server';
-import List from '~/components/List';
-import { toast } from 'react-toastify';
-import { Badge } from '~/components/ui/badge';
 import { canAccessDocumentManagement } from '~/utils/permission';
 import { getEmployees } from '~/services/employee.server';
-import { isResolveError } from '~/lib';
-import { IEmployeeBrief } from '~/interfaces/employee.interface';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
+import DocumentList from './_components/DocumentList';
+import {
+  getDocumentFolderById,
+  getDocumentFolders,
+} from '~/services/documentFolder.server';
+import DocumentFolderList from '~/components/FolderList';
+import Defer from '~/components/Defer';
+import { useState } from 'react';
+import { NewDocumentFolderFormPopup } from './_components/NewDocumentFolderFormPopup';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await parseAuthCookie(request);
 
-  if (!canAccessDocumentManagement(user?.user.usr_role)) {
+  if (!user || !canAccessDocumentManagement(user?.user.usr_role)) {
     throw new Response('Bạn không có quyền truy cập vào trang này.', {
       status: 403,
     });
   }
 
   const url = new URL(request.url);
+  const parent = url.searchParams.get('parent') || '';
+
+  if (!parent) {
+    return {
+      foldersPromise: getDocumentFolders(url.searchParams, user).catch((e) => {
+        console.error(e);
+        return {
+          data: [],
+          pagination: {
+            totalPages: 0,
+            page: 1,
+            limit: 10,
+            total: 0,
+          },
+        };
+      }),
+    };
+  }
 
   return {
-    documentsPromise: getDocuments(url.searchParams, user!).catch((e) => {
+    parent,
+    folderPromise: getDocumentFolderById(parent, user).catch((e) => {
+      console.log(e);
+      return null;
+    }),
+    documentsPromise: getDocuments(url.searchParams, user).catch((e) => {
       console.error(e);
       return {
         data: [],
@@ -45,154 +70,42 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           limit: 10,
           total: 0,
         },
-      } as IListResponse<IDocument>;
+      };
     }),
     employeesPromise: getEmployees(
       new URLSearchParams([['limit', '1000']]),
-      user!,
+      user,
     ).catch((e) => {
       console.error(e);
       return {
-        success: false,
-        message: e.message || 'Có lỗi xảy ra khi lấy danh sách nhân viên',
+        data: [],
+        pagination: {
+          totalPages: 0,
+          page: 1,
+          limit: 10,
+          total: 0,
+        },
       };
     }),
   };
 };
 
 export default function HRMDocuments() {
-  const { documentsPromise, employeesPromise } = useLoaderData<typeof loader>();
+  const {
+    parent,
+    documentsPromise,
+    employeesPromise,
+    foldersPromise,
+    folderPromise,
+  } = useLoaderData<typeof loader>();
 
-  useEffect(() => {
-    const loadEmployees = async () => {
-      const employeesData = (await employeesPromise) as any;
-      if (isResolveError(employeesData)) {
-        console.error('Error loading employees:', employeesData.message);
-        return;
-      }
-      setVisibleColumns((prevColumns) =>
-        prevColumns.map((col) => {
-          if (col.key === 'doc_createdBy') {
-            return {
-              ...col,
-              options: employeesData.data.length
-                ? employeesData.data.map((emp: IEmployeeBrief) => ({
-                    value: emp.id,
-                    label: `${emp.emp_user?.usr_firstName} ${emp.emp_user?.usr_lastName}`,
-                  }))
-                : [
-                    {
-                      value: '',
-                      label: 'Không có nhân viên',
-                    },
-                  ],
-            };
-          }
-          return col;
-        }),
-      ); // Trigger re-render to update options
-    };
-    loadEmployees();
-  }, [employeesPromise]);
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    IListColumn<IDocument>[]
-  >([
-    {
-      key: 'doc_name',
-      title: 'Tên tài liệu',
-      visible: true,
-      sortField: 'doc_name',
-      render: (item: IDocument) => (
-        <Link
-          to={`/erp/documents/${item.id}`}
-          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-none'
-          title={item.doc_name}
-        >
-          {item.doc_name}
-        </Link>
-      ),
-    },
-    {
-      key: 'doc_url',
-      title: 'Đường dẫn',
-      visible: true,
-      sortField: 'doc_url',
-      render: (item: IDocument) => (
-        <a
-          href={item.doc_url}
-          target='_blank'
-          rel='noopener noreferrer'
-          className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
-          title={item.doc_url}
-        >
-          <span className='hidden sm:inline'>{item.doc_url}</span>
-          <span className='sm:hidden'>Xem</span>
-        </a>
-      ),
-    },
-    {
-      key: 'doc_createdBy',
-      title: 'Người tạo',
-      visible: true,
-      sortField: 'doc_createdBy',
-      filterField: 'createdBy',
-      options: [],
-      render: (item: IDocument) => {
-        if (typeof item.doc_createdBy === 'string') {
-          return (
-            <span className='text-xs sm:text-sm'>{item.doc_createdBy}</span>
-          );
-        }
-        return (
-          <Link
-            to={`/erp/employees/${item.doc_createdBy.id}`}
-            className='text-blue-600 hover:underline text-xs sm:text-sm block truncate max-w-[100px] sm:max-w-none'
-            title={`${item.doc_createdBy.emp_user.usr_firstName} ${item.doc_createdBy.emp_user.usr_lastName}`}
-          >
-            <span className='hidden sm:inline'>
-              {item.doc_createdBy.emp_user.usr_firstName}{' '}
-              {item.doc_createdBy.emp_user.usr_lastName}
-            </span>
-            <span className='sm:hidden'>
-              {item.doc_createdBy.emp_user.usr_firstName}
-            </span>
-          </Link>
-        );
-      },
-    },
-    {
-      key: 'doc_isPublic',
-      title: 'Chế độ try cập',
-      visible: true,
-      filterField: 'isPublic',
-      options: [
-        { value: 'true', label: 'Công khai' },
-        { value: 'false', label: 'Hạn chế' },
-      ],
-      render: (item: IDocument) => {
-        if (typeof item.doc_whiteList === 'string') {
-          return (
-            <span className='text-xs sm:text-sm'>{item.doc_whiteList}</span>
-          );
-        }
-        return (
-          <Badge
-            variant={item.doc_isPublic ? 'default' : 'secondary'}
-            className={`${item.doc_isPublic ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'} hover:bg-unset text-xs`}
-          >
-            <span className='sm:inline'>
-              {item.doc_isPublic ? 'Công khai' : 'Hạn chế'}
-            </span>
-          </Badge>
-        );
-      },
-    },
-  ]);
   const uploadFetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
 
-  const addNewHandler = () => {
+  const addNewHandler = (parent?: string) => {
+    if (!parent) {
+      toast.error('Vui lòng chọn một thư mục để thêm tài liệu');
+      return;
+    }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '*/*';
@@ -208,8 +121,8 @@ export default function HRMDocuments() {
       for (let i = 0; i < files.length; i++) {
         formData.append('document', files[i]);
       }
+      formData.set('parent', parent);
 
-      toastIdRef.current = toast.loading('Đang tải lên...');
       uploadFetcher.submit(formData, {
         method: 'POST',
         encType: 'multipart/form-data',
@@ -221,54 +134,90 @@ export default function HRMDocuments() {
     input.click();
   };
 
-  useEffect(() => {
-    if (uploadFetcher.data) {
-      if (uploadFetcher.data.success) {
-        toastIdRef.current = toast.update(toastIdRef.current, {
-          render: 'Tải lên thành công',
-          type: 'success',
-          autoClose: 3000,
-          isLoading: false,
-        });
-      } else {
-        toastIdRef.current = toast.update(toastIdRef.current, {
-          render:
-            uploadFetcher.data.toast.message || 'Có lỗi xảy ra khi tải lên',
-          type: 'error',
-          autoClose: 3000,
-          isLoading: false,
-        });
-      }
-    }
-  }, [uploadFetcher.data]);
+  useFetcherResponseHandler(uploadFetcher);
+
+  const [showNewFolderPopup, setShowNewFolderPopup] = useState(false);
 
   return (
     <div className='space-y-4 sm:space-y-6 min-h-screen p-2 sm:p-4'>
       {/* Content Header */}
       <ContentHeader
-        title='Danh sách tài liệu'
+        title={parent ? 'Danh sách tài liệu' : 'Danh sách thư mục'}
         actionContent={
-          <>
-            <Plus className='w-3 h-3 sm:w-4 sm:h-4' />
-            <span className='hidden sm:inline'>Thêm tài liệu</span>
-            <span className='sm:hidden'>Thêm</span>
-          </>
+          parent ? (
+            <>
+              <Plus className='w-3 h-3 sm:w-4 sm:h-4' />
+              <span className='hidden sm:inline'>Thêm tài liệu</span>
+              <span className='sm:hidden'>Thêm</span>
+            </>
+          ) : (
+            <>
+              <Plus className='w-3 h-3 sm:w-4 sm:h-4' />
+              <span className='hidden sm:inline'>Thêm thư mục</span>
+              <span className='sm:hidden'>Thêm</span>
+            </>
+          )
         }
-        actionHandler={() => addNewHandler()}
+        actionHandler={() => {
+          if (parent) {
+            return addNewHandler(parent);
+          }
+          setShowNewFolderPopup(true);
+        }}
       />
 
-      <List<IDocument>
-        itemsPromise={documentsPromise}
-        visibleColumns={visibleColumns}
-        setVisibleColumns={setVisibleColumns}
-        addNewHandler={addNewHandler}
-        name='Tài liệu'
-      />
+      <div className='flex items-center'>
+        <Link
+          to='/erp/documents'
+          className='mr-2 text-gray-900 hover:text-gray-500'
+        >
+          Danh sách thư mục
+        </Link>
+        {folderPromise && (
+          <Defer resolve={folderPromise}>
+            {(folder) => (
+              <div key={folder?.id} className='flex items-center'>
+                <ChevronRight className='mx-2 text-gray-900' size={16} />
+                <Link
+                  to={`/erp/documents?parent=${folder?.id}`}
+                  className='text-gray-900 hover:text-gray-500'
+                >
+                  {folder?.fol_name}
+                </Link>
+              </div>
+            )}
+          </Defer>
+        )}
+      </div>
+
+      {foldersPromise && (
+        <DocumentFolderList
+          foldersPromise={foldersPromise}
+          addNewHandler={() => setShowNewFolderPopup(true)}
+        />
+      )}
+
+      {documentsPromise && employeesPromise && (
+        <DocumentList
+          documentsPromise={documentsPromise}
+          employeesPromise={employeesPromise}
+          addNewHandler={() => addNewHandler(parent)}
+        />
+      )}
+
+      {showNewFolderPopup && (
+        <NewDocumentFolderFormPopup
+          open={showNewFolderPopup}
+          setOpen={setShowNewFolderPopup}
+        />
+      )}
     </div>
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+}: ActionFunctionArgs): IActionFunctionReturn => {
   const { session, headers } = await isAuthenticated(request);
   if (!session) {
     return data(
@@ -330,6 +279,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       case 'POST':
         const files = formData.getAll('document') as File[];
+        const parent = formData.get('parent')?.toString().trim();
         if (!files.length) {
           // throw new Error('Vui lòng chọn ít nhất một tài liệu để tải lên');
           return data(
@@ -343,16 +293,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             { headers, status: 400 },
           );
         }
+        if (!parent) {
+          return data(
+            {
+              success: false,
+              toast: {
+                message: 'Vui lòng chọn một thư mục để tải tài liệu',
+                type: 'error',
+              },
+            },
+            { headers, status: 400 },
+          );
+        }
 
         const payload = new FormData();
         for (let i = 0; i < files.length; i++) {
           payload.append('documents', files[i]);
         }
-        const documents = await uploadDocument(payload, session!);
+        payload.set('parent', parent);
+        await uploadDocument(payload, session!);
 
         return data(
           {
-            documents,
             success: true,
             toast: {
               message: 'Upload Tài liệu thành công!',

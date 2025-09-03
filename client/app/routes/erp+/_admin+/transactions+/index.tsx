@@ -61,6 +61,7 @@ export default function () {
       render: (transaction) => (
         <Link
           to={`/erp/transactions/${transaction.id}`}
+          prefetch='intent'
           className='text-blue-600 hover:underline py-2'
         >
           {transaction.tx_title || 'Không có tiêu đề'}
@@ -115,6 +116,7 @@ export default function () {
         return (
           <Link
             to={`/erp/customers/${transaction.tx_customer.id}`}
+            prefetch='intent'
             className='text-blue-600 hover:underline'
           >
             {transaction.tx_customer.cus_firstName}{' '}
@@ -131,7 +133,8 @@ export default function () {
       render: (transaction) =>
         transaction.tx_createdBy?.emp_user ? (
           <Link
-            to={`/erp/hr/employees/${transaction.tx_createdBy.id}`}
+            to={`/erp/employees/${transaction.tx_createdBy.id}`}
+            prefetch='intent'
             className='text-blue-600 hover:underline'
           >
             {transaction.tx_createdBy.emp_user.usr_firstName}{' '}

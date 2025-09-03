@@ -37,8 +37,8 @@ const customerSchema = new Schema<ICustomerDocument, ICustomerModel>(
       unique: true,
     },
     cus_address: {
-      province: { type: String },
-      district: { type: String },
+      provinceId: { type: String },
+      wardId: { type: String },
       street: { type: String, required: true },
     },
     cus_sex: {

@@ -4,11 +4,13 @@ import { getUsers } from '~/services/user.server';
 import { getImages } from '~/services/image.server';
 import { getDocuments } from '~/services/document.server';
 import { parseAuthCookie } from '~/services/cookie.server';
+import { getEmployees } from '~/services/employee.server';
 
 const services = {
   // getUsers,
   getImages,
   getDocuments,
+  getEmployees,
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

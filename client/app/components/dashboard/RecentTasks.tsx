@@ -47,6 +47,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
           <Button variant='ghost' size='sm' asChild>
             <Link
               to='/erp/tasks?sortBy=createdAt&sortOrder=desc'
+              prefetch='intent'
               className='flex items-center'
             >
               <span className='hidden sm:inline'>Xem tất cả</span>
@@ -78,7 +79,8 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                   <div className='flex-1 min-w-0 pr-2'>
                     <Link
                       to={`/erp/tasks/${task.id}`}
-                      className='text-xs sm:text-sm font-medium text-foreground hover:text-red-900 transition-colors line-clamp-2'
+                      prefetch='intent'
+                      className='text-sm sm:text-base font-medium text-foreground hover:text-red-900 transition-colors line-clamp-2'
                     >
                       {task.tsk_name}
                     </Link>
@@ -118,7 +120,7 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                       </span>
                     </div>
 
-                    {task.tsk_assignees && task.tsk_assignees.length > 0 && (
+                    {/* {task.tsk_assignees && task.tsk_assignees.length > 0 && (
                       <div className='flex items-center space-x-1'>
                         <User className='w-3 h-3' />
                         <span className='hidden sm:inline'>
@@ -128,12 +130,13 @@ export default function RecentTasks({ tasks }: RecentTasksProps) {
                           {task.tsk_assignees.length}
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   {task.tsk_caseService && (
                     <Link
                       to={`/erp/cases/${task.tsk_caseService.id}`}
+                      prefetch='intent'
                       className='text-red-900 hover:text-red-800 transition-colors text-xs shrink-0'
                     >
                       {task.tsk_caseService.case_code}

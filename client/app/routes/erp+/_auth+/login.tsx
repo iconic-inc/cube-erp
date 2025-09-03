@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await parseAuthCookie(request);
@@ -116,7 +117,6 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const fetcher = useFetcher<typeof action>();
-  const toastIdRef = useRef<any>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -130,39 +130,7 @@ const Login = () => {
     }
   }, [navigation.state]);
 
-  useEffect(() => {
-    switch (fetcher.state) {
-      case 'submitting':
-        toastIdRef.current = toast.loading('Loading...', {
-          autoClose: false,
-        });
-        setLoading(true);
-        break;
-
-      case 'idle':
-        if (fetcher.data?.toast && toastIdRef.current) {
-          const { toast: toastData } = fetcher.data as any;
-          toast.update(toastIdRef.current, {
-            render: toastData.message,
-            type: toastData.type || 'success', // Default to 'success' if type is not provided
-            autoClose: 3000,
-            isLoading: false,
-          });
-          toastIdRef.current = null;
-          setLoading(false);
-          break;
-        }
-
-        toast.update(toastIdRef.current, {
-          render: fetcher.data?.toast.message,
-          autoClose: 3000,
-          isLoading: false,
-          type: 'error',
-        });
-        setLoading(false);
-        break;
-    }
-  }, [fetcher.state]);
+  useFetcherResponseHandler(fetcher as any);
 
   const [fingerprint, setFingerprint] = useState('');
 
@@ -285,10 +253,11 @@ const Login = () => {
 
           <CardFooter className='bg-gray-50/50 border-t border-gray-100'>
             <div className='w-full text-center'>
-              <p className='text-xs sm:text-sm text-gray-600'>
+              <p className='text-sm sm:text-base text-gray-600'>
                 Không có tài khoản?{' '}
                 <Link
                   to='#'
+                  prefetch='intent'
                   className='text-blue-600 font-medium hover:text-blue-700 hover:underline transition-colors'
                 >
                   Liên hệ admin
@@ -300,7 +269,7 @@ const Login = () => {
 
         {/* Footer */}
         <div className='mt-6 sm:mt-8 text-center space-y-3'>
-          <p className='text-xs sm:text-sm text-gray-500'>
+          <p className='text-sm sm:text-base text-gray-500'>
             &copy; 2025 Cube Lawfirm ERP
           </p>
         </div>
