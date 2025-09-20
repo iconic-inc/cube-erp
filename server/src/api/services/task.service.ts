@@ -682,7 +682,6 @@ const getTaskById = async (id: string) => {
 
 // Update Task
 const updateTask = async (id: string, data: ITaskUpdate) => {
-  console.log('-----------------updating task with data: ', data);
   const task = await TaskModel.findByIdAndUpdate(
     id,
     {
@@ -1366,7 +1365,6 @@ const getEmployeesPerformance = async (query: any = {}) => {
 
     // Execute aggregation
     const performanceData = await TaskModel.aggregate(pipeline);
-    console.log(performanceData);
 
     // Calculate summary statistics
     const summaryPipeline = [

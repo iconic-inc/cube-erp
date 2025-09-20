@@ -13,9 +13,7 @@ export default function AskForGeoPermissionPopup() {
           <button
             className='text-blue-500 font-semibold'
             onClick={() => {
-              navigator.geolocation.getCurrentPosition((position) => {
-                console.log(position);
-              });
+              navigator.geolocation.getCurrentPosition((position) => {});
             }}
           >
             Allow

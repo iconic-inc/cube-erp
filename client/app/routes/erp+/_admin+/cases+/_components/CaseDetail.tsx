@@ -404,8 +404,8 @@ export default function CaseDetail({
                 <div className='mt-4 pt-4 border-t border-blue-200 animate-in slide-in-from-bottom-2 duration-400 delay-650'>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                     {caseService.case_totalsCache.incurredCostTotal > 0 && (
-                      <div className='text-center p-2 bg-red-50 rounded-lg transition-all duration-200 hover:bg-red-100 hover:scale-105 animate-in scale-in-0 duration-300 delay-700'>
-                        <div className='text-sm font-medium text-red-600'>
+                      <div className='text-center p-2 bg-red-50 rounded-lg border border-red-400 transition-all duration-200 hover:bg-red-100 hover:scale-105 animate-in scale-in-0 duration-300'>
+                        <div className='text-sm font-bold text-red-600'>
                           {caseService.case_totalsCache.incurredCostTotal.toLocaleString(
                             'vi-VN',
                           )}{' '}
@@ -418,14 +418,14 @@ export default function CaseDetail({
                     )}
 
                     {caseService.case_totalsCache.commissionTotal > 0 && (
-                      <div className='text-center p-2 bg-yellow-50 rounded-lg border border-yellow-400 transition-all duration-200 hover:bg-yellow-100 hover:scale-105 animate-in scale-in-0 duration-300 delay-750'>
-                        <div className='text-sm font-medium text-yellow-600'>
+                      <div className='text-center p-2 bg-yellow-50 rounded-lg border border-yellow-400 transition-all duration-200 hover:bg-yellow-100 hover:scale-105 animate-in scale-in-0 duration-300'>
+                        <div className='text-sm font-bold text-yellow-600'>
                           {caseService.case_totalsCache.commissionTotal.toLocaleString(
                             'vi-VN',
                           )}{' '}
                           VNĐ
                         </div>
-                        <div className='text-xs text-yellow-500'>Hoa hồng</div>
+                        <div className='text-xs text-yellow-600'>Hoa hồng</div>
                       </div>
                     )}
                   </div>

@@ -222,6 +222,7 @@ export default function CaseInstallmentList({
                           return {
                             ...i,
                             paidAmount: 0,
+                            status: 'PLANNED',
                           };
                         }
                         return i;
@@ -242,6 +243,7 @@ export default function CaseInstallmentList({
                           return {
                             ...i,
                             paidAmount: i.amount,
+                            status: 'PAID',
                           };
                         }
                         return i;

@@ -107,8 +107,6 @@ export const action = async ({
       session,
     );
 
-    console.log('case service import result', result);
-
     // Check if there are critical errors (more than 50% failure rate)
     const failureRate = result.errors.length / result.total;
     if (result.errors.length > 0 && failureRate > 0.5) {

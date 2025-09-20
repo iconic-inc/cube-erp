@@ -19,16 +19,16 @@ import List from '~/components/List';
 import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 import { action } from '..';
 import { IIncurredCostCreate, IncurredCost } from '~/interfaces/case.interface';
-import { Receipt, Edit, Trash2, Plus, Check } from 'lucide-react';
+import { Receipt, Edit, Trash2, Plus } from 'lucide-react';
 import NumericInput from '~/components/NumericInput';
 import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
 
 interface IncurredCostEditModalProps {
-  incurredCost: IIncurredCostCreate | null;
+  incurredCost: IncurredCost | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (incurredCost: IIncurredCostCreate) => void;
+  onSave: (id: string, incurredCost: IIncurredCostCreate) => void;
   isNew?: boolean;
 }
 
@@ -72,7 +72,7 @@ function IncurredCostEditModal({
       amount: formData.amount,
     };
 
-    onSave(updatedIncurredCost);
+    onSave(incurredCost!.id, updatedIncurredCost);
     onClose();
   };
 
@@ -170,8 +170,44 @@ export default function CaseIncurredCostList({
   const fetcher = useFetcher<typeof action>();
 
   const [editingIncurredCost, setEditingIncurredCost] =
-    useState<IIncurredCostCreate | null>(null);
+    useState<IncurredCost | null>(null);
   const [isNewIncurredCost, setIsNewIncurredCost] = useState(false);
+
+  useEffect(() => {
+    // Refresh action column render to get latest incurred costs state
+    setVisibleColumns(
+      visibleColumns.map((col) => {
+        if (col.key === 'actions') {
+          col.render = (item) => (
+            <div className='flex space-x-2'>
+              <Button
+                size='sm'
+                variant='outline'
+                type='button'
+                onClick={() => {
+                  setEditingIncurredCost(item);
+                  setIsNewIncurredCost(false);
+                }}
+              >
+                <Edit className='h-4 w-4' />
+              </Button>
+
+              <Button
+                size='sm'
+                type='button'
+                variant='outline'
+                onClick={() => handleRemoveIncurredCost(item.id)}
+                className='text-red-500'
+              >
+                <Trash2 className='h-4 w-4' />
+              </Button>
+            </div>
+          );
+        }
+        return col;
+      }),
+    );
+  }, [incurredCosts]);
 
   const [visibleColumns, setVisibleColumns] = useState<
     IListColumn<IncurredCost>[]
@@ -190,7 +226,13 @@ export default function CaseIncurredCostList({
       title: 'Loại chi phí',
       key: 'category',
       visible: true,
-      render: (item) => <span className='font-medium'>{item.category}</span>,
+      render: (item) => (
+        <span className='font-medium'>
+          {Object.values(TRANSACTION.CATEGORY.outcome).find(
+            (category) => category.value === item.category,
+          )?.label || item.category}
+        </span>
+      ),
     },
     {
       title: 'Mô tả',
@@ -219,50 +261,29 @@ export default function CaseIncurredCostList({
       title: 'Thao tác',
       key: 'actions',
       visible: true,
-      render: (item) => (
-        <div className='flex space-x-2'>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => {
-              setEditingIncurredCost(item);
-              setIsNewIncurredCost(false);
-            }}
-          >
-            <Edit className='h-4 w-4' />
-          </Button>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => handleRemoveIncurredCost(item.id)}
-          >
-            <Trash2 className='h-4 w-4' />
-          </Button>
-        </div>
-      ),
+      render: (item) => <></>,
     },
   ]);
 
   useFetcherResponseHandler(fetcher);
 
-  const handleSaveIncurredCost = (updatedIncurredCost: IIncurredCostCreate) => {
-    let updatedIncurredCosts = [...incurredCosts, updatedIncurredCost];
+  const handleSaveIncurredCost = (
+    incurredCostId: string,
+    updatedIncurredCost: IIncurredCostCreate,
+  ) => {
+    let updatedIncurredCosts: IIncurredCostCreate[] = incurredCosts;
+    if (isNewIncurredCost) updatedIncurredCosts.push(updatedIncurredCost);
+    else
+      updatedIncurredCosts = incurredCosts.map((cost) =>
+        cost.id === incurredCostId ? { ...cost, ...updatedIncurredCost } : cost,
+      );
 
     // Sort by date (newest first)
     updatedIncurredCosts.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 
-    fetcher.submit(
-      {
-        op: 'updateCaseServiceIncurredCost',
-        value: JSON.stringify(updatedIncurredCosts),
-      },
-      {
-        method: 'PATCH',
-        action: `/erp/cases/${caseId}?index`,
-      },
-    );
+    handleUpdateIncurredCost(updatedIncurredCosts);
   };
 
   const handleRemoveIncurredCost = (incurredCostId: string) => {
@@ -270,10 +291,14 @@ export default function CaseIncurredCostList({
       (c) => c.id !== incurredCostId,
     );
 
+    handleUpdateIncurredCost(updatedIncurredCosts);
+  };
+
+  const handleUpdateIncurredCost = (incurredCosts: IIncurredCostCreate[]) => {
     fetcher.submit(
       {
         op: 'updateCaseServiceIncurredCost',
-        value: JSON.stringify(updatedIncurredCosts),
+        value: JSON.stringify(incurredCosts),
       },
       {
         method: 'PATCH',
@@ -288,13 +313,14 @@ export default function CaseIncurredCostList({
       category: '',
       description: '',
       amount: 0,
+      id: undefined as any,
     });
     setIsNewIncurredCost(true);
   };
 
   // Calculate total incurred costs
   const totalIncurredCosts = incurredCosts.reduce(
-    (sum, cost) => sum + cost.amount,
+    (sum, cost) => sum + parseFloat(cost.amount.toString()),
     0,
   );
 
@@ -330,6 +356,7 @@ export default function CaseIncurredCostList({
           setVisibleColumns={setVisibleColumns}
           showPagination={false}
           showToolbar={false}
+          readOnly
         />
 
         {editingIncurredCost && (

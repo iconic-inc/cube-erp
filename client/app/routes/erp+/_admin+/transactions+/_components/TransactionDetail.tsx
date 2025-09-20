@@ -63,6 +63,9 @@ export default function TransactionDetail({
           );
         }
 
+        const caseService = transaction.tx_caseService;
+        const customer = caseService?.case_customer || transaction.tx_customer;
+
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200 mx-2 sm:mx-0'>
             <CardHeader className='bg-gradient-to-r from-red-900 to-red-800 text-white py-4 sm:py-6 px-4 sm:px-6 rounded-t-xl'>
@@ -158,44 +161,37 @@ export default function TransactionDetail({
                       </Link>
                     </div>
 
-                    {transaction.tx_customer && (
+                    {customer && (
                       <div className='flex items-start space-x-2 sm:space-x-3'>
                         <User className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0 mt-0.5' />
                         <span className='text-sm sm:text-sm text-gray-500'>
                           Khách hàng:
                         </span>
                         <Link
-                          to={`/erp/customers/${transaction.tx_customer.id}`}
+                          to={`/erp/customers/${customer.id}`}
                           prefetch='intent'
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
-                          {transaction.tx_customer.cus_firstName}{' '}
-                          {transaction.tx_customer.cus_lastName} (
-                          {transaction.tx_customer.cus_code})
+                          {customer.cus_firstName} {customer.cus_lastName} (
+                          {customer.cus_code})
                         </Link>
                       </div>
                     )}
 
-                    {transaction.tx_caseService && (
+                    {caseService && (
                       <div className='flex items-start space-x-2 sm:space-x-3'>
                         <Building className='w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0 mt-0.5' />
                         <span className='text-sm sm:text-sm text-gray-500'>
                           Hồ sơ vụ việc:
                         </span>
                         <Link
-                          to={`/erp/cases/${transaction.tx_caseService.id}`}
+                          to={`/erp/cases/${caseService.id}`}
                           prefetch='intent'
                           className='text-sm sm:text-sm font-medium text-blue-600 hover:underline break-words'
                         >
-                          {transaction.tx_caseService.case_code} -{' '}
-                          {
-                            transaction.tx_caseService.case_customer
-                              .cus_firstName
-                          }{' '}
-                          {
-                            transaction.tx_caseService.case_customer
-                              .cus_lastName
-                          }
+                          {caseService.case_code} -{' '}
+                          {caseService.case_customer?.cus_firstName}{' '}
+                          {caseService.case_customer?.cus_lastName}
                         </Link>
                       </div>
                     )}

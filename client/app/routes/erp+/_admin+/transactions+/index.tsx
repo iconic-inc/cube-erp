@@ -105,7 +105,7 @@ export default function () {
         if (!transaction.tx_caseService) return 'N/A';
         return (
           <Link
-            to={`/erp/case-services/${transaction.tx_caseService.id}`}
+            to={`/erp/cases/${transaction.tx_caseService.id}`}
             prefetch='intent'
             className='text-blue-600 hover:underline'
           >
