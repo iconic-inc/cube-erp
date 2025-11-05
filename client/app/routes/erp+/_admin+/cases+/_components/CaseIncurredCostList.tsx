@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import {
   Dialog,
@@ -23,6 +22,7 @@ import { Receipt, Edit, Trash2, Plus } from 'lucide-react';
 import NumericInput from '~/components/NumericInput';
 import { SelectSearch } from '~/components/ui/SelectSearch';
 import { TRANSACTION } from '~/constants/transaction.constant';
+import { DatePicker } from '~/components/ui/date-picker';
 
 interface IncurredCostEditModalProps {
   incurredCost: IncurredCost | null;
@@ -91,14 +91,16 @@ function IncurredCostEditModal({
           {/* Date */}
           <div className='space-y-2'>
             <Label htmlFor='date'>Ngày phát sinh *</Label>
-            <Input
+            <DatePicker
               id='date'
               type='date'
-              value={formData.date}
+              initialDate={new Date(formData.date)}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, date: e.target.value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  date: e.toISOString(),
+                }))
               }
-              required
             />
           </div>
 

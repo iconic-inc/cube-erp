@@ -131,7 +131,8 @@ export default function CaseDetailForm({
     );
 
     // Add participants data
-    formData.set('participants', JSON.stringify(participants));
+    if (type === 'create')
+      formData.set('participants', JSON.stringify(participants));
 
     // Add installments data
     formData.set('installments', JSON.stringify(installments));
@@ -190,6 +191,7 @@ export default function CaseDetailForm({
     incurredCosts,
   ]);
 
+  console.log(participants);
   useFetcherResponseHandler(fetcher);
 
   // false by default if type is 'update', true after resolve the casePromise
@@ -812,7 +814,7 @@ export default function CaseDetailForm({
         <CardFooter className='p-4 sm:p-6'>
           <div className='w-full flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0'>
             <Link
-              to='/erp/customers'
+              to='/erp/cases'
               prefetch='intent'
               className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base flex items-center transition-all duration-300 w-full sm:w-auto justify-center'
             >

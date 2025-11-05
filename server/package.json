@@ -20,7 +20,7 @@
     "gen:employee": "ts-node src/scripts/genEmployee.ts",
     "gen:customer": "ts-node src/scripts/genCustomer.ts",
     "gen:case-service": "ts-node src/scripts/genCaseService.ts",
-    "build": "tsc && tsc-alias"
+    "build": "rm -rf dist && tsc && tsc-alias"
   },
   "keywords": [],
   "author": "",

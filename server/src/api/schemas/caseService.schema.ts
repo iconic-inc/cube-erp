@@ -1,12 +1,15 @@
 import { z } from 'zod';
-import mongoose, { isValidObjectId } from 'mongoose';
+import { isValidObjectId } from 'mongoose';
 import { CASE_SERVICE } from '../constants';
 
 // Schema for case tax
 const caseTaxSchema = z.object({
   name: z.string().min(1, 'Tên thuế là bắt buộc'),
   mode: z.enum(['PERCENT', 'FIXED']),
-  value: z.number().min(0, 'Giá trị thuế phải lớn hơn hoặc bằng 0'),
+  value: z.preprocess(
+    (val: any) => (typeof val === 'number' ? val : parseFloat(val)),
+    z.number().min(0, 'Giá trị thuế phải lớn hơn hoặc bằng 0')
+  ),
   scope: z.enum(['ON_BASE', 'ON_BASE_PLUS_INCIDENTALS']).default('ON_BASE'),
 });
 
@@ -18,25 +21,53 @@ const caseParticipantSchema = z.object({
   role: z.string().optional(),
   commission: z.object({
     type: z.enum(['PERCENT_OF_GROSS', 'PERCENT_OF_NET', 'FLAT']),
-    value: z.number().min(0, 'Giá trị hoa hồng phải lớn hơn hoặc bằng 0'),
-    capAmount: z.number().min(0).optional(),
-    floorAmount: z.number().min(0).optional(),
+    value: z.preprocess(
+      (val: any) => (typeof val === 'number' ? val : parseFloat(val)),
+      z.number().min(0, 'Giá trị hoa hồng phải lớn hơn hoặc bằng 0')
+    ),
+    capAmount: z.preprocess(
+      (val: any) =>
+        val === undefined
+          ? undefined
+          : typeof val === 'number'
+          ? val
+          : parseFloat(val),
+      z.number().min(0).optional()
+    ),
+    floorAmount: z.preprocess(
+      (val: any) =>
+        val === undefined
+          ? undefined
+          : typeof val === 'number'
+          ? val
+          : parseFloat(val),
+      z.number().min(0).optional()
+    ),
     eligibleOn: z.enum(['AT_CLOSURE', 'ON_PAYMENT']).default('AT_CLOSURE'),
   }),
 });
 
 // Schema for installment plan item
 const installmentPlanItemSchema = z.object({
-  seq: z.number().int().min(1, 'Số thứ tự phải lớn hơn 0'),
+  seq: z.preprocess(
+    (val: any) => (typeof val === 'number' ? val : parseInt(val)),
+    z.number().int().min(1, 'Số thứ tự phải lớn hơn 0')
+  ),
   dueDate: z.preprocess(
     (val) => (val ? new Date(val as string) : new Date()),
     z.date()
   ),
-  amount: z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0'),
+  amount: z.preprocess(
+    (val: any) => (typeof val === 'number' ? val : parseFloat(val)),
+    z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0')
+  ),
   status: z
     .enum(['PLANNED', 'DUE', 'PARTIALLY_PAID', 'PAID', 'OVERDUE'])
     .default('PLANNED'),
-  paidAmount: z.number().min(0).default(0),
+  paidAmount: z.preprocess(
+    (val: any) => (typeof val === 'number' ? val : parseFloat(val || '0')),
+    z.number().min(0, 'Số tiền đã thanh toán phải lớn hơn hoặc bằng 0')
+  ),
   notes: z.string().optional(),
 });
 
@@ -48,7 +79,10 @@ const incurredCostSchema = z.object({
   ),
   category: z.string().min(1, 'Danh mục chi phí là bắt buộc'),
   description: z.string().optional(),
-  amount: z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0'),
+  amount: z.preprocess(
+    (val: any) => (typeof val === 'number' ? val : parseFloat(val)),
+    z.number().min(0, 'Số tiền phải lớn hơn hoặc bằng 0')
+  ),
   vendorId: z
     .string()
     .refine(isValidObjectId, {
