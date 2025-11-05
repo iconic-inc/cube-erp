@@ -22,6 +22,7 @@ import {
 } from '~/interfaces/case.interface';
 import { Calculator, Edit, Trash2, Plus, Check, XCircle } from 'lucide-react';
 import NumericInput from '~/components/NumericInput';
+import { DatePicker } from '~/components/ui/date-picker';
 
 interface InstallmentEditModalProps {
   installment: InstallmentPlanItem | null;
@@ -103,12 +104,12 @@ function InstallmentEditModal({
           {/* Due Date */}
           <div className='space-y-2'>
             <Label htmlFor='dueDate'>Ngày đến hạn</Label>
-            <Input
+            <DatePicker
               id='dueDate'
               type='date'
-              value={formData.dueDate}
+              initialDate={new Date(formData.dueDate)}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, dueDate: e.target.value }))
+                setFormData((prev) => ({ ...prev, dueDate: e.toISOString() }))
               }
             />
           </div>

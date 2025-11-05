@@ -104,12 +104,6 @@ export const action = async ({
         const pricingData = formData.get('pricing') as string;
         const pricing = pricingData ? JSON.parse(pricingData) : undefined;
 
-        // Parse participants data
-        const participantsData = formData.get('participants') as string;
-        const participants = participantsData
-          ? JSON.parse(participantsData)
-          : undefined;
-
         // Parse installments data
         const installmentsData = formData.get('installments') as string;
         const installments = installmentsData
@@ -131,7 +125,6 @@ export const action = async ({
           startDate: (formData.get('startDate') as string) || undefined,
           endDate: (formData.get('endDate') as string) || undefined,
           pricing,
-          participants,
           installments,
           incurredCosts,
         };

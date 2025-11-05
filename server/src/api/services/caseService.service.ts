@@ -2309,7 +2309,7 @@ const updateCaseServiceWithTransactions = async (
   try {
     // Get the original case service if not provided
     if (!originalCaseService) {
-      originalCaseService = await CaseServiceModel.findById(id);
+      originalCaseService = await CaseServiceModel.findById(id).lean();
       if (!originalCaseService) {
         throw new NotFoundError('Case service not found');
       }
@@ -2575,11 +2575,15 @@ const updatePricingTransactions = async (
               description: `${newTax.name}`,
             }
           );
-          (newTax as any).transactionId = (originalTax as any).transactionId;
+          (newTax as any).transactionId = (
+            originalTax as any
+          ).transactionId.toString();
         }
       } else {
         // No changes - keep existing transaction ID
-        (newTax as any).transactionId = (originalTax as any).transactionId;
+        (newTax as any).transactionId = (
+          originalTax as any
+        ).transactionId.toString();
       }
     }
   }
