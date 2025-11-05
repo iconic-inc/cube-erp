@@ -52,6 +52,8 @@ import { useFetcherResponseHandler } from '~/hooks/useFetcherResponseHandler';
 import { Separator } from '~/components/ui/separator';
 import EmployeePicker from '~/components/EmployeePicker';
 import NumericInput from '~/components/NumericInput';
+import { SelectSearch } from '~/components/ui/SelectSearch';
+import { TRANSACTION } from '~/constants/transaction.constant';
 
 export default function CaseDetailForm({
   formId,
@@ -660,15 +662,16 @@ export default function CaseDetailForm({
                 </div>
                 <div>
                   <Label className='text-xs font-medium'>Danh mục</Label>
-                  <Input
+                  <SelectSearch
+                    id='category'
                     value={cost.category}
-                    onChange={(e) => {
+                    onValueChange={(value) => {
                       const newCosts = [...incurredCosts];
-                      newCosts[index].category = e.target.value;
+                      newCosts[index].category = value;
                       setIncurredCosts(newCosts);
                     }}
-                    placeholder='Ví dụ: Phí lab'
-                    className='mt-1'
+                    placeholder='Nhập loại chi phí...'
+                    options={Object.values(TRANSACTION.CATEGORY.outcome)}
                   />
                 </div>
                 <div>

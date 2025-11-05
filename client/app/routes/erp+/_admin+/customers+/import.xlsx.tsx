@@ -99,7 +99,6 @@ export const action = async ({
 
     // Call backend import API
     const result = await importCustomers(file, overwrite, session);
-    console.log('import result', result.errors);
     if (result.errors.length > 0) {
       return data(
         {

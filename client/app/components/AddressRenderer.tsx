@@ -9,7 +9,6 @@ type IAddress = {
 };
 
 export default function AddressRenderer({ address }: { address: IAddress }) {
-  console.log('holoo');
   return (
     <Defer resolve={useMemo(async () => await toAddressString(address), [])}>
       {(result) => result}

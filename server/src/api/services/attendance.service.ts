@@ -27,8 +27,6 @@ const generateAttendanceQR = async (): Promise<IAttendanceQRResponse> => {
 };
 
 const checkIn = async (data: ICheckInData) => {
-  console.log('Processing check-in for user:', data.userId);
-
   // Validate input data
   // if (!data.fingerprint) {
   //   throw new BadRequestError('Fingerprint is required');
@@ -70,18 +68,13 @@ const checkIn = async (data: ICheckInData) => {
   const hour = now.getHours();
   const status = hour < 9 ? 'success' : 'late';
 
-  console.log('Creating notification with status:', status);
-
   // Tạo thông báo - truyền null cho senderId hoặc sử dụng system user ID nếu có
   await createAttendanceNotification(data.userId, now, status);
-  console.log('Notification created successfully');
 
   return getReturnData(attendance);
 };
 
 const checkOut = async (data: ICheckInData) => {
-  console.log('Processing check-out for user:', data.userId);
-
   // Validate input data
   if (!data.fingerprint) {
     throw new BadRequestError('Fingerprint is required');
@@ -102,7 +95,6 @@ const checkOut = async (data: ICheckInData) => {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
-  console.log('Updating attendance record...');
 
   const attendance = await AttendanceModel.findOneAndUpdate(
     {
@@ -123,17 +115,12 @@ const checkOut = async (data: ICheckInData) => {
     );
   }
 
-  console.log('Attendance record updated:', attendance);
-
   // Kiểm tra thời gian check-out và gửi thông báo phù hợp
   const hour = now.getHours();
   const status = hour > 17 ? 'success' : 'early';
 
-  console.log('Creating notification with status:', status);
-
   // Tạo thông báo - truyền null cho senderId hoặc sử dụng system user ID nếu có
   await createAttendanceNotification(data.userId, now, status);
-  console.log('Notification created successfully');
 
   return getReturnData(attendance);
 };

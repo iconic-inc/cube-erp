@@ -82,7 +82,6 @@ export default function DocumentDetail({
         }
 
         const { doc_createdBy, doc_whiteList, doc_parent } = document;
-        console.log(doc_parent);
 
         return (
           <Card className='rounded-xl overflow-hidden shadow-lg border border-gray-200'>

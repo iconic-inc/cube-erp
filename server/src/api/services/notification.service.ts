@@ -14,8 +14,6 @@ import {
 // Tạo thông báo mới
 const createNotification = async (data: ICreateNotificationData) => {
   try {
-    console.log('Creating notification with data:', data);
-
     const notification = await NotificationModel.build({
       senderId: data.senderId ? new Types.ObjectId(data.senderId) : undefined,
       recipientId: new Types.ObjectId(data.recipientId),
@@ -26,7 +24,6 @@ const createNotification = async (data: ICreateNotificationData) => {
       metadata: data.metadata,
     });
 
-    console.log('Notification created:', notification);
     return getReturnData(notification);
   } catch (error) {
     console.error('Error creating notification:', error);
@@ -44,8 +41,6 @@ const createAttendanceNotification = async (
   status: 'success' | 'late' | 'failed' | 'early' | 'absent'
 ) => {
   try {
-    console.log('Creating attendance notification for user:', recipientId);
-
     let title = '';
     let message = '';
 
@@ -89,7 +84,6 @@ const createAttendanceNotification = async (
       },
     });
 
-    console.log('Attendance notification created successfully');
     return getReturnData(notification);
   } catch (error) {
     console.error('Error creating attendance notification:', error);
@@ -199,8 +193,6 @@ const getUserNotifications = async (
 // Đánh dấu thông báo đã đọc
 const markAsRead = async (notificationId: string, userId: string) => {
   try {
-    console.log('Marking notification as read:', { notificationId, userId });
-
     // Chuyển đổi ID thành ObjectId
     const notificationObjectId = new Types.ObjectId(notificationId);
     const userObjectId = new Types.ObjectId(userId);
@@ -227,7 +219,6 @@ const markAsRead = async (notificationId: string, userId: string) => {
       throw new NotFoundError('Không thể đánh dấu thông báo đã đọc');
     }
 
-    console.log('Notification marked as read successfully');
     return getReturnData(notification);
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -244,8 +235,6 @@ const markAsRead = async (notificationId: string, userId: string) => {
 // Đánh dấu tất cả thông báo đã đọc
 const markAllAsRead = async (userId: string) => {
   try {
-    console.log('Marking all notifications as read for user:', userId);
-
     // Chuyển đổi userId sang ObjectId
     const userObjectId = new Types.ObjectId(userId);
 
@@ -255,7 +244,6 @@ const markAllAsRead = async (userId: string) => {
       { isRead: true }
     );
 
-    console.log('Marked as read result:', result);
     return { success: true, count: result.modifiedCount };
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
@@ -269,11 +257,6 @@ const markAllAsRead = async (userId: string) => {
 // Xóa thông báo
 const deleteNotification = async (notificationId: string, userId: string) => {
   try {
-    console.log('Attempting to delete notification with:', {
-      notificationId,
-      userId,
-    });
-
     // Chuyển đổi ID sang ObjectId
     const notificationObjectId = new Types.ObjectId(notificationId);
 
@@ -281,8 +264,6 @@ const deleteNotification = async (notificationId: string, userId: string) => {
     const existingNotification = await NotificationModel.findOne({
       _id: notificationObjectId,
     });
-
-    console.log('Found notification:', existingNotification);
 
     if (!existingNotification) {
       throw new NotFoundError('Không tìm thấy thông báo');
@@ -292,8 +273,6 @@ const deleteNotification = async (notificationId: string, userId: string) => {
     const result = await NotificationModel.deleteOne({
       _id: notificationObjectId,
     });
-
-    console.log('Delete result:', result);
 
     if (result.deletedCount === 0) {
       throw new BadRequestError('Không thể xóa thông báo');
@@ -327,8 +306,6 @@ const createAdminNotification = async (
   data: IAdminCreateNotificationData
 ) => {
   try {
-    console.log('Creating admin notification with data:', data);
-
     const notifications = await Promise.all(
       data.recipientIds.map(async (recipientId) => {
         const notification = await NotificationModel.build({
@@ -347,7 +324,6 @@ const createAdminNotification = async (
       })
     );
 
-    console.log('Admin notifications created successfully');
     return notifications.map((notification) => getReturnData(notification));
   } catch (error) {
     console.error('Error creating admin notification:', error);

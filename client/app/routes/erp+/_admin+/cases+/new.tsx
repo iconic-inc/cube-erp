@@ -189,7 +189,6 @@ export const action = async ({
             }
           }
 
-          console.log(data);
           const res = await createCaseService(data, session!);
 
           return dataResponse(

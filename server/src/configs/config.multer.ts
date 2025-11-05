@@ -29,7 +29,6 @@ export const storage = (subfolder: string = '') => {
     },
     filename: (req, file, cb) => {
       // Generate unique filename with original extension
-      console.log('-'.repeat(50), file);
       const fileExt = path.extname(file.originalname);
       const fileName = `${Date.now()}-${slugify(file.originalname, {
         locale: 'vi',

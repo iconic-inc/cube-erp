@@ -79,7 +79,6 @@ export const action = async ({
           department: formData.get('department') as string,
           joinDate: formData.get('joinDate') as string,
         };
-        console.log(data);
 
         // Kiểm tra dữ liệu bắt buộc
         if (
@@ -187,7 +186,6 @@ export default function NewEmployee() {
 
   const formId = useMemo(() => generateFormId('employee-detail-form'), []);
 
-  console.log(formId);
   return (
     <div className='space-y-4 md:space-y-6 min-h-screen'>
       {/* Content Header */}

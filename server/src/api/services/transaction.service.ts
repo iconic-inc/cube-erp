@@ -308,6 +308,14 @@ const getTransactionById = async (
         },
       })
       .populate('tx_customer', 'cus_code cus_firstName cus_lastName')
+      .populate({
+        path: 'tx_caseService',
+        select: 'case_code case_customer',
+        populate: {
+          path: 'case_customer',
+          select: 'cus_code cus_firstName cus_lastName',
+        },
+      })
       .lean();
 
     if (!transaction) {

@@ -41,6 +41,7 @@ import { parse } from 'date-fns';
 import { EmployeeModel } from '@models/employee.model';
 import { ITask } from '../interfaces/task.interface';
 import { CustomerModel } from '@models/customer.model';
+import { ObjectId } from 'mongoose';
 
 const getCaseServices = async (
   query: ICaseServiceQuery = {}
@@ -354,7 +355,7 @@ const calculateTotalsCache = (caseServiceData: {
 
   // Calculate incurred cost total
   const incurredCostTotal = incurredCosts.reduce(
-    (sum: number, cost: any) => sum + (cost.amount || 0),
+    (sum: number, cost: any) => sum + (+cost.amount || 0),
     0
   );
 
@@ -547,9 +548,6 @@ const createCaseService = async (caseServiceData: ICaseServiceCreate) => {
         await updateTaskAssigneesForCase(
           caseService._id.toString(),
           participantEmployeeIds
-        );
-        console.log(
-          `Assigned ${participantEmployeeIds.length} participants to tasks for new case service ${caseService._id}`
         );
       } catch (taskUpdateError) {
         console.error(
@@ -800,10 +798,6 @@ const importCaseServices = async (
 
         // Map Excel columns to case service data
         const caseServiceData = await mapExcelRowToCaseService(row);
-        console.log(
-          '***************************************************import case service data',
-          caseServiceData
-        );
 
         // Validate required fields
         if (!caseServiceData.code) {
@@ -891,11 +885,6 @@ const importCaseServices = async (
         });
       }
     }
-
-    console.log(
-      '***************************************************import results',
-      results
-    );
 
     // Commit transaction
     await session.commitTransaction();
@@ -1754,10 +1743,6 @@ const updateTaskAssigneesForCase = async (
       }
     );
 
-    console.log(
-      `Updated ${updateResult.modifiedCount} tasks for case service ${caseServiceId} with ${participantEmployeeIds.length} assignees`
-    );
-
     // Note: We don't call syncAllCaseServiceParticipants here to avoid circular updates
     // since we're updating tasks based on participants, not the other way around
 
@@ -1928,7 +1913,7 @@ const updateCaseServiceInstallment = async (
       throw new NotFoundError('Case service not found');
     }
 
-    if (!payload || payload.length === 0) {
+    if (!payload) {
       return {
         success: true,
         message: 'No installments provided to update',
@@ -1938,15 +1923,11 @@ const updateCaseServiceInstallment = async (
 
     // Clean up temporary IDs from installments before updating
     const cleanedInstallments = payload.map((installment) => {
-      if (installment.id) {
-        const { id, ...cleanedInstallment } = installment;
-        return getReturnData(cleanedInstallment) as InstallmentPlanItem;
-      }
-      return getReturnData(installment);
+      return getReturnData({
+        ...installment,
+        id: installment.id || new Types.ObjectId().toString(),
+      });
     }) as InstallmentPlanItem[];
-
-    // Update the case service installments
-    caseService.case_installments = cleanedInstallments;
 
     // Handle transaction updates for installments if userId is provided
     if (userId) {
@@ -2004,7 +1985,7 @@ const updateCaseServiceIncurredCost = async (
       throw new NotFoundError('Case service not found');
     }
 
-    if (!payload || payload.length === 0) {
+    if (!payload) {
       return {
         success: true,
         message: 'No incurred costs provided to update',
@@ -2014,16 +1995,11 @@ const updateCaseServiceIncurredCost = async (
 
     // Clean up temporary IDs from incurred costs before updating
     const cleanedIncurredCosts = payload.map((cost) => {
-      // Remove _id if it's a temporary ID (starts with "temp_") or if it's not a valid ObjectId
-      if (cost.id) {
-        const { id, ...cleanedCost } = cost;
-        return getReturnData(cleanedCost) as IncurredCost;
-      }
-      return getReturnData(cost);
+      return getReturnData({
+        ...cost,
+        id: cost.id || new Types.ObjectId().toString(),
+      });
     }) as IncurredCost[];
-
-    // Update the case service incurred costs
-    caseService.case_incurredCosts = cleanedIncurredCosts;
 
     // Handle transaction updates for incurred costs if userId is provided
     if (userId) {
@@ -2303,11 +2279,6 @@ const createCaseServiceWithTransactions = async (
       }
     }
 
-    console.log(
-      '---------------------------------------updating case service: ',
-      caseServiceData
-    );
-
     // Update the case service with transaction IDs
     await updateCaseService(caseService.id, {
       installments: caseServiceData.installments,
@@ -2405,20 +2376,20 @@ const updateInstallmentTransactions = async (
 ) => {
   // Create maps for easy lookup
   const originalMap = new Map(
-    originalInstallments.map((item) => [item._id, item])
+    originalInstallments.map((item) => [item._id?.toString(), item])
   );
-  const newMap = new Map(newInstallments.map((item) => [item._id, item]));
+  const newMap = new Map(newInstallments.map((item) => [item.id, item]));
 
   // Handle deletions
   for (const original of originalInstallments) {
-    if (!newMap.has(original._id) && original.transactionId) {
+    if (!newMap.has(original._id?.toString()) && original.transactionId) {
       await deleteTransactionRecord(original.transactionId.toString());
     }
   }
 
   // Handle additions and updates
   for (const newItem of newInstallments) {
-    const original = originalMap.get(newItem._id);
+    const original = originalMap.get(newItem.id);
 
     if (!original) {
       // New installment - create transaction
@@ -2467,19 +2438,21 @@ const updateIncurredCostTransactions = async (
   newCosts: IncurredCost[],
   originalCosts: IncurredCost[]
 ) => {
-  const originalMap = new Map(originalCosts.map((item) => [item._id, item]));
-  const newMap = new Map(newCosts.map((item) => [item._id, item]));
+  const originalMap = new Map(
+    originalCosts.map((item) => [item._id.toString(), item])
+  );
+  const newMap = new Map(newCosts.map((item) => [item.id, item]));
 
   // Handle deletions
   for (const original of originalCosts) {
-    if (!newMap.has(original._id) && original.transactionId) {
+    if (!newMap.has(original._id.toString()) && original.transactionId) {
       await deleteTransactionRecord(original.transactionId.toString());
     }
   }
 
   // Handle additions and updates
   for (const newItem of newCosts) {
-    const original = originalMap.get(newItem._id);
+    const original = originalMap.get(newItem.id);
 
     if (!original) {
       // New cost - create transaction
@@ -2531,7 +2504,7 @@ const updateIncurredCostTransactions = async (
     }
   }
 
-  return Array.from(new Map([...originalMap, ...newMap]).values());
+  return Array.from(newMap.values());
 };
 
 const updatePricingTransactions = async (
