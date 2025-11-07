@@ -31,7 +31,6 @@ export default function StatisticsDisplay({
   statisticsData: ITransactionStats;
 }) {
   const stats = statisticsData;
-  console.log(statisticsData);
   const [provinces, setProvinces] = useState<Province[]>([]);
   useEffect(() => {
     (async () => {
@@ -388,7 +387,13 @@ export default function StatisticsDisplay({
             <CardTitle className='flex items-center text-base sm:text-lg'>
               <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
               <span className='text-sm sm:text-lg'>
-                Thống kê thu nhập theo tỉnh/thành phố
+                Thống kê thu nhập theo tỉnh/thành phố (
+                {topProvinces.reduce((sum, p) => sum + p.income, 0) > 0
+                  ? `Tổng: ${formatCurrency(
+                      topProvinces.reduce((sum, p) => sum + p.income, 0),
+                    )}`
+                  : ''}
+                )
               </span>
             </CardTitle>
           </CardHeader>
@@ -437,7 +442,13 @@ export default function StatisticsDisplay({
             <CardTitle className='flex items-center text-base sm:text-lg'>
               <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
               <span className='text-sm sm:text-lg'>
-                Thống kê chi tiêu theo tỉnh/thành phố
+                Thống kê chi tiêu theo tỉnh/thành phố (
+                {topProvinces.reduce((sum, p) => sum + p.outcome, 0) > 0
+                  ? `Tổng: ${formatCurrency(
+                      topProvinces.reduce((sum, p) => sum + p.outcome, 0),
+                    )}`
+                  : ''}
+                )
               </span>
             </CardTitle>
           </CardHeader>
@@ -481,12 +492,24 @@ export default function StatisticsDisplay({
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className='p-4 sm:p-6 pb-3 sm:pb-4'>
             <CardTitle className='flex items-center text-base sm:text-lg'>
               <Globe className='h-4 w-4 sm:h-5 sm:w-5 mr-2' />
               <span className='text-sm sm:text-lg'>
-                Thống kê lợi nhuận theo tỉnh/thành phố
+                Thống kê lợi nhuận theo tỉnh/thành phố (
+                {topProvinces.reduce(
+                  (sum, p) => sum + (p.income - p.outcome),
+                  0,
+                ) > 0
+                  ? `Tổng: ${formatCurrency(
+                      topProvinces.reduce(
+                        (sum, p) => sum + (p.income - p.outcome),
+                        0,
+                      ),
+                    )}`
+                  : ''}
+                )
               </span>
             </CardTitle>
           </CardHeader>
@@ -528,7 +551,7 @@ export default function StatisticsDisplay({
               </p>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </>
   );

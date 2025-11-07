@@ -150,7 +150,7 @@ const deductToReward = async (data: IDeductToRewardRequest, userId: string) => {
     // Validate reward
     const reward = await RewardModel.findById(data.rewardId).session(session);
     if (!reward) {
-      throw new NotFoundError('Reward  not found');
+      throw new NotFoundError('Reward not found');
     }
 
     if (reward.rw_status !== REWARD.STATUS.ACTIVE) {
@@ -170,7 +170,7 @@ const deductToReward = async (data: IDeductToRewardRequest, userId: string) => {
           tx_amount: data.amount,
           tx_paid: data.amount,
           tx_paymentMethod: TRANSACTION.PAYMENT_METHOD.OTHER,
-          tx_category: TRANSACTION.CATEGORY.OUTCOME.REWARD,
+          tx_category: TRANSACTION.CATEGORY.OUTCOME.REWARD.value,
           tx_description:
             data.description ||
             `Khấu trừ ${toCurrencyString(data.amount)} vào quỹ thưởng: ${
