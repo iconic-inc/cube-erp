@@ -24,7 +24,7 @@ export interface CaseParticipant {
   commission: {
     type: 'PERCENT_OF_GROSS' | 'PERCENT_OF_NET' | 'FLAT';
     value: number; // percent (0-100) or flat amount in case currency
-    transactionId: string | Types.ObjectId; // for audit trail
+    transactionId?: string | Types.ObjectId; // for audit trail
   };
 }
 

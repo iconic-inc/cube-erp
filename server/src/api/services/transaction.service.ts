@@ -739,10 +739,34 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
     // Province-only breakdown pipeline
     const provincePipeline: any[] = [
       { $match: filter },
+      // Lookup case service to get nested customer
       {
         $lookup: {
-          from: 'customers',
-          localField: 'tx_customer',
+          from: CASE_SERVICE.COLLECTION_NAME,
+          localField: 'tx_caseService',
+          foreignField: '_id',
+          as: 'caseServiceData',
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseServiceData',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Add a field to determine the actual customer ID (direct or from case service)
+      {
+        $addFields: {
+          actualCustomerId: {
+            $ifNull: ['$tx_customer', '$caseServiceData.case_customer'],
+          },
+        },
+      },
+      // Lookup customer data using the actual customer ID
+      {
+        $lookup: {
+          from: CUSTOMER.COLLECTION_NAME,
+          localField: 'actualCustomerId',
           foreignField: '_id',
           as: 'customerData',
         },
@@ -768,7 +792,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
           },
           total: { $sum: '$tx_amount' },
           count: { $sum: 1 },
-          customerCount: { $addToSet: '$tx_customer' },
+          customerCount: { $addToSet: '$actualCustomerId' },
         },
       },
       {
@@ -784,7 +808,7 @@ const getTransactionStatistics = async (query: ITransactionQuery = {}) => {
       { $match: filter },
       {
         $lookup: {
-          from: 'caseservices',
+          from: CASE_SERVICE.COLLECTION_NAME,
           localField: 'tx_caseService',
           foreignField: '_id',
           as: 'caseServiceData',

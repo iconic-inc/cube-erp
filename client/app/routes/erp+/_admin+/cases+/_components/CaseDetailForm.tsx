@@ -560,17 +560,13 @@ export default function CaseDetailForm({
                 </div>
                 <div>
                   <Label className='text-xs font-medium'>Ngày đến hạn</Label>
-                  <Input
-                    type='date'
-                    value={
-                      new Date(installment.dueDate).toISOString().split('T')[0]
-                    }
-                    onChange={(e) => {
+                  <DatePicker
+                    initialDate={new Date(installment.dueDate)}
+                    onChange={(v) => {
                       const newInstallments = [...installments];
-                      newInstallments[index].dueDate = new Date(e.target.value);
+                      newInstallments[index].dueDate = new Date(v);
                       setInstallments(newInstallments);
                     }}
-                    className='mt-1'
                   />
                 </div>
                 <div>
@@ -651,15 +647,13 @@ export default function CaseDetailForm({
               >
                 <div>
                   <Label className='text-xs font-medium'>Ngày</Label>
-                  <Input
-                    type='date'
-                    value={new Date(cost.date).toISOString().split('T')[0]}
+                  <DatePicker
+                    initialDate={new Date(cost.date)}
                     onChange={(e) => {
                       const newCosts = [...incurredCosts];
-                      newCosts[index].date = new Date(e.target.value);
+                      newCosts[index].date = new Date(e);
                       setIncurredCosts(newCosts);
                     }}
-                    className='mt-1'
                   />
                 </div>
                 <div>

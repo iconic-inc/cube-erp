@@ -1,15 +1,16 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { config } from 'dotenv';
 
 // Load environment variables
 config({ path: '.env.test' });
 
-let mongod: MongoMemoryServer;
+let mongod: MongoMemoryReplSet;
 
 beforeAll(async () => {
+  console.log('setting up test env');
   // Start in-memory MongoDB instance
-  mongod = await MongoMemoryServer.create();
+  mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   const uri = mongod.getUri();
 
   // Connect mongoose to the in-memory database

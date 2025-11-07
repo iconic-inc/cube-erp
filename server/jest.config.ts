@@ -17,7 +17,7 @@ const compilerOptions = ts.parseJsonConfigFileContent(
 const jestConfig: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>'],
   testMatch: ['**/*.test.ts'],
   transform: {
     '^.+\\.ts$': [
@@ -30,7 +30,7 @@ const jestConfig: Config = {
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.options.paths!, {
     prefix: '<rootDir>/',
   }),
-  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   testTimeout: 30000,
   collectCoverageFrom: [
     'src/**/*.ts',
